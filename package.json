@@ -1,0 +1,16 @@
+{
+  "name": "buddgy",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Buddgy — envelope budgeting app. Root scripts orchestrate client/ and server/ as two independent packages.",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "test": "npm test --prefix server && npm test --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

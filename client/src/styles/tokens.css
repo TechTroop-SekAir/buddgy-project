@@ -1,0 +1,40 @@
+/*
+ * Design tokens — single source of truth for color/spacing values.
+ * CLAUDE.md § Non-Negotiables: no hardcoded design values outside this file.
+ * tailwind.config.js and src/theme.js both read these, never restate hex.
+ *
+ * Values below are PROVISIONAL placeholders so the app is usable on Day 1 —
+ * Track A owns finalizing the real palette (docs/PLAN.md ticket A-01) and
+ * must update docs/DESIGN.md § Palette & Tokens in the same PR.
+ */
+
+:root {
+  /* Backgrounds */
+  --bg-page: #f7f8fa;
+  --bg-surface: #ffffff;
+  --bg-input: #ffffff;
+
+  /* Text hierarchy */
+  --text-primary: #1a1d23;
+  --text-secondary: #4b5262;
+  --text-muted: #8a90a2;
+
+  /* The one interactive color */
+  --accent: #3d6bf0;
+  --accent-subtle: #e8edfd;
+
+  /* Borders */
+  --border-card: #e3e5eb;
+  --border-nav: #e3e5eb;
+
+  /* Buddgy status colors — dedicated tokens, never reuse form red/green.
+     See docs/DESIGN.md § Status Colors. */
+  --status-ok: #2f9e58;
+  --status-warning: #d98c1f;
+  --status-danger: #d9483a;
+  --status-forecast-alert: #b5350f;
+
+  /* Form validation (kept distinct from status-* above) */
+  --form-success: #22a35a;
+  --form-error: #e0453a;
+}
