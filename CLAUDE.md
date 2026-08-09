@@ -67,7 +67,8 @@
 │   ├── DESIGN.md              # Palette, tokens, status colors — referenced by .claude/commands/design.md
 │   ├── TESTING.md
 │   ├── DEPLOYMENT.md
-│   └── PLAN.md                 # 12-day delivery board, tracks, critical path
+│   ├── PLAN.md                 # Per-person checklist (Darya/Matan/Ofek), dates, definition of done
+│   └── PLAN-DETAILS.md         # Day-by-day schedule, demo script, requirement traceability
 └── .claude/commands
     ├── product.md
     ├── dev.md

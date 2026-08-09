@@ -16,6 +16,7 @@ This directory is the single source of truth for the Buddgy spec.
 | [`DESIGN.md`](./DESIGN.md) | Palette, tokens, status colors, responsive breakpoints, the Mantine boundary |
 | [`TESTING.md`](./TESTING.md) | Test strategy, coverage targets, Buddgy-critical cases, mocking policy |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Railway setup, environments, release process, smoke checks |
-| [`PLAN.md`](./PLAN.md) | The 12-day delivery board, tracks, critical path, risk register |
+| [`PLAN.md`](./PLAN.md) | Per-person checklist (Darya/Matan/Ofek), dates, definition of done, risks |
+| [`PLAN-DETAILS.md`](./PLAN-DETAILS.md) | Day-by-day schedule, demo script, requirement traceability — TA-facing detail |
 
 For **how Claude should work** (process, not spec), see `.claude/commands/`: `/dev`, `/product`, `/qa`, `/design`. These reference the files above rather than repeating them — if something looks duplicated, the command file should be pointing here instead.
