@@ -4,11 +4,13 @@ require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const config = require('../config/config.js')[process.env.NODE_ENV || 'development'];
 
-const sequelize = new Sequelize(process.env[config.use_env_variable], {
-  dialect: config.dialect,
-  dialectOptions: config.dialectOptions,
-  logging: false,
-});
+const sequelize = config.use_env_variable
+  ? new Sequelize(process.env[config.use_env_variable], {
+      dialect: config.dialect,
+      dialectOptions: config.dialectOptions,
+      logging: false,
+    })
+  : new Sequelize({ ...config, logging: false });
 
 const db = {};
 

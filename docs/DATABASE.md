@@ -22,6 +22,7 @@ Related specs: [`API.md`](./API.md) (what reads/writes these tables) · [`SECURI
 ## Conventions
 
 - Database: **PostgreSQL**, accessed via Sequelize. See `CLAUDE.md` § Database Rules for the non-negotiables (migrations are the source of truth, transactions for multi-step writes, no `SELECT *`).
+- **Temporary dev shim:** `server/config/config.js` currently points the `development` env at local SQLite (`./dev.db`) instead of `DATABASE_URL`, and the `users`/`csv_imports` migrations were adjusted to drop Postgres-only syntax (`JSONB` → `TEXT`, `now()` → `CURRENT_TIMESTAMP`) so they run under both engines. This is a stopgap for local iteration without a running Postgres instance — production and `test` configs are untouched. Revert `config.js` to `DATABASE_URL`-based Postgres and restore `JSONB`/`now()` before this is considered done; don't build features that depend on SQLite-only behavior.
 - **All monetary amounts are stored as integers in agorot** (1 ILS = 100 agorot) — never floats. Every money column is suffixed `_agorot`. Conversion to/from shekels happens only at the API/UI boundary.
 - Table names: `snake_case`, plural. FKs: `<singular_table>_id`.
 - `created_at` uses `DEFAULT now()` where present; this schema has no `updated_at` yet — add one via migration if a table needs edit-history later.

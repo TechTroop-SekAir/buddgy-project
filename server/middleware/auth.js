@@ -10,7 +10,7 @@ function requireAuth(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
   if (!token) {
-    return next(new AppError('Authentication required.', 401));
+    return next(new AppError('unauthorized', 401));
   }
 
   try {
@@ -18,14 +18,14 @@ function requireAuth(req, res, next) {
     req.user = { id: payload.sub, role: payload.role };
     next();
   } catch {
-    next(new AppError('Invalid or expired token.', 401));
+    next(new AppError('unauthorized', 401));
   }
 }
 
 // Stack after requireAuth on admin-only routes.
 function requireAdmin(req, res, next) {
   if (req.user?.role !== 'admin') {
-    return next(new AppError('Admin access required.', 403));
+    return next(new AppError('forbidden', 403));
   }
   next();
 }

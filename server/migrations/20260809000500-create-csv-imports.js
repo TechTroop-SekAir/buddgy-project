@@ -18,7 +18,7 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       column_mapping: {
-        type: Sequelize.JSONB,
+        type: Sequelize.TEXT,
       },
       rows_imported: {
         type: Sequelize.INTEGER,
@@ -26,7 +26,7 @@ module.exports = {
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('now()'),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
   },
