@@ -15,7 +15,7 @@ Related specs: [`ARCHITECTURE.md`](./ARCHITECTURE.md) § Deployment Shape · `CL
 
 ## Platform
 
-Railway hosts both `client/` and `server/` as separate services from this one repo, plus a managed PostgreSQL instance. Deploy early (Day 1–2, ticket C-01 in [`PLAN.md`](./PLAN.md)) — standing up the pipeline before there's real functionality means the team is never blocked on "does deployment even work" during the last week.
+Railway hosts both `client/` and `server/` as separate services from this one repo, plus a managed PostgreSQL instance. The `staging` environment is live — server and Postgres are provisioned and deploying from `main` (ticket C-01 in [`PLAN.md`](./PLAN.md), completed Day 2).
 
 ## Environments
 
@@ -42,8 +42,9 @@ CLOUDINARY_URL=
 ## Release Process
 
 1. Push to `main` triggers the Railway build for both services
-2. **Migrations run as a release step before the server process starts** — never `sync({ force: true })`, never a manual `psql` change (`CLAUDE.md` § Database Rules)
+2. **Migrations run as a release step before the server process starts** — never `sync({ force: true })`, never a manual `psql` change (`CLAUDE.md` § Database Rules). The server service's Railway Start Command is `npm run db:migrate && npm start`, so this is automated on every deploy rather than run by hand.
 3. Server boots only after migrations succeed; a failed migration fails the deploy rather than booting against a stale schema
+4. `DATABASE_URL` is wired via Railway's variable reference to the managed Postgres instance and connects over SSL in `production`/`staging` (`server/config/config.js`)
 
 ## Smoke Checks
 
@@ -51,6 +52,6 @@ After every deploy to an environment about to be demoed:
 
 - [ ] `GET /api/auth/me` with a known test token returns `200`
 - [ ] Client loads and can log in
-- [ ] `POST /api/calendar/connect` redirects to the *correct* environment's `GOOGLE_REDIRECT_URI`
+- [ ] `GET /api/calendar/connect` returns a Google consent URL pointed at the *correct* environment's `GOOGLE_REDIRECT_URI`
 - [ ] `POST /api/transactions/parse` returns a parsed suggestion (Claude key valid, not rate-limited)
 - [ ] A file upload (profile picture or CSV) round-trips through storage
