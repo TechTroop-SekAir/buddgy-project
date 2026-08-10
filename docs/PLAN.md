@@ -79,8 +79,8 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [ ] **C-02** Claude service: quick-entry parsing (`/api/transactions/parse`) — *Day 3–6, needs Matan's B-04*
 - [ ] **C-03** Claude service: CSV column-mapping detection — *Day 6*
 - [ ] **C-04** CSV pipeline: upload, storage, preview, confirm + `dedup_hash` — *Day 6–7, needs Matan's B-01*
-- [ ] **C-05** Google OAuth: connect flow + encrypted token storage — *Day 7, needs Matan's B-01/B-03*
-- [ ] **C-06** Calendar sync: fetch, amount extraction, upsert by `google_event_id` — *Day 8*
+- [x] **C-05** Google OAuth: connect flow + encrypted token storage — *Day 7, needs Matan's B-01/B-03*
+- [x] **C-06** Calendar sync: fetch, amount extraction, upsert by `google_event_id` — *Day 8*
 - [ ] **C-07** Storage service (Cloudinary/S3) for avatars + CSV files — *Day 9*
 - [ ] **C-08** External-API failure handling (timeouts, rate limits, expired token) — *Day 10*
 - [ ] **C-09** CI pipeline: run tests on PR, mocked externals only — *Day 10*

@@ -120,8 +120,12 @@ POST /api/imports/:id/confirm   🔒   → { imported: 47, duplicatesSkipped: 3 
 ## Calendar & Forecast
 
 ```
-GET    /api/calendar/connect      🔒  → Google OAuth redirect
+GET    /api/calendar/connect      🔒  → { url }   (Google consent screen URL; client redirects to it)
+GET    /api/calendar/callback         unauthed — Google redirects here; identity comes from the
+                                       signed `state` param minted by /connect. Redirects the
+                                       browser to CLIENT_URL, never returns JSON.
 POST   /api/calendar/sync         🔒  → { newEvents: 4 }
+DELETE /api/calendar/disconnect   🔒  → { connected: false }   (planned_expenses rows are kept)
 GET    /api/planned-expenses?month=2026-08   🔒  → [ planned_expense ]
 PATCH  /api/planned-expenses/:id  🔒  → planned_expense   (confirm / assign to envelope)
 GET    /api/forecast?month=2026-08   🔒
