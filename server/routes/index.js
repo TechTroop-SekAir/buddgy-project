@@ -8,8 +8,8 @@ const router = Router();
 // Unauthenticated — target for Railway's healthcheck (docs/DEPLOYMENT.md § Smoke Checks).
 router.get('/health', (req, res) => ok(res, { ok: true }));
 
+router.use('/auth', require('./authRoutes'));
 // Feature routers mount here as they're built, e.g.:
-// router.use('/auth', require('./authRoutes'));
 // router.use('/envelopes', require('./envelopeRoutes'));
 router.use('/calendar', require('./calendar'));
 

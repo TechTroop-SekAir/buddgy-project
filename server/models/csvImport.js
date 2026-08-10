@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       user_id: { type: DataTypes.INTEGER, allowNull: false },
       file_url: { type: DataTypes.TEXT },
-      column_mapping: { type: DataTypes.JSONB },
+      column_mapping: { type: DataTypes.TEXT },
       rows_imported: { type: DataTypes.INTEGER },
     },
     {

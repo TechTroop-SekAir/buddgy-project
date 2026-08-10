@@ -45,10 +45,12 @@ Related specs: [`DATABASE.md`](./DATABASE.md) (backing tables) · [`SECURITY.md`
 ## Auth
 
 ```
-POST   /api/auth/register     → { token, user }
-POST   /api/auth/login        → { token, user }
-GET    /api/auth/me       🔒  → { user }
+POST   /api/auth/register     { email, password, full_name? }  → { token, user }
+POST   /api/auth/login        { email, password }               → { token, user }
+GET    /api/auth/me       🔒                                    → { user }
 ```
+
+`full_name` is optional (nullable column) — the client doesn't collect it yet.
 
 ## Envelopes
 

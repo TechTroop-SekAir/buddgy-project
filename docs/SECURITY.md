@@ -38,9 +38,9 @@ Admin routes are the only ones that legitimately read across users, and they exp
 
 ## JWT Lifecycle
 
-- Issued on register/login, signed with `JWT_SECRET`, contains `{ userId, role }` — never anything sensitive (no password hash, no tokens)
+- Issued on register/login, signed with `JWT_SECRET`, contains `{ sub: userId, role }` — never anything sensitive (no password hash, no tokens)
 - Verified in `middleware/auth.js` on every protected route
-- Expiry: short-lived enough to limit blast radius from a leaked token; exact TTL is a Track B decision to record here once set
+- Expiry: **7 days** (`expiresIn: '7d'` in `services/authService.js`) — acceptable blast radius for MVP; tighten before any production hardening pass
 - No refresh-token flow for the app's own auth (JWT re-login on expiry is acceptable for an MVP) — **do not confuse this with `google_refresh_token`**, which is a separate, long-lived OAuth credential
 
 ## Secrets
