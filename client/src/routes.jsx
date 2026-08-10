@@ -2,19 +2,47 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 // Public/protected split per ticket A-02. Feature pages (envelopes,
 // transactions, quick entry, imports, calendar, admin) get their own
 // routes as their tickets land — this is the skeleton, not the full map.
+//
+// Both gates wait on isLoading so a refreshed session isn't bounced before
+// AuthContext finishes rehydrating the user from the stored token.
 function ProtectedRoute({ children }) {
-  const { user } = useAuth();
-  return user ? children : <Navigate to="/" replace />;
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+  return user ? children : <Navigate to="/login" replace />;
+}
+
+function PublicOnlyRoute({ children }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+  return user ? <Navigate to="/dashboard" replace /> : children;
 }
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route
+        path="/login"
+        element={
+          <PublicOnlyRoute>
+            <LoginPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicOnlyRoute>
+            <RegisterPage />
+          </PublicOnlyRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={
