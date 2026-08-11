@@ -14,6 +14,8 @@
     "db:seed": "sequelize-cli db:seed:all"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.37",
+    "ai": "^7.0.59",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -22,7 +24,8 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.12.0",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.3"
+    "sequelize": "^6.37.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "jest": "^29.7.0",

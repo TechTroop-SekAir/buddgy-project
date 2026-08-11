@@ -76,7 +76,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 ## Ofek — Integrations + Deployment
 
 - [x] **C-01** Railway project: client + server services + managed Postgres — *Day 1–2*
-- [ ] **C-02** Claude service: quick-entry parsing (`/api/transactions/parse`) — *Day 3–6, needs Matan's B-04*
+- [x] **C-02** Claude service: quick-entry parsing (`/api/transactions/parse`) — *Day 3–6, needs Matan's B-04*
 - [ ] **C-03** Claude service: CSV column-mapping detection — *Day 6*
 - [ ] **C-04** CSV pipeline: upload, storage, preview, confirm + `dedup_hash` — *Day 6–7, needs Matan's B-01*
 - [x] **C-05** Google OAuth: connect flow + encrypted token storage — *Day 7, needs Matan's B-01/B-03*

@@ -11,6 +11,7 @@ router.get('/health', (req, res) => ok(res, { ok: true }));
 router.use('/auth', require('./authRoutes'));
 // Feature routers mount here as they're built, e.g.:
 // router.use('/envelopes', require('./envelopeRoutes'));
+router.use('/transactions', require('./transactions'));
 router.use('/calendar', require('./calendar'));
 
 module.exports = router;
