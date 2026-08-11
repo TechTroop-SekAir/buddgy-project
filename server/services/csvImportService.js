@@ -14,6 +14,9 @@ const claudeService = require('../services/claudeService');
 
 const PREVIEW_ROW_COUNT = 10;
 const SAMPLE_ROW_COUNT_FOR_AI = 5;
+// A stalled re-read of the stored file must fail fast, not hang the request
+// indefinitely — docs/INTEGRATIONS.md § Failure Handling.
+const FILE_FETCH_TIMEOUT_MS = 30000;
 
 /**
  * Decodes a CSV file's bytes to text, stripping a UTF-8 BOM and falling
@@ -189,7 +192,14 @@ async function confirmImport(userId, importId, mapping) {
     throw new AppError('validation failed: mapping', 400);
   }
 
-  const response = await fetch(csvImport.file_url);
+  let response;
+  try {
+    response = await fetch(csvImport.file_url, { signal: AbortSignal.timeout(FILE_FETCH_TIMEOUT_MS) });
+  } catch {
+    // Network/DNS failure or timeout — never leak the raw error.
+    // docs/INTEGRATIONS.md § Failure Handling.
+    throw new AppError('upstream storage error: could not re-read file', 502);
+  }
   if (!response.ok) {
     throw new AppError('upstream storage error: could not re-read file', 502);
   }

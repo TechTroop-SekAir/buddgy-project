@@ -82,8 +82,8 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **C-05** Google OAuth: connect flow + encrypted token storage — *Day 7, needs Matan's B-01/B-03*
 - [x] **C-06** Calendar sync: fetch, amount extraction, upsert by `google_event_id` — *Day 8*
 - [ ] **C-07** Storage service (Cloudinary/S3) for avatars + CSV files — *Day 9, CSV half landed early with C-04; avatar upload path remains*
-- [ ] **C-08** External-API failure handling (timeouts, rate limits, expired token) — *Day 10*
-- [ ] **C-09** CI pipeline: run tests on PR, mocked externals only — *Day 10*
+- [x] **C-08** External-API failure handling (timeouts, rate limits, expired token) — *Day 10*
+- [x] **C-09** CI pipeline: run tests on PR, mocked externals only — *Day 10*
 - [ ] **C-10** Deploy promote + smoke checklist — *Day 11, needs Darya's A-16 and Matan's B-09*
 
 ---

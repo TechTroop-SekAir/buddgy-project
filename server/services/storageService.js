@@ -18,6 +18,9 @@ const ALLOWED_CSV_MIME_TYPES = new Set([
   'text/plain',
 ]);
 const MAX_CSV_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+// A stalled upload must fail fast, not hang the request indefinitely —
+// docs/INTEGRATIONS.md § Failure Handling.
+const STORAGE_UPLOAD_TIMEOUT_MS = 30000;
 
 let configured = false;
 function ensureConfigured() {
@@ -67,9 +70,24 @@ async function uploadCsvFile(buffer, originalname) {
 
   try {
     const result = await new Promise((resolve, reject) => {
+      let settled = false;
+
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        uploadStream.destroy(new Error('upload timed out'));
+        reject(new Error('upload timed out'));
+      }, STORAGE_UPLOAD_TIMEOUT_MS);
+      timer.unref?.();
+
       const uploadStream = cloudinary.uploader.upload_stream(
         { resource_type: 'raw', folder: 'csv_imports', filename_override: originalname, use_filename: true },
-        (err, res) => (err ? reject(err) : resolve(res))
+        (err, res) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          err ? reject(err) : resolve(res);
+        }
       );
       uploadStream.end(buffer);
     });

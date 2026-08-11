@@ -11,6 +11,9 @@ const { shekelsToAgorot } = require('../utils/money');
 
 const MODEL_ID = 'claude-3-5-sonnet-20241022';
 const MAX_TOKENS = 512;
+// A stalled connection must fail fast, not hang the request indefinitely —
+// docs/INTEGRATIONS.md § Failure Handling.
+const CLAUDE_TIMEOUT_MS = 15000;
 
 function loadApiKey() {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -76,6 +79,7 @@ async function parseQuickEntry(text, envelopes) {
       maxOutputTokens: MAX_TOKENS,
       schema: quickEntrySchema,
       prompt: buildPrompt(text, envelopes, today),
+      abortSignal: AbortSignal.timeout(CLAUDE_TIMEOUT_MS),
     }));
   } catch {
     // Timeout, rate limit, or the model's output didn't satisfy the schema
@@ -137,6 +141,7 @@ async function detectColumnMapping(headerRow, sampleRows) {
       maxOutputTokens: MAX_TOKENS,
       schema: columnMappingSchema,
       prompt: buildMappingPrompt(headerRow, sampleRows),
+      abortSignal: AbortSignal.timeout(CLAUDE_TIMEOUT_MS),
     }));
   } catch {
     // Timeout, rate limit, or malformed output — same failure contract as
