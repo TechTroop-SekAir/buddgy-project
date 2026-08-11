@@ -13,5 +13,6 @@ router.use('/auth', require('./authRoutes'));
 // router.use('/envelopes', require('./envelopeRoutes'));
 router.use('/transactions', require('./transactions'));
 router.use('/calendar', require('./calendar'));
+router.use('/imports', require('./imports'));
 
 module.exports = router;

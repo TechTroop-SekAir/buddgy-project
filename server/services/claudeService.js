@@ -98,4 +98,57 @@ async function parseQuickEntry(text, envelopes) {
   };
 }
 
-module.exports = { parseQuickEntry };
+// The model is asked to map source column *names* (from the header row),
+// never to touch the data itself — docs/INTEGRATIONS.md § Anthropic Claude
+// API, point 2. Only a handful of sample rows are sent, never the whole file.
+const columnMappingSchema = z.object({
+  date: z.string().nullable().describe('The header name of the column containing the transaction date. null if none fits.'),
+  amount: z.string().nullable().describe('The header name of the column containing the transaction amount. null if none fits.'),
+  description: z.string().nullable().describe('The header name of the column containing a merchant/description. null if none fits.'),
+});
+
+function buildMappingPrompt(headerRow, sampleRows) {
+  const sampleLines = sampleRows.map((row) => row.join(', ')).join('\n');
+  return [
+    'The following is the header row and a few sample rows from a bank statement CSV export.',
+    'Map the columns to date, amount, and description by returning the exact header text for each — never invent a column name.',
+    `Header row: ${headerRow.join(', ')}`,
+    'Sample rows:',
+    sampleLines,
+  ].join('\n');
+}
+
+/**
+ * Detects which CSV columns hold date/amount/description, from the header
+ * row and a few sample rows only. Never reads or persists the full file —
+ * docs/API.md § CSV Import.
+ *
+ * @param {string[]} headerRow
+ * @param {string[][]} sampleRows
+ * @returns {Promise<{ date: string|null, amount: string|null, description: string|null }>}
+ */
+async function detectColumnMapping(headerRow, sampleRows) {
+  const validHeaders = new Set(headerRow);
+
+  let object;
+  try {
+    ({ object } = await generateObject({
+      model: anthropic(MODEL_ID),
+      maxOutputTokens: MAX_TOKENS,
+      schema: columnMappingSchema,
+      prompt: buildMappingPrompt(headerRow, sampleRows),
+    }));
+  } catch {
+    // Timeout, rate limit, or malformed output — same failure contract as
+    // parseQuickEntry. Never leak the raw SDK error.
+    throw new AppError('unprocessable: ai parse failed', 422);
+  }
+
+  return {
+    date: validHeaders.has(object.date) ? object.date : null,
+    amount: validHeaders.has(object.amount) ? object.amount : null,
+    description: validHeaders.has(object.description) ? object.description : null,
+  };
+}
+
+module.exports = { parseQuickEntry, detectColumnMapping };
