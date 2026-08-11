@@ -17,7 +17,10 @@ env:
   JWT_SECRET: ci-test-jwt-secret
   ANTHROPIC_API_KEY: ci-test-anthropic-key
   CLOUDINARY_URL: cloudinary://key:secret@ci-test-cloud
-  ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+  # Quoted deliberately — an all-digit unquoted scalar (e.g. a run of zeros)
+  # gets parsed as a YAML integer and collapses to "0" before Node ever sees
+  # it, which is exactly what broke this the first time.
+  ENCRYPTION_KEY: "ecc566c5c69751d829a733e15772f7340ca782a9aeb1f2366aa5de39642254da"
   GOOGLE_CLIENT_ID: ci-test-google-client-id
   GOOGLE_CLIENT_SECRET: ci-test-google-client-secret
   GOOGLE_REDIRECT_URI: http://localhost:4000/api/calendar/callback
