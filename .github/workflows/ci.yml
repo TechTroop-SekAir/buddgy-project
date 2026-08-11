@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Dummy values only — every external service (Claude, Google, Cloudinary) is
+# mocked in tests per docs/TESTING.md § Mocking Policy, so nothing here needs
+# to be a real credential. These exist purely so modules that read env vars
+# at load time (server/utils/crypto.js's loadKey(), server/config/config.js)
+# don't crash before a single test runs — see docs/PLAN.md's C-09 notes on
+# why this bit locally-invisible (server/.env supplies these there).
+env:
+  NODE_ENV: test
+  JWT_SECRET: ci-test-jwt-secret
+  ANTHROPIC_API_KEY: ci-test-anthropic-key
+  CLOUDINARY_URL: cloudinary://key:secret@ci-test-cloud
+  ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+  GOOGLE_CLIENT_ID: ci-test-google-client-id
+  GOOGLE_CLIENT_SECRET: ci-test-google-client-secret
+  GOOGLE_REDIRECT_URI: http://localhost:4000/api/calendar/callback
+  CLIENT_URL: http://localhost:5173
+  DATABASE_URL: postgres://postgres:postgres@localhost:5432/buddgy_ci
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: buddgy_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: server
+
+      # Postgres alignment: run the real migrations, and their down side,
+      # against a real Postgres instance — this is the only place the
+      # production dialect actually gets exercised (both Jest test files
+      # fully mock the DB), and the only check that would catch a
+      # migration written against SQLite-only syntax before it reaches
+      # Railway. docs/DATABASE.md § Migration Conventions requires every
+      # migration to have a complete `down`; `db:migrate:undo:all` is what
+      # actually proves that, rather than trusting it was written correctly.
+      - name: Run migrations
+        run: npm run db:migrate
+        working-directory: server
+
+      - name: Verify every migration's down works
+        run: npm run db:migrate:undo:all
+        working-directory: server
+
+      - name: Re-apply migrations (leave schema in the up state)
+        run: npm run db:migrate
+        working-directory: server
+
+      - name: Run tests
+        run: npm test
+        working-directory: server
+
+  client:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: client
+
+      # No client tests exist yet (client/package.json's `test` script is a
+      # placeholder) — `build` is the real check available today: it fails
+      # on broken imports, bad JSX, etc. Swap in `npm test` once Darya's
+      # A-18 (Playwright) lands.
+      - name: Build
+        run: npm run build
+        working-directory: client
