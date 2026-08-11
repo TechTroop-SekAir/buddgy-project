@@ -225,6 +225,20 @@ describe('POST /api/imports/:id/confirm', () => {
     expect(res.status).toBe(404);
   });
 
+  it('returns 502, not a hang, when re-fetching the stored file times out', async () => {
+    global.fetch.mockRejectedValue(Object.assign(new Error('The operation was aborted'), { name: 'AbortError' }));
+
+    const res = await request(app)
+      .post('/api/imports/12/confirm')
+      .set('Authorization', authHeader())
+      .send({ mapping });
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toBe('upstream storage error: could not re-read file');
+    expect(JSON.stringify(res.body)).not.toMatch(/at .*\(.*:\d+:\d+\)/); // no stack trace leaked
+    expect(mockTransactionBulkCreate).not.toHaveBeenCalled();
+  });
+
   it('rejects with 401 when unauthenticated', async () => {
     const res = await request(app).post('/api/imports/12/confirm').send({ mapping });
 

@@ -104,6 +104,19 @@ describe('POST /api/transactions/parse', () => {
     expect(res.body.error).toBe('unprocessable: ai parse failed');
   });
 
+  it('returns 422, not a hang, when the call times out', async () => {
+    mockGenerateObject.mockRejectedValue(Object.assign(new Error('The operation was aborted'), { name: 'AbortError' }));
+
+    const res = await request(app)
+      .post('/api/transactions/parse')
+      .set('Authorization', authHeader())
+      .send({ text: 'anything' });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('unprocessable: ai parse failed');
+    expect(JSON.stringify(res.body)).not.toMatch(/at .*\(.*:\d+:\d+\)/); // no stack trace leaked
+  });
+
   it('rejects with 401 when unauthenticated', async () => {
     const res = await request(app)
       .post('/api/transactions/parse')
