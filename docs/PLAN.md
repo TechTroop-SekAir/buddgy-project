@@ -47,7 +47,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [ ] **A-04** Auth pages (register/login) — *Day 3, against mock*
 - [ ] **A-05** Envelope dashboard (grid, status colors, empty state) — *Day 3, against mock*
 - [ ] **A-06** Envelope create/edit/delete forms — *Day 4*
-- [ ] **A-07** Transaction list + filters — *Day 4*
+- [x] **A-07** Transaction list + filters — *Day 4*
 - [ ] **A-08** Manual transaction form — *Day 5*
 - [ ] **A-09** Switch client from mock to real API — *Day 5, needs Matan's B-05*
 - [ ] **A-10** Quick Entry UI (text → review → confirm) — *Day 6, needs Ofek's C-02*

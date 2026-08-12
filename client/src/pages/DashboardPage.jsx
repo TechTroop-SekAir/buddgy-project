@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
 import { AddEnvelopeModal } from '../components/envelopes/AddEnvelopeModal';
 import { EnvelopeCard } from '../components/envelopes/EnvelopeCard';
@@ -34,9 +35,14 @@ export function DashboardPage() {
     <div className="p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-text-primary">Envelope Dashboard</h1>
-        <Button variant="outline" color="gray" size="md" onClick={logout}>
-          Log out
-        </Button>
+        <div className="flex items-center gap-4">
+          <Link to="/transactions" className="text-sm text-text-secondary hover:text-text-primary">
+            Transactions
+          </Link>
+          <Button variant="outline" color="gray" size="md" onClick={logout}>
+            Log out
+          </Button>
+        </div>
       </div>
       <Button mt="md" variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
         Add Envelope
