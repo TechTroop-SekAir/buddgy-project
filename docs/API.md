@@ -55,11 +55,20 @@ GET    /api/auth/me       🔒                                    → { user }
 ## Envelopes
 
 ```
-GET    /api/envelopes?month=2026-08                🔒  → [ envelope ]
-POST   /api/envelopes                              🔒  → envelope
-PUT    /api/envelopes/:id                          🔒  → envelope   (update budget/name/color)
-DELETE /api/envelopes/:id                          🔒  → { id }
+GET          /api/envelopes?month=2026-08                🔒  → [ envelope ]
+POST         /api/envelopes                              🔒  → envelope
+PUT | PATCH  /api/envelopes/:id                          🔒  → envelope   (partial update: name/budget/color)
+DELETE       /api/envelopes/:id                          🔒  → { id }
 ```
+
+`month` accepts either `2026-08` or `2026-08-01` (client/src/utils/month.js's `getCurrentMonth()`
+sends the latter) — both normalize to the first-of-month `DATEONLY` value. The spec says `PUT`;
+the shipped client (`envelopeService.js`) calls `PATCH`. Both are accepted, same handler, body is
+a partial update either way.
+
+Envelope `data` carries a **derived, response-only `spent_agorot`** field — summed from
+`transactions` at read time, not a DB column (see [`DATABASE.md`](./DATABASE.md) § envelopes).
+Always present, `0` (never `null`) when the envelope has no transactions yet.
 
 All scoped to the caller's `user_id` — see [`SECURITY.md`](./SECURITY.md) § Row-Level Access.
 
@@ -68,8 +77,12 @@ All scoped to the caller's `user_id` — see [`SECURITY.md`](./SECURITY.md) § R
 ```
 GET    /api/transactions?month=2026-08&envelopeId=3  🔒  → [ transaction ]
 POST   /api/transactions                             🔒  → transaction   (manual creation)
+PATCH  /api/transactions/:id                          🔒  → transaction   (partial update — e.g. assign an unassigned CSV row to an envelope)
 DELETE /api/transactions/:id                          🔒  → { id }
 ```
+
+`envelope_id` (create and update) must belong to the caller or be `null` — a foreign or
+nonexistent id is `400 "validation failed: envelope_id"`, not silently accepted.
 
 ### AI Quick Entry
 
