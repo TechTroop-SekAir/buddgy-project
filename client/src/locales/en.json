@@ -1,0 +1,158 @@
+{
+  "common": {
+    "appName": "Buddgy",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "back": "Back",
+    "loading": "Loading…"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "logout": "Log out",
+    "backToDashboard": "← Dashboard"
+  },
+  "landing": {
+    "title": "Buddgy",
+    "subtitle": "Envelope budgeting with AI-parsed entries, CSV import, and calendar-synced forecasts.",
+    "login": "Log in",
+    "register": "Create account"
+  },
+  "auth": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "login": {
+      "title": "Log in",
+      "passwordPlaceholder": "Your password",
+      "submit": "Log in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Register"
+    },
+    "register": {
+      "title": "Create an account",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Log in"
+    },
+    "validation": {
+      "emailInvalid": "Enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "passwordsMismatch": "Passwords do not match"
+    }
+  },
+  "dashboard": {
+    "title": "Envelope Dashboard",
+    "addEnvelope": "Add Envelope",
+    "addFirstEnvelope": "Add your first envelope",
+    "quickAdd": "Quick Add",
+    "loading": "Loading envelopes…",
+    "empty": "You don't have any envelopes yet this month."
+  },
+  "envelopes": {
+    "totalBudget": "Total Budget",
+    "totalSpent": "Total Spent",
+    "remainingBalance": "Remaining Balance",
+    "spentOf": "{{spent}} of {{budget}} spent",
+    "deleteConfirmTitle": "Delete envelope?",
+    "deleteConfirmBody": "This will permanently delete \"{{name}}\". This can't be undone.",
+    "status": {
+      "overBudget": "Over budget",
+      "nearDepletion": "Near depletion",
+      "onTrack": "On track"
+    }
+  },
+  "addEnvelopeModal": {
+    "title": "Add envelope",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Groceries",
+    "budgetLabel": "Monthly budget",
+    "submit": "Add Envelope",
+    "nameRequired": "Name is required",
+    "budgetInvalid": "Budget must be greater than 0",
+    "suggestedCategories": {
+      "pets": "Pets",
+      "fitness": "Fitness",
+      "gifts": "Gifts"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "loading": "Loading transactions…",
+    "emptyMonth": "You don't have any transactions yet this month.",
+    "emptyFiltered": "No transactions match your filters.",
+    "total_one": "Total: {{amount}} across {{count}} transaction",
+    "total_other": "Total: {{amount}} across {{count}} transactions",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search description…",
+    "categoryLabel": "Category",
+    "allCategories": "All categories",
+    "uncategorized": "Uncategorized",
+    "fromLabel": "From",
+    "toLabel": "To",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "dateHeader": "Date",
+    "descriptionHeader": "Description",
+    "categoryHeader": "Category",
+    "amountHeader": "Amount"
+  },
+  "quickEntry": {
+    "openButton": "Quick Add",
+    "modalTitle": "Quick Add",
+    "input": {
+      "label": "What did you spend on?",
+      "placeholder": "e.g. coffee and a pastry in Ramat Gan, 34 shekels",
+      "charCount": "{{count}}/{{max}}",
+      "submit": "Parse"
+    },
+    "parsing": {
+      "title": "Reading your entry…",
+      "body": "This can take up to 15 seconds."
+    },
+    "review": {
+      "title": "Review before saving",
+      "amountLabel": "Amount",
+      "descriptionLabel": "Description",
+      "dateLabel": "Date",
+      "envelopeLabel": "Envelope",
+      "envelopeNone": "No envelope suggested — pick one",
+      "categoryBadge": "Suggested category: {{category}}",
+      "lowConfidenceWarning": "Low confidence — double-check these details.",
+      "noEnvelopeWarning": "No envelope was suggested. Choose one before saving.",
+      "confirm": "Save transaction",
+      "back": "Edit text"
+    },
+    "error": {
+      "generic": "We couldn't read that entry. You can try again or edit your text.",
+      "validation": "Enter some text describing the expense.",
+      "retry": "Try again"
+    }
+  },
+  "categories": {
+    "housing": "Housing",
+    "groceries": "Groceries",
+    "utilities": "Utilities",
+    "transport": "Transport",
+    "healthcare": "Healthcare",
+    "diningOut": "Dining Out",
+    "entertainment": "Entertainment",
+    "shopping": "Shopping"
+  },
+  "errors": {
+    "unauthorized": "Incorrect email or password.",
+    "duplicate": "An account with this email already exists.",
+    "notFound": "Item not found.",
+    "generic": "Something went wrong. Please try again.",
+    "validation": {
+      "email": "Enter a valid email address",
+      "password": "Password is required",
+      "name": "Name is required",
+      "monthlyBudgetAgorot": "Budget must be greater than 0"
+    }
+  }
+}

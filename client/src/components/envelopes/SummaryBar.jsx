@@ -17,15 +17,15 @@ export function SummaryBar({ envelopes }) {
     <Card padding={0} className="bg-bg-surface border border-border-card rounded-lg">
       <div className="px-6 py-5 flex flex-wrap gap-8">
         <div>
-          <p className="text-sm text-text-secondary">{t('summaryBar.totalBudget')}</p>
+          <p className="text-sm text-text-secondary">{t('envelopes.totalBudget')}</p>
           <p className="text-xl font-semibold text-text-primary">{formatShekels(totals.budget)}</p>
         </div>
         <div>
-          <p className="text-sm text-text-secondary">{t('summaryBar.totalSpent')}</p>
+          <p className="text-sm text-text-secondary">{t('envelopes.totalSpent')}</p>
           <p className="text-xl font-semibold text-text-primary">{formatShekels(totals.spent)}</p>
         </div>
         <div>
-          <p className="text-sm text-text-secondary">{t('summaryBar.remaining')}</p>
+          <p className="text-sm text-text-secondary">{t('envelopes.remainingBalance')}</p>
           <p className="text-xl font-semibold text-text-primary">{formatShekels(remaining)}</p>
         </div>
       </div>

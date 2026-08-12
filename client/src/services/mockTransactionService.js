@@ -4,6 +4,7 @@
 // envelope ids from mockEnvelopeService so envelope_id references stay valid.
 // Only `list` is implemented — create/delete belong to ticket A-08.
 import * as mockEnvelopeService from './mockEnvelopeService';
+import { getCurrentMonth } from '../utils/month';
 
 const TRANSACTIONS_KEY = 'buddgy_mock_transactions';
 const SEEDED_USERS_KEY = 'buddgy_mock_transactions_seeded_users';
@@ -96,4 +97,68 @@ export async function list(userId, month) {
   return loadTransactions().filter(
     (t) => t.user_id === userId && t.transaction_date.startsWith(monthPrefix)
   );
+}
+
+// Fakes server/services/claudeService.js's parseQuickEntry shape (ticket
+// C-02) for ticket A-10, so Quick Entry is demoable end-to-end without a
+// running server. Typing the literal word "fail" anywhere in the text is a
+// deterministic trigger for the 422 path, mirroring the real endpoint's
+// single undifferentiated `unprocessable: ai parse failed` error.
+const AMOUNT_PATTERN = /(\d+(?:\.\d+)?)\s*(?:₪|ils|shekel|shekels|שקל|שקלים)?/i;
+
+// userId: the real endpoint derives the user from the JWT and takes no such
+// param, but the mock needs it to look up the caller's own envelopes for the
+// suggestion — same (text, userId) call site as the real service, which
+// simply ignores the extra argument.
+export async function parse(text, userId) {
+  await delay(600);
+
+  if (/fail/i.test(text)) {
+    throw new Error('unprocessable: ai parse failed');
+  }
+
+  const match = text.match(AMOUNT_PATTERN);
+  const amountShekels = match ? Number(match[1]) : 0;
+  const envelopes = await mockEnvelopeService.list(userId, getCurrentMonth());
+
+  const lowerText = text.toLowerCase();
+  const matchedEnvelope = envelopes.find((envelope) => lowerText.includes(envelope.name.toLowerCase()));
+
+  return {
+    amount_agorot: Math.round(amountShekels * 100),
+    category: matchedEnvelope ? matchedEnvelope.name : 'Uncategorized',
+    suggested_envelope_id: matchedEnvelope ? matchedEnvelope.id : null,
+    description: text.trim().slice(0, 255),
+    transaction_date: new Date().toISOString().slice(0, 10),
+    confidence: amountShekels > 0 ? 0.82 : 0.35,
+  };
+}
+
+export async function create(userId, payload) {
+  await delay(200);
+  const { envelope_id = null, amount_agorot, description, transaction_date } = payload;
+
+  if (!Number.isInteger(amount_agorot) || amount_agorot <= 0) {
+    throw new Error('validation failed: amount_agorot');
+  }
+  if (!description || !description.trim()) {
+    throw new Error('validation failed: description');
+  }
+
+  const transaction = {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    envelope_id,
+    amount_agorot,
+    description: description.trim(),
+    source: 'quick_entry',
+    transaction_date,
+    dedup_hash: null,
+  };
+
+  const transactions = loadTransactions();
+  transactions.push(transaction);
+  saveTransactions(transactions);
+
+  return transaction;
 }

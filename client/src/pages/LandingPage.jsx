@@ -7,19 +7,17 @@ export function LandingPage() {
 
   return (
     <div className="px-8 py-9">
-      <h1 className="text-3xl font-semibold tracking-tight text-text-primary">{t('landing.appName')}</h1>
-      <p className="text-base text-text-secondary mt-4 mb-7">
-        {t('landing.tagline')}
-      </p>
+      <h1 className="text-3xl font-semibold tracking-tight text-text-primary">{t('landing.title')}</h1>
+      <p className="text-base text-text-secondary mt-4 mb-7">{t('landing.subtitle')}</p>
       <div className="flex gap-3">
         <Link to="/login">
           <Button variant="filled" color="accent" size="md">
-            {t('common.logIn')}
+            {t('landing.login')}
           </Button>
         </Link>
         <Link to="/register">
           <Button variant="outline" color="gray" size="md">
-            {t('common.createAccount')}
+            {t('landing.register')}
           </Button>
         </Link>
       </div>

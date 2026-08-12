@@ -45,13 +45,14 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **A-01** Tokens + Mantine theme + Tailwind wired *(scaffolded — palette is a placeholder, finalize Day 1)*
 - [x] **A-02** Routing skeleton + auth-gated routes *(scaffolded)*
 - [x] **A-03** `components/ui/` adapters: Button, TextInput, NumberInput, Card, Modal *(scaffolded)*
-- [ ] **A-04** Auth pages (register/login) — *Day 3, against mock*
-- [ ] **A-05** Envelope dashboard (grid, status colors, empty state) — *Day 3, against mock*
-- [ ] **A-06** Envelope create/edit/delete forms — *Day 4*
+- [x] **A-04** Auth pages (register/login) — *Day 3, against mock*
+- [x] **A-05** Envelope dashboard (grid, status colors, empty state) — *Day 3, against mock*
+- [x] **A-06** Envelope create/edit/delete forms — *Day 4*
 - [x] **A-07** Transaction list + filters — *Day 4*
-- [ ] **A-08** Manual transaction form — *Day 5*
+- [ ] **A-08** Manual transaction form — *Day 5 (transactionService.create + mock landed with A-10; needs its own entry form/UI)*
 - [ ] **A-09** Switch client from mock to real API — *Day 5, needs Matan's B-05*
-- [ ] **A-10** Quick Entry UI (text → review → confirm) — *Day 6, needs Ofek's C-02*
+- [x] **A-10** Quick Entry UI (text → review → confirm) — *Day 6, needs Ofek's C-02*
+- [ ] **A-19** i18n/RTL infra (Hebrew default) — *landed with A-10; react-i18next, `src/locales/`, `LocaleContext`, Mantine `DirectionProvider` all in place and every existing page/component uses it. Remaining: keep it current as new pages ship (see `client/CLAUDE.md` § i18n & RTL).*
 - [ ] **A-11** CSV import UI (upload → mapping → confirm) — *Day 7, needs Ofek's C-04*
 - [ ] **A-12** Calendar connect/sync UI + planned-expense assign — *Day 8, needs Ofek's C-06*
 - [ ] **A-13** Forecast banner + at-risk highlighting — *Day 9, needs Matan's B-07*

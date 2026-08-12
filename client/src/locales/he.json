@@ -1,118 +1,136 @@
 {
   "common": {
-    "logIn": "התחברות",
-    "createAccount": "יצירת חשבון",
+    "appName": "באדג'י",
     "cancel": "ביטול",
     "delete": "מחיקה",
-    "logOut": "התנתקות"
+    "back": "חזרה",
+    "loading": "טוען…"
+  },
+  "nav": {
+    "dashboard": "לוח בקרה",
+    "transactions": "תנועות",
+    "logout": "התנתקות",
+    "backToDashboard": "→ לוח בקרה"
   },
   "landing": {
-    "appName": "Buddgy",
-    "tagline": "תקציב מעטפות חכם מבוסס AI, עם רישום מהיר, ייבוא קבצי CSV ותחזיות מסונכרנות ליומן."
+    "title": "באדג'י",
+    "subtitle": "תקצוב מעטפות עם רישום חכם באמצעות AI, ייבוא קובצי CSV ותחזיות מסונכרנות עם היומן.",
+    "login": "התחברות",
+    "register": "יצירת חשבון"
   },
   "auth": {
+    "emailLabel": "אימייל",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "סיסמה",
     "login": {
       "title": "התחברות",
-      "emailLabel": "אימייל",
-      "emailPlaceholder": "you@example.com",
-      "passwordLabel": "סיסמה",
       "passwordPlaceholder": "הסיסמה שלך",
       "submit": "התחברות",
       "noAccount": "אין לך חשבון?",
-      "registerLink": "הרשמה",
-      "validation": {
-        "email": "יש להזין כתובת אימייל תקינה",
-        "password": "נדרשת סיסמה"
-      }
+      "registerLink": "הרשמה"
     },
     "register": {
       "title": "יצירת חשבון",
-      "emailLabel": "אימייל",
-      "emailPlaceholder": "you@example.com",
-      "passwordLabel": "סיסמה",
       "passwordPlaceholder": "לפחות 8 תווים",
       "confirmPasswordLabel": "אימות סיסמה",
-      "confirmPasswordPlaceholder": "הזינו שוב את הסיסמה",
+      "confirmPasswordPlaceholder": "הזן/י את הסיסמה שוב",
       "submit": "יצירת חשבון",
       "haveAccount": "כבר יש לך חשבון?",
-      "loginLink": "התחברות",
-      "validation": {
-        "email": "יש להזין כתובת אימייל תקינה",
-        "password": "הסיסמה חייבת לכלול לפחות 8 תווים",
-        "confirmPassword": "הסיסמאות אינן תואמות"
-      }
+      "loginLink": "התחברות"
+    },
+    "validation": {
+      "emailInvalid": "יש להזין כתובת אימייל תקינה",
+      "passwordRequired": "יש להזין סיסמה",
+      "passwordMinLength": "הסיסמה חייבת להכיל לפחות 8 תווים",
+      "passwordsMismatch": "הסיסמאות אינן תואמות"
     }
   },
   "dashboard": {
-    "title": "לוח בקרה של המעטפות",
-    "navTransactions": "תנועות",
+    "title": "לוח בקרה למעטפות",
+    "addEnvelope": "הוספת מעטפה",
+    "addFirstEnvelope": "הוספת המעטפה הראשונה שלך",
+    "quickAdd": "רישום מהיר",
     "loading": "טוען מעטפות…",
-    "emptyTitle": "אין לך עדיין מעטפות בחודש זה.",
-    "addFirst": "הוספת המעטפה הראשונה שלך",
-    "addEnvelope": "הוספת מעטפה"
+    "empty": "אין לך עדיין מעטפות החודש."
   },
   "envelopes": {
-    "modal": {
-      "title": "הוספת מעטפה",
-      "nameLabel": "שם",
-      "namePlaceholder": "לדוגמה: קניות",
-      "budgetLabel": "תקציב חודשי",
-      "budgetPlaceholder": "0",
-      "currencySymbol": "₪",
-      "submit": "הוספת מעטפה",
-      "suggested": {
-        "pets": "חיות מחמד",
-        "fitness": "כושר",
-        "gifts": "מתנות"
-      },
-      "validation": {
-        "name": "נדרש שם",
-        "budget": "התקציב חייב להיות גדול מ-0"
-      }
-    },
-    "card": {
-      "spentOf": "הוצאו {{spent}} מתוך {{budget}}",
-      "deleteConfirmTitle": "למחוק את המעטפה?",
-      "deleteConfirmBody": "פעולה זו תמחק את \"{{name}}\" לצמיתות. לא ניתן לשחזר פעולה זו."
-    },
+    "totalBudget": "תקציב כולל",
+    "totalSpent": "סך ההוצאות",
+    "remainingBalance": "יתרה נותרת",
+    "spentOf": "{{spent}} מתוך {{budget}} נוצלו",
+    "deleteConfirmTitle": "למחוק את המעטפה?",
+    "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\". לא ניתן לבטל פעולה זו.",
     "status": {
       "overBudget": "חריגה מהתקציב",
-      "nearDepletion": "מתקרב לסיום",
-      "onTrack": "מסלול תקין"
+      "nearDepletion": "מתקרבת לסיום",
+      "onTrack": "במסלול"
     }
   },
-  "summaryBar": {
-    "totalBudget": "סה״כ תקציב",
-    "totalSpent": "סה״כ הוצאות",
-    "remaining": "יתרה"
+  "addEnvelopeModal": {
+    "title": "הוספת מעטפה",
+    "nameLabel": "שם",
+    "namePlaceholder": "לדוגמה: מצרכים",
+    "budgetLabel": "תקציב חודשי",
+    "submit": "הוספת מעטפה",
+    "nameRequired": "יש להזין שם",
+    "budgetInvalid": "התקציב חייב להיות גדול מ-0",
+    "suggestedCategories": {
+      "pets": "חיות מחמד",
+      "fitness": "כושר",
+      "gifts": "מתנות"
+    }
   },
   "transactions": {
     "title": "תנועות",
-    "backToDashboard": "חזרה ללוח הבקרה",
     "loading": "טוען תנועות…",
-    "emptyMonth": "אין לך עדיין תנועות בחודש זה.",
-    "emptyFiltered": "לא נמצאו תנועות התואמות לסינון.",
-    "uncategorized": "ללא קטגוריה",
-    "summary": {
-      "count_one": "סה״כ: {{total}} עבור תנועה אחת",
-      "count_other": "סה״כ: {{total}} עבור {{count}} תנועות"
+    "emptyMonth": "אין לך עדיין תנועות החודש.",
+    "emptyFiltered": "לא נמצאו תנועות התואמות את הסינון.",
+    "total_one": "סה\"כ: {{amount}} בסך {{count}} תנועה",
+    "total_other": "סה\"כ: {{amount}} בסך {{count}} תנועות",
+    "searchLabel": "חיפוש",
+    "searchPlaceholder": "חיפוש לפי תיאור…",
+    "categoryLabel": "קטגוריה",
+    "allCategories": "כל הקטגוריות",
+    "uncategorized": "ללא שיוך",
+    "fromLabel": "מתאריך",
+    "toLabel": "עד תאריך",
+    "prevMonth": "החודש הקודם",
+    "nextMonth": "החודש הבא",
+    "dateHeader": "תאריך",
+    "descriptionHeader": "תיאור",
+    "categoryHeader": "קטגוריה",
+    "amountHeader": "סכום"
+  },
+  "quickEntry": {
+    "openButton": "רישום מהיר",
+    "modalTitle": "רישום מהיר",
+    "input": {
+      "label": "על מה הוצאת?",
+      "placeholder": "לדוגמה: קפה ומאפה ברמת גן, 34 שקלים",
+      "charCount": "{{count}}/{{max}}",
+      "submit": "ניתוח"
     },
-    "table": {
-      "date": "תאריך",
-      "description": "תיאור",
-      "category": "קטגוריה",
-      "amount": "סכום"
+    "parsing": {
+      "title": "קורא את הרישום שלך…",
+      "body": "זה עשוי לקחת עד 15 שניות."
     },
-    "filters": {
-      "search": "חיפוש",
-      "searchPlaceholder": "חיפוש לפי תיאור…",
-      "category": "קטגוריה",
-      "allCategories": "כל הקטגוריות",
-      "uncategorized": "ללא קטגוריה",
-      "from": "מתאריך",
-      "to": "עד תאריך",
-      "prevMonth": "החודש הקודם",
-      "nextMonth": "החודש הבא"
+    "review": {
+      "title": "אישור לפני שמירה",
+      "amountLabel": "סכום",
+      "descriptionLabel": "תיאור",
+      "dateLabel": "תאריך",
+      "envelopeLabel": "מעטפה",
+      "envelopeNone": "לא הוצעה מעטפה — יש לבחור אחת",
+      "categoryBadge": "קטגוריה מוצעת: {{category}}",
+      "lowConfidenceWarning": "רמת ביטחון נמוכה — כדאי לבדוק את הפרטים.",
+      "noEnvelopeWarning": "לא הוצעה מעטפה. יש לבחור אחת לפני השמירה.",
+      "confirm": "שמירת תנועה",
+      "back": "עריכת הטקסט"
+    },
+    "error": {
+      "generic": "לא הצלחנו לקרוא את הרישום. אפשר לנסות שוב או לערוך את הטקסט.",
+      "validation": "יש להזין טקסט המתאר את ההוצאה.",
+      "retry": "ניסיון נוסף"
     }
   },
   "categories": {

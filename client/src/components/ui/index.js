@@ -7,3 +7,4 @@ export { Badge } from './Badge';
 export { Progress } from './Progress';
 export { Select } from './Select';
 export { DateInput } from './DateInput';
+export { Textarea } from './Textarea';

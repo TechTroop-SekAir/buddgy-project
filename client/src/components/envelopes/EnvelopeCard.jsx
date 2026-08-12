@@ -9,7 +9,7 @@ export function EnvelopeCard({ envelope, onDelete }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { color, label, percentUsed } = getEnvelopeStatus(envelope, t);
+  const { color, status, percentUsed } = getEnvelopeStatus(envelope);
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
@@ -26,11 +26,11 @@ export function EnvelopeCard({ envelope, onDelete }) {
       <div className="px-6 py-5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-text-primary">{envelope.name}</h3>
-          <Badge color={color}>{label}</Badge>
+          <Badge color={color}>{t(`envelopes.status.${status}`)}</Badge>
         </div>
         <Progress value={Math.min(percentUsed * 100, 100)} color={color} />
         <p className="text-sm text-text-secondary">
-          {t('envelopes.card.spentOf', {
+          {t('envelopes.spentOf', {
             spent: formatShekels(envelope.spent_agorot),
             budget: formatShekels(envelope.monthly_budget_agorot),
           })}
@@ -46,9 +46,9 @@ export function EnvelopeCard({ envelope, onDelete }) {
         </Button>
       </div>
 
-      <Modal opened={confirmOpen} onClose={() => setConfirmOpen(false)} title={t('envelopes.card.deleteConfirmTitle')}>
+      <Modal opened={confirmOpen} onClose={() => setConfirmOpen(false)} title={t('envelopes.deleteConfirmTitle')}>
         <p className="text-sm text-text-secondary mb-6">
-          {t('envelopes.card.deleteConfirmBody', { name: envelope.name })}
+          {t('envelopes.deleteConfirmBody', { name: envelope.name })}
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" color="gray" onClick={() => setConfirmOpen(false)} disabled={isDeleting}>

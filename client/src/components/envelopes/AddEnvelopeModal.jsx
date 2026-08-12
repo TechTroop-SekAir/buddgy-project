@@ -15,8 +15,8 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
   const form = useForm({
     initialValues: { name: '', budgetShekels: '' },
     validate: {
-      name: (value) => (value.trim().length > 0 ? null : t('envelopes.modal.validation.name')),
-      budgetShekels: (value) => (Number(value) > 0 ? null : t('envelopes.modal.validation.budget')),
+      name: (value) => (value.trim().length > 0 ? null : t('addEnvelopeModal.nameRequired')),
+      budgetShekels: (value) => (Number(value) > 0 ? null : t('addEnvelopeModal.budgetInvalid')),
     },
   });
 
@@ -44,11 +44,11 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
   };
 
   return (
-    <Modal opened={opened} onClose={handleClose} title={t('envelopes.modal.title')}>
+    <Modal opened={opened} onClose={handleClose} title={t('addEnvelopeModal.title')}>
       <form onSubmit={form.onSubmit(handleSubmit)} className="flex flex-col gap-4">
         <div className="flex gap-2">
           {SUGGESTED_CATEGORY_KEYS.map((key) => {
-            const label = t(`envelopes.modal.suggested.${key}`);
+            const label = t(`addEnvelopeModal.suggestedCategories.${key}`);
             return (
               <Button
                 key={key}
@@ -64,15 +64,15 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
           })}
         </div>
         <TextInput
-          label={t('envelopes.modal.nameLabel')}
-          placeholder={t('envelopes.modal.namePlaceholder')}
+          label={t('addEnvelopeModal.nameLabel')}
+          placeholder={t('addEnvelopeModal.namePlaceholder')}
           required
           {...form.getInputProps('name')}
         />
         <NumberInput
-          label={t('envelopes.modal.budgetLabel')}
-          placeholder={t('envelopes.modal.budgetPlaceholder')}
-          leftSection={t('envelopes.modal.currencySymbol')}
+          label={t('addEnvelopeModal.budgetLabel')}
+          placeholder="0"
+          leftSection="₪"
           min={0}
           required
           {...form.getInputProps('budgetShekels')}
@@ -87,7 +87,7 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
             {t('common.cancel')}
           </Button>
           <Button type="submit" variant="filled" color="accent" loading={isSubmitting}>
-            {t('envelopes.modal.submit')}
+            {t('addEnvelopeModal.submit')}
           </Button>
         </div>
       </form>

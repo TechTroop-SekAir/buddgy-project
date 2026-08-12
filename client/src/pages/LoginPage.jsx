@@ -18,8 +18,8 @@ export function LoginPage() {
     initialValues: { email: '', password: '' },
     validateInputOnBlur: true,
     validate: {
-      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : t('auth.login.validation.email')),
-      password: (value) => (value.length > 0 ? null : t('auth.login.validation.password')),
+      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : t('auth.validation.emailInvalid')),
+      password: (value) => (value.length > 0 ? null : t('auth.validation.passwordRequired')),
     },
   });
 
@@ -44,13 +44,13 @@ export function LoginPage() {
           <h1 className="text-3xl font-semibold tracking-tight text-text-primary mb-7">{t('auth.login.title')}</h1>
           <form onSubmit={form.onSubmit(handleSubmit)} className="flex flex-col gap-4">
             <TextInput
-              label={t('auth.login.emailLabel')}
-              placeholder={t('auth.login.emailPlaceholder')}
+              label={t('auth.emailLabel')}
+              placeholder={t('auth.emailPlaceholder')}
               required
               {...form.getInputProps('email')}
             />
             <TextInput
-              label={t('auth.login.passwordLabel')}
+              label={t('auth.passwordLabel')}
               type="password"
               placeholder={t('auth.login.passwordPlaceholder')}
               required

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button, DateInput, Select, TextInput } from '../ui';
 import { getMonthBounds, getMonthLabel } from '../../utils/date';
+import { useLocale } from '../../context/LocaleContext';
 
 export const UNASSIGNED_VALUE = 'unassigned';
 
@@ -18,10 +19,16 @@ export function TransactionFilters({
   onDateToChange,
 }) {
   const { t } = useTranslation();
+  const { direction } = useLocale();
+  // Chevrons are directional glyphs, not text — "previous" must point toward
+  // the start of reading order, which flips with RTL, so pick the glyph
+  // rather than translate it.
+  const prevGlyph = direction === 'rtl' ? '→' : '←';
+  const nextGlyph = direction === 'rtl' ? '←' : '→';
   const { start, end } = getMonthBounds(month);
   const categoryOptions = [
-    { value: '', label: t('transactions.filters.allCategories') },
-    { value: UNASSIGNED_VALUE, label: t('transactions.filters.uncategorized') },
+    { value: '', label: t('transactions.allCategories') },
+    { value: UNASSIGNED_VALUE, label: t('transactions.uncategorized') },
     ...envelopeOptions,
   ];
 
@@ -34,10 +41,10 @@ export function TransactionFilters({
           color="gray"
           size="xs"
           className="px-2 py-1 text-text-secondary hover:text-text-primary"
-          onClick={() => onMonthChange(1)}
-          aria-label={t('transactions.filters.nextMonth')}
+          onClick={() => onMonthChange(-1)}
+          aria-label={t('transactions.prevMonth')}
         >
-          →
+          {prevGlyph}
         </Button>
         <p className="text-lg font-semibold text-text-primary min-w-[10rem] text-center">
           {getMonthLabel(month)}
@@ -48,29 +55,29 @@ export function TransactionFilters({
           color="gray"
           size="xs"
           className="px-2 py-1 text-text-secondary hover:text-text-primary"
-          onClick={() => onMonthChange(-1)}
-          aria-label={t('transactions.filters.prevMonth')}
+          onClick={() => onMonthChange(1)}
+          aria-label={t('transactions.nextMonth')}
         >
-          ←
+          {nextGlyph}
         </Button>
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
         <TextInput
-          label={t('transactions.filters.search')}
-          placeholder={t('transactions.filters.searchPlaceholder')}
+          label={t('transactions.searchLabel')}
+          placeholder={t('transactions.searchPlaceholder')}
           value={search}
           onChange={(e) => onSearchChange(e.currentTarget.value)}
         />
         <Select
-          label={t('transactions.filters.category')}
+          label={t('transactions.categoryLabel')}
           data={categoryOptions}
           value={envelopeId}
           onChange={(value) => onEnvelopeChange(value ?? '')}
           clearable
         />
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-text-primary">{t('transactions.filters.from')}</span>
+          <span className="text-sm font-medium text-text-primary">{t('transactions.fromLabel')}</span>
           <DateInput
             className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
             min={start}
@@ -80,7 +87,7 @@ export function TransactionFilters({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-text-primary">{t('transactions.filters.to')}</span>
+          <span className="text-sm font-medium text-text-primary">{t('transactions.toLabel')}</span>
           <DateInput
             className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
             min={dateFrom || start}

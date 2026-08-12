@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import transactionService from '../services/transactionService';
 import envelopeService from '../services/envelopeService';
@@ -62,9 +61,9 @@ export function TransactionsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-text-primary">{t('transactions.title')}</h1>
-        <Button component={Link} to="/dashboard" variant="subtle" color="gray" size="sm">
-          {t('transactions.backToDashboard')}
-        </Button>
+        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
+          {t('nav.backToDashboard')}
+        </Link>
       </div>
 
       <div className="mt-6">
@@ -96,16 +95,19 @@ export function TransactionsPage() {
       {!isLoading && filteredTransactions.length > 0 && (
         <>
           <p className="text-sm text-text-secondary mt-6">
-            {t('transactions.summary.count', { count: filteredTransactions.length, total: formatShekels(total) })}
+            {t('transactions.total', {
+              count: filteredTransactions.length,
+              amount: formatShekels(total),
+            })}
           </p>
 
           <table className="w-full mt-3">
             <thead>
               <tr className="border-b border-border-card text-start text-xs uppercase text-text-secondary">
-                <th className="py-2 pe-4 font-medium">{t('transactions.table.date')}</th>
-                <th className="py-2 pe-4 font-medium">{t('transactions.table.description')}</th>
-                <th className="py-2 pe-4 font-medium">{t('transactions.table.category')}</th>
-                <th className="py-2 pe-4 font-medium text-end">{t('transactions.table.amount')}</th>
+                <th className="py-2 pe-4 font-medium">{t('transactions.dateHeader')}</th>
+                <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
+                <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
+                <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
               </tr>
             </thead>
             <tbody>

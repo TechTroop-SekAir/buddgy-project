@@ -1,0 +1,205 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { Badge, Button, Modal, NumberInput, Select, Textarea, TextInput } from '../ui';
+import { useAuth } from '../../context/AuthContext';
+import envelopeService from '../../services/envelopeService';
+import transactionService from '../../services/transactionService';
+import { agorotToShekels, shekelsToAgorot } from '../../utils/money';
+import { getCurrentMonth } from '../../utils/month';
+
+const MAX_TEXT_LENGTH = 500;
+const LOW_CONFIDENCE_THRESHOLD = 0.6;
+
+const STEP = { INPUT: 'input', PARSING: 'parsing', REVIEW: 'review' };
+
+// Modal-owned three-step flow (input → parsing → review/confirm) launched
+// from DashboardPage, matching AddEnvelopeModal.jsx's local-state pattern.
+// The parse step never saves anything on its own — root CLAUDE.md § External
+// Integrations: "never auto-save an AI-parsed transaction."
+export function QuickEntryModal({ opened, onClose, onConfirm }) {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const month = getCurrentMonth();
+
+  const [step, setStep] = useState(STEP.INPUT);
+  const [text, setText] = useState('');
+  const [parseError, setParseError] = useState('');
+  const [review, setReview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const { data: envelopes = [] } = useQuery({
+    queryKey: ['envelopes', user.id, month],
+    queryFn: () => envelopeService.list(user.id, month),
+    enabled: opened,
+  });
+  const envelopeOptions = envelopes.map((envelope) => ({ value: String(envelope.id), label: envelope.name }));
+
+  const reset = () => {
+    setStep(STEP.INPUT);
+    setText('');
+    setParseError('');
+    setReview(null);
+    setSubmitError('');
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
+  const handleParse = async () => {
+    setParseError('');
+    setStep(STEP.PARSING);
+    try {
+      const result = await transactionService.parse(text.trim(), user.id);
+      setReview({
+        amountShekels: String(agorotToShekels(result.amount_agorot)),
+        description: result.description,
+        transactionDate: result.transaction_date,
+        envelopeId: result.suggested_envelope_id != null ? String(result.suggested_envelope_id) : '',
+        category: result.category,
+        confidence: result.confidence,
+      });
+      setStep(STEP.REVIEW);
+    } catch (err) {
+      setParseError(err.message === 'unprocessable: ai parse failed' ? t('quickEntry.error.generic') : err.message);
+      setStep(STEP.INPUT);
+    }
+  };
+
+  const handleConfirm = async () => {
+    setSubmitError('');
+    setIsSubmitting(true);
+    try {
+      await onConfirm({
+        envelope_id: review.envelopeId ? Number(review.envelopeId) : null,
+        amount_agorot: shekelsToAgorot(Number(review.amountShekels)),
+        description: review.description.trim(),
+        transaction_date: review.transactionDate,
+      });
+      reset();
+      onClose();
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isLowConfidence = review && review.confidence < LOW_CONFIDENCE_THRESHOLD;
+  const hasNoEnvelope = review && !review.envelopeId;
+
+  return (
+    <Modal opened={opened} onClose={handleClose} title={t('quickEntry.modalTitle')}>
+      {step === STEP.INPUT && (
+        <div className="flex flex-col gap-4">
+          <Textarea
+            label={t('quickEntry.input.label')}
+            placeholder={t('quickEntry.input.placeholder')}
+            autosize
+            minRows={3}
+            maxLength={MAX_TEXT_LENGTH}
+            value={text}
+            onChange={(e) => setText(e.currentTarget.value)}
+          />
+          <p className="text-xs text-text-secondary text-end">
+            {t('quickEntry.input.charCount', { count: text.length, max: MAX_TEXT_LENGTH })}
+          </p>
+          {parseError && (
+            <p className="text-sm text-form-error" role="alert">
+              {parseError}
+            </p>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" color="gray" onClick={handleClose}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="filled"
+              color="accent"
+              disabled={!text.trim()}
+              onClick={handleParse}
+            >
+              {t('quickEntry.input.submit')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === STEP.PARSING && (
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <p className="text-base font-medium text-text-primary">{t('quickEntry.parsing.title')}</p>
+          <p className="text-sm text-text-secondary">{t('quickEntry.parsing.body')}</p>
+        </div>
+      )}
+
+      {step === STEP.REVIEW && review && (
+        <div className="flex flex-col gap-4">
+          <p className="text-base font-medium text-text-primary">{t('quickEntry.review.title')}</p>
+          <Badge color="gray" className="self-start">
+            {t('quickEntry.review.categoryBadge', { category: review.category })}
+          </Badge>
+
+          {isLowConfidence && (
+            <p className="text-sm text-status-warning" role="alert">
+              {t('quickEntry.review.lowConfidenceWarning')}
+            </p>
+          )}
+
+          <NumberInput
+            label={t('quickEntry.review.amountLabel')}
+            leftSection="₪"
+            min={0}
+            value={review.amountShekels}
+            onChange={(value) => setReview((prev) => ({ ...prev, amountShekels: String(value) }))}
+          />
+          <TextInput
+            label={t('quickEntry.review.descriptionLabel')}
+            value={review.description}
+            onChange={(e) => setReview((prev) => ({ ...prev, description: e.currentTarget.value }))}
+          />
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-text-primary">{t('quickEntry.review.dateLabel')}</span>
+            <input
+              type="date"
+              className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
+              value={review.transactionDate}
+              onChange={(e) => setReview((prev) => ({ ...prev, transactionDate: e.target.value }))}
+            />
+          </label>
+          <Select
+            label={t('quickEntry.review.envelopeLabel')}
+            placeholder={t('quickEntry.review.envelopeNone')}
+            data={envelopeOptions}
+            value={review.envelopeId || null}
+            onChange={(value) => setReview((prev) => ({ ...prev, envelopeId: value ?? '' }))}
+            clearable
+          />
+          {hasNoEnvelope && (
+            <p className="text-sm text-status-warning" role="alert">
+              {t('quickEntry.review.noEnvelopeWarning')}
+            </p>
+          )}
+
+          {submitError && (
+            <p className="text-sm text-form-error" role="alert">
+              {submitError}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-3 mt-2">
+            <Button type="button" variant="outline" color="gray" onClick={() => setStep(STEP.INPUT)}>
+              {t('quickEntry.review.back')}
+            </Button>
+            <Button type="button" variant="filled" color="accent" loading={isSubmitting} onClick={handleConfirm}>
+              {t('quickEntry.review.confirm')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}

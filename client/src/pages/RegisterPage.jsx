@@ -18,10 +18,10 @@ export function RegisterPage() {
     initialValues: { email: '', password: '', confirmPassword: '' },
     validateInputOnBlur: true,
     validate: {
-      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : t('auth.register.validation.email')),
-      password: (value) => (value.length >= 8 ? null : t('auth.register.validation.password')),
+      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : t('auth.validation.emailInvalid')),
+      password: (value) => (value.length >= 8 ? null : t('auth.validation.passwordMinLength')),
       confirmPassword: (value, values) =>
-        value === values.password ? null : t('auth.register.validation.confirmPassword'),
+        value === values.password ? null : t('auth.validation.passwordsMismatch'),
     },
   });
 
@@ -46,16 +46,18 @@ export function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-bg-page px-8 py-9">
       <Card padding={0} className="w-full max-w-md bg-bg-surface border border-border-card rounded-lg">
         <div className="px-6 py-5">
-          <h1 className="text-3xl font-semibold tracking-tight text-text-primary mb-7">{t('auth.register.title')}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-text-primary mb-7">
+            {t('auth.register.title')}
+          </h1>
           <form onSubmit={form.onSubmit(handleSubmit)} className="flex flex-col gap-4">
             <TextInput
-              label={t('auth.register.emailLabel')}
-              placeholder={t('auth.register.emailPlaceholder')}
+              label={t('auth.emailLabel')}
+              placeholder={t('auth.emailPlaceholder')}
               required
               {...form.getInputProps('email')}
             />
             <TextInput
-              label={t('auth.register.passwordLabel')}
+              label={t('auth.passwordLabel')}
               type="password"
               placeholder={t('auth.register.passwordPlaceholder')}
               required
