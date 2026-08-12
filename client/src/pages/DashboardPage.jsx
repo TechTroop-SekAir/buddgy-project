@@ -1,8 +1,34 @@
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../components/ui';
+import { AddEnvelopeModal } from '../components/envelopes/AddEnvelopeModal';
+import { EnvelopeCard } from '../components/envelopes/EnvelopeCard';
+import { SummaryBar } from '../components/envelopes/SummaryBar';
 import { useAuth } from '../context/AuthContext';
+import envelopeService from '../services/envelopeService';
+import { getCurrentMonth } from '../utils/month';
 
 export function DashboardPage() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const queryClient = useQueryClient();
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const month = getCurrentMonth();
+  const queryKey = ['envelopes', user.id, month];
+
+  const { data: envelopes = [], isLoading } = useQuery({
+    queryKey,
+    queryFn: () => envelopeService.list(user.id, month),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (payload) => envelopeService.create(user.id, { ...payload, month }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => envelopeService.remove(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
 
   return (
     <div className="p-8">
@@ -12,8 +38,40 @@ export function DashboardPage() {
           Log out
         </Button>
       </div>
-      <p className="text-text-secondary">Placeholder for A-05.</p>
-      <Button mt="md">Add Envelope</Button>
+      <Button mt="md" variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
+        Add Envelope
+      </Button>
+
+      {isLoading && <p className="text-text-secondary mt-6">Loading envelopes…</p>}
+
+      {!isLoading && envelopes.length > 0 && (
+        <div className="mt-6">
+          <SummaryBar envelopes={envelopes} />
+        </div>
+      )}
+
+      {!isLoading && envelopes.length === 0 && (
+        <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
+          <p className="text-text-secondary">You don&apos;t have any envelopes yet this month.</p>
+          <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
+            Add your first envelope
+          </Button>
+        </div>
+      )}
+
+      {!isLoading && envelopes.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          {envelopes.map((envelope) => (
+            <EnvelopeCard key={envelope.id} envelope={envelope} onDelete={(id) => deleteMutation.mutateAsync(id)} />
+          ))}
+        </div>
+      )}
+
+      <AddEnvelopeModal
+        opened={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        onSubmit={(payload) => createMutation.mutateAsync(payload)}
+      />
     </div>
   );
 }

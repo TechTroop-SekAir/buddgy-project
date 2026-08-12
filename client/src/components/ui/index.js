@@ -3,3 +3,5 @@ export { TextInput } from './TextInput';
 export { NumberInput } from './NumberInput';
 export { Card } from './Card';
 export { Modal } from './Modal';
+export { Badge } from './Badge';
+export { Progress } from './Progress';
