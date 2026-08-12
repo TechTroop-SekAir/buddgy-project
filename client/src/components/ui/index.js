@@ -5,3 +5,4 @@ export { Card } from './Card';
 export { Modal } from './Modal';
 export { Badge } from './Badge';
 export { Progress } from './Progress';
+export { Select } from './Select';
