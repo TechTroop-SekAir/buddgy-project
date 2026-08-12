@@ -9,10 +9,7 @@ const base = {
 };
 
 module.exports = {
-  development: {
-    dialect: 'sqlite',
-    storage: './dev.db',
-  },
+  development: { ...base },
   test: { ...base },
   production: {
     ...base,

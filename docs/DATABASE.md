@@ -22,7 +22,7 @@ Related specs: [`API.md`](./API.md) (what reads/writes these tables) · [`SECURI
 ## Conventions
 
 - Database: **PostgreSQL**, accessed via Sequelize. See `CLAUDE.md` § Database Rules for the non-negotiables (migrations are the source of truth, transactions for multi-step writes, no `SELECT *`).
-- **Temporary dev shim:** `server/config/config.js` currently points the `development` env at local SQLite (`./dev.db`) instead of `DATABASE_URL`, and the `users`/`csv_imports` migrations were adjusted to drop Postgres-only syntax (`JSONB` → `TEXT`, `now()` → `CURRENT_TIMESTAMP`) so they run under both engines. This is a stopgap for local iteration without a running Postgres instance — production and `test` configs are untouched. Revert `config.js` to `DATABASE_URL`-based Postgres and restore `JSONB`/`now()` before this is considered done; don't build features that depend on SQLite-only behavior.
+- **Local dev:** Managed automatically via the `./scripts/update-db.sh` script, which boots the `postgres:16` Docker container (matching CI) and handles migrations/seeding. See `README.md` § Getting started.
 - **All monetary amounts are stored as integers in agorot** (1 ILS = 100 agorot) — never floats. Every money column is suffixed `_agorot`. Conversion to/from shekels happens only at the API/UI boundary.
 - Table names: `snake_case`, plural. FKs: `<singular_table>_id`.
 - `created_at` uses `DEFAULT now()` where present; this schema has no `updated_at` yet — add one via migration if a table needs edit-history later.
@@ -129,4 +129,4 @@ Both are enforced at the DB level (`UNIQUE`), but the service layer must also ha
 - One migration per schema change, named `YYYYMMDD-<verb>-<what>` (e.g. `20260809-create-envelopes-table`).
 - Every migration has a complete `down`.
 - Foreign keys and the indexes above are added in the same migration as the table, not deferred.
-- Seeders (`server/seeders/`) provide demo data for local dev and for the Day 12 demo — see [`PLAN.md`](./PLAN.md).
+- Seeders (`server/seeders/`) provide demo data for local dev via `npm run db:seed:dev` and for the Day 12 demo — see [`PLAN.md`](./PLAN.md).
