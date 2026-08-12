@@ -18,6 +18,9 @@ export const theme = createTheme({
     // Mantine wants a 10-shade array; a flat single-token fill is enough
     // for Day 1 — refine with a real shade scale as part of ticket A-01.
     accent: Array(10).fill(readToken('--accent') || '#3d6bf0'),
+    'status-ok': Array(10).fill(readToken('--status-ok') || '#2f9e58'),
+    'status-warning': Array(10).fill(readToken('--status-warning') || '#d98c1f'),
+    'status-danger': Array(10).fill(readToken('--status-danger') || '#d9483a'),
   },
   fontFamily: 'system-ui, -apple-system, sans-serif',
 });
