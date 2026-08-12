@@ -1,8 +1,9 @@
 // Mirrors money.js/month.js — small pure helpers, no external date library.
+import { getIntlLocale } from './locale';
 
 /** @param {string} dateString ISO date, e.g. '2026-08-08' */
 export function formatDate(dateString) {
-  return new Intl.DateTimeFormat('he-IL', {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -11,7 +12,7 @@ export function formatDate(dateString) {
 
 /** @param {string} month 'YYYY-MM-01' */
 export function getMonthLabel(month) {
-  return new Intl.DateTimeFormat('he-IL', { year: 'numeric', month: 'long' }).format(new Date(month));
+  return new Intl.DateTimeFormat(getIntlLocale(), { year: 'numeric', month: 'long' }).format(new Date(month));
 }
 
 /** @param {string} month 'YYYY-MM-01'; @param {number} delta months to shift, +/- */

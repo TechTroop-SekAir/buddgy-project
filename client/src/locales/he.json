@@ -1,0 +1,140 @@
+{
+  "common": {
+    "logIn": "התחברות",
+    "createAccount": "יצירת חשבון",
+    "cancel": "ביטול",
+    "delete": "מחיקה",
+    "logOut": "התנתקות"
+  },
+  "landing": {
+    "appName": "Buddgy",
+    "tagline": "תקציב מעטפות חכם מבוסס AI, עם רישום מהיר, ייבוא קבצי CSV ותחזיות מסונכרנות ליומן."
+  },
+  "auth": {
+    "login": {
+      "title": "התחברות",
+      "emailLabel": "אימייל",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "סיסמה",
+      "passwordPlaceholder": "הסיסמה שלך",
+      "submit": "התחברות",
+      "noAccount": "אין לך חשבון?",
+      "registerLink": "הרשמה",
+      "validation": {
+        "email": "יש להזין כתובת אימייל תקינה",
+        "password": "נדרשת סיסמה"
+      }
+    },
+    "register": {
+      "title": "יצירת חשבון",
+      "emailLabel": "אימייל",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "סיסמה",
+      "passwordPlaceholder": "לפחות 8 תווים",
+      "confirmPasswordLabel": "אימות סיסמה",
+      "confirmPasswordPlaceholder": "הזינו שוב את הסיסמה",
+      "submit": "יצירת חשבון",
+      "haveAccount": "כבר יש לך חשבון?",
+      "loginLink": "התחברות",
+      "validation": {
+        "email": "יש להזין כתובת אימייל תקינה",
+        "password": "הסיסמה חייבת לכלול לפחות 8 תווים",
+        "confirmPassword": "הסיסמאות אינן תואמות"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "לוח בקרה של המעטפות",
+    "navTransactions": "תנועות",
+    "loading": "טוען מעטפות…",
+    "emptyTitle": "אין לך עדיין מעטפות בחודש זה.",
+    "addFirst": "הוספת המעטפה הראשונה שלך",
+    "addEnvelope": "הוספת מעטפה"
+  },
+  "envelopes": {
+    "modal": {
+      "title": "הוספת מעטפה",
+      "nameLabel": "שם",
+      "namePlaceholder": "לדוגמה: קניות",
+      "budgetLabel": "תקציב חודשי",
+      "budgetPlaceholder": "0",
+      "currencySymbol": "₪",
+      "submit": "הוספת מעטפה",
+      "suggested": {
+        "pets": "חיות מחמד",
+        "fitness": "כושר",
+        "gifts": "מתנות"
+      },
+      "validation": {
+        "name": "נדרש שם",
+        "budget": "התקציב חייב להיות גדול מ-0"
+      }
+    },
+    "card": {
+      "spentOf": "הוצאו {{spent}} מתוך {{budget}}",
+      "deleteConfirmTitle": "למחוק את המעטפה?",
+      "deleteConfirmBody": "פעולה זו תמחק את \"{{name}}\" לצמיתות. לא ניתן לשחזר פעולה זו."
+    },
+    "status": {
+      "overBudget": "חריגה מהתקציב",
+      "nearDepletion": "מתקרב לסיום",
+      "onTrack": "מסלול תקין"
+    }
+  },
+  "summaryBar": {
+    "totalBudget": "סה״כ תקציב",
+    "totalSpent": "סה״כ הוצאות",
+    "remaining": "יתרה"
+  },
+  "transactions": {
+    "title": "תנועות",
+    "backToDashboard": "חזרה ללוח הבקרה",
+    "loading": "טוען תנועות…",
+    "emptyMonth": "אין לך עדיין תנועות בחודש זה.",
+    "emptyFiltered": "לא נמצאו תנועות התואמות לסינון.",
+    "uncategorized": "ללא קטגוריה",
+    "summary": {
+      "count_one": "סה״כ: {{total}} עבור תנועה אחת",
+      "count_other": "סה״כ: {{total}} עבור {{count}} תנועות"
+    },
+    "table": {
+      "date": "תאריך",
+      "description": "תיאור",
+      "category": "קטגוריה",
+      "amount": "סכום"
+    },
+    "filters": {
+      "search": "חיפוש",
+      "searchPlaceholder": "חיפוש לפי תיאור…",
+      "category": "קטגוריה",
+      "allCategories": "כל הקטגוריות",
+      "uncategorized": "ללא קטגוריה",
+      "from": "מתאריך",
+      "to": "עד תאריך",
+      "prevMonth": "החודש הקודם",
+      "nextMonth": "החודש הבא"
+    }
+  },
+  "categories": {
+    "housing": "דיור",
+    "groceries": "מזון וקניות",
+    "utilities": "חשבונות וחשמל",
+    "transport": "תחבורה",
+    "healthcare": "בריאות",
+    "diningOut": "מסעדות",
+    "entertainment": "בידור",
+    "shopping": "קניות"
+  },
+  "errors": {
+    "unauthorized": "אימייל או סיסמה שגויים.",
+    "duplicate": "קיים כבר חשבון עם כתובת אימייל זו.",
+    "notFound": "הפריט לא נמצא.",
+    "generic": "משהו השתבש. נסו שוב.",
+    "validation": {
+      "email": "יש להזין כתובת אימייל תקינה",
+      "password": "נדרשת סיסמה",
+      "name": "נדרש שם",
+      "monthlyBudgetAgorot": "התקציב חייב להיות גדול מ-0"
+    }
+  }
+}

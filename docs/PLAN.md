@@ -12,6 +12,7 @@
 | [Ofek — Integrations + Deployment](#ofek--integrations--deployment) | His checklist, in order, with target days |
 | [Definition of Done](#definition-of-done) | Before any item gets checked off |
 | [Risks](#risks) | The likely ones, and what to do about them |
+| [Technical Debt](#technical-debt) | Known gaps intentionally deferred, and why |
 
 Related: [`PLAN-DETAILS.md`](./PLAN-DETAILS.md) has the day-by-day schedule, the demo script, and the requirement-traceability table — TA-facing detail you don't need day to day.
 
@@ -59,6 +60,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [ ] **A-16** Responsive pass across all pages — *Day 10*
 - [ ] **A-17** Empty/loading/error states audit — *Day 10*
 - [ ] **A-18** Client E2E tests (Playwright) — *Day 11, feature freeze day*
+- [x] **A-19** i18n & RTL infrastructure + retrofit existing pages — *Day 4*
 
 ## Matan — Server + DB
 
@@ -105,3 +107,9 @@ Before checking a box:
 | Railway/Postgres setup friction blocks everyone | C-01 starts Day 1, not deferred |
 | CSV encoding issues (Hebrew bank exports, BOM, `,` vs `;`) silently drop rows | Explicit encoding-detection tests in C-04's Definition of Done |
 | Scope creep past Day 11 | Freeze is non-negotiable — anything unfinished moves to [`OVERVIEW.md`](./OVERVIEW.md) § Extensions |
+
+## Technical Debt
+
+| Item | Notes |
+|---|---|
+| Mock transaction descriptions are English-only (`DEFAULT_TRANSACTIONS` in `mockTransactionService.js` — "Rent payment", "Electric bill", etc.) | Translate to Hebrew to match the rest of the now Hebrew-default UI (`A-19`) |

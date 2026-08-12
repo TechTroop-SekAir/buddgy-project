@@ -54,9 +54,8 @@ Everywhere else — pages, feature components — import from `components/ui` vi
 > `src/locales/`, and `index.html` is currently `<html lang="en">` with no `dir` attribute. All
 > four existing pages (`LandingPage`, `LoginPage`, `RegisterPage`, `DashboardPage`) hardcode
 > English strings today. The rules below are the target every *new* piece of UI must be written
-> against — retrofitting the four existing pages and standing up the locale provider is tracked as
-> a follow-up ticket (see `docs/PLAN.md`). Don't add more hardcoded strings while that ticket is
-> open.
+> against. Infra is now live (ticket `A-19`, `docs/PLAN.md`) — `react-i18next` is wired up,
+> `src/locales/he.json` backs every page, and `index.html` is `<html lang="he" dir="rtl">`.
 
 - **Zero hardcoded Hebrew or English strings in JSX.** Every user-facing string comes from the
   translation system via `t('key')` (e.g. `react-i18next`, backed by `src/locales/he.json` /

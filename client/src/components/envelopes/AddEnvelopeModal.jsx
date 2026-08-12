@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { useForm } from '@mantine/form';
+import { useTranslation } from 'react-i18next';
 import { Button, Modal, NumberInput, TextInput } from '../ui';
 import { shekelsToAgorot } from '../../utils/money';
+import { getErrorMessage } from '../../utils/errorMessages';
 
-const SUGGESTED_CATEGORIES = ['Pets', 'Fitness', 'Gifts'];
+const SUGGESTED_CATEGORY_KEYS = ['pets', 'fitness', 'gifts'];
 
 export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   const form = useForm({
     initialValues: { name: '', budgetShekels: '' },
     validate: {
-      name: (value) => (value.trim().length > 0 ? null : 'Name is required'),
-      budgetShekels: (value) => (Number(value) > 0 ? null : 'Budget must be greater than 0'),
+      name: (value) => (value.trim().length > 0 ? null : t('envelopes.modal.validation.name')),
+      budgetShekels: (value) => (Number(value) > 0 ? null : t('envelopes.modal.validation.budget')),
     },
   });
 
@@ -34,34 +37,42 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
       form.reset();
       onClose();
     } catch (err) {
-      setSubmitError(err.message);
+      setSubmitError(getErrorMessage(err.message, t));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal opened={opened} onClose={handleClose} title="Add envelope">
+    <Modal opened={opened} onClose={handleClose} title={t('envelopes.modal.title')}>
       <form onSubmit={form.onSubmit(handleSubmit)} className="flex flex-col gap-4">
         <div className="flex gap-2">
-          {SUGGESTED_CATEGORIES.map((category) => (
-            <Button
-              key={category}
-              type="button"
-              variant="outline"
-              color="gray"
-              size="xs"
-              onClick={() => form.setFieldValue('name', category)}
-            >
-              {category}
-            </Button>
-          ))}
+          {SUGGESTED_CATEGORY_KEYS.map((key) => {
+            const label = t(`envelopes.modal.suggested.${key}`);
+            return (
+              <Button
+                key={key}
+                type="button"
+                variant="outline"
+                color="gray"
+                size="xs"
+                onClick={() => form.setFieldValue('name', label)}
+              >
+                {label}
+              </Button>
+            );
+          })}
         </div>
-        <TextInput label="Name" placeholder="e.g. Groceries" required {...form.getInputProps('name')} />
+        <TextInput
+          label={t('envelopes.modal.nameLabel')}
+          placeholder={t('envelopes.modal.namePlaceholder')}
+          required
+          {...form.getInputProps('name')}
+        />
         <NumberInput
-          label="Monthly budget"
-          placeholder="0"
-          leftSection="₪"
+          label={t('envelopes.modal.budgetLabel')}
+          placeholder={t('envelopes.modal.budgetPlaceholder')}
+          leftSection={t('envelopes.modal.currencySymbol')}
           min={0}
           required
           {...form.getInputProps('budgetShekels')}
@@ -73,10 +84,10 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
         )}
         <div className="flex justify-end gap-3 mt-2">
           <Button type="button" variant="outline" color="gray" onClick={handleClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="filled" color="accent" loading={isSubmitting}>
-            Add Envelope
+            {t('envelopes.modal.submit')}
           </Button>
         </div>
       </form>

@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
+import { useTranslation } from 'react-i18next';
 import { Button, Card, TextInput } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import authService from '../services/authService';
+import { getErrorMessage } from '../utils/errorMessages';
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [submitError, setSubmitError] = useState('');
@@ -15,8 +18,8 @@ export function LoginPage() {
     initialValues: { email: '', password: '' },
     validateInputOnBlur: true,
     validate: {
-      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : 'Enter a valid email address'),
-      password: (value) => (value.length > 0 ? null : 'Password is required'),
+      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : t('auth.login.validation.email')),
+      password: (value) => (value.length > 0 ? null : t('auth.login.validation.password')),
     },
   });
 
@@ -28,7 +31,7 @@ export function LoginPage() {
       login({ token, user });
       navigate('/dashboard');
     } catch (err) {
-      setSubmitError(err.message === 'unauthorized' ? 'Incorrect email or password.' : err.message);
+      setSubmitError(getErrorMessage(err.message, t));
     } finally {
       setIsSubmitting(false);
     }
@@ -38,13 +41,18 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-bg-page px-8 py-9">
       <Card padding={0} className="w-full max-w-md bg-bg-surface border border-border-card rounded-lg">
         <div className="px-6 py-5">
-          <h1 className="text-3xl font-semibold tracking-tight text-text-primary mb-7">Log in</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-text-primary mb-7">{t('auth.login.title')}</h1>
           <form onSubmit={form.onSubmit(handleSubmit)} className="flex flex-col gap-4">
-            <TextInput label="Email" placeholder="you@example.com" required {...form.getInputProps('email')} />
             <TextInput
-              label="Password"
+              label={t('auth.login.emailLabel')}
+              placeholder={t('auth.login.emailPlaceholder')}
+              required
+              {...form.getInputProps('email')}
+            />
+            <TextInput
+              label={t('auth.login.passwordLabel')}
               type="password"
-              placeholder="Your password"
+              placeholder={t('auth.login.passwordPlaceholder')}
               required
               {...form.getInputProps('password')}
             />
@@ -54,13 +62,13 @@ export function LoginPage() {
               </p>
             )}
             <Button type="submit" variant="filled" color="accent" size="md" loading={isSubmitting} className="mt-6">
-              Log in
+              {t('auth.login.submit')}
             </Button>
           </form>
           <p className="text-base text-text-secondary mt-6">
-            Don&apos;t have an account?{' '}
+            {t('auth.login.noAccount')}{' '}
             <Link to="/register" className="text-accent font-medium">
-              Register
+              {t('auth.login.registerLink')}
             </Link>
           </p>
         </div>
