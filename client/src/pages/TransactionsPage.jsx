@@ -30,7 +30,10 @@ export function TransactionsPage() {
     queryFn: () => envelopeService.list(user.id, month),
   });
 
-  const envelopeOptions = envelopes.map((envelope) => ({ value: envelope.id, label: envelope.name }));
+  // Mantine's Select requires string option values (client/CLAUDE.md § Component
+  // Boundary components pass through Mantine as-is) — envelope.id is a number
+  // from the real API. Same conversion as QuickEntryModal.jsx / PlannedExpensesPage.jsx.
+  const envelopeOptions = envelopes.map((envelope) => ({ value: String(envelope.id), label: envelope.name }));
   const envelopeNameById = Object.fromEntries(envelopes.map((envelope) => [envelope.id, envelope.name]));
 
   const handleMonthChange = (delta) => {
@@ -45,7 +48,7 @@ export function TransactionsPage() {
       if (query && !transaction.description.toLowerCase().includes(query)) return false;
 
       if (envelopeId === UNASSIGNED_VALUE && transaction.envelope_id) return false;
-      if (envelopeId && envelopeId !== UNASSIGNED_VALUE && transaction.envelope_id !== envelopeId) return false;
+      if (envelopeId && envelopeId !== UNASSIGNED_VALUE && String(transaction.envelope_id) !== envelopeId) return false;
 
       if (dateFrom && transaction.transaction_date < dateFrom) return false;
       if (dateTo && transaction.transaction_date > dateTo) return false;
