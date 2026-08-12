@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import transactionService from '../services/transactionService';
 import envelopeService from '../services/envelopeService';
@@ -11,6 +12,7 @@ import { shiftMonth } from '../utils/date';
 import { formatShekels } from '../utils/money';
 
 export function TransactionsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [month, setMonth] = useState(getCurrentMonth());
   const [search, setSearch] = useState('');
@@ -57,9 +59,9 @@ export function TransactionsPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">Transactions</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t('transactions.title')}</h1>
         <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-          ← Dashboard
+          {t('nav.backToDashboard')}
         </Link>
       </div>
 
@@ -79,30 +81,32 @@ export function TransactionsPage() {
         />
       </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">Loading transactions…</p>}
+      {isLoading && <p className="text-text-secondary mt-6">{t('transactions.loading')}</p>}
 
       {!isLoading && transactions.length === 0 && (
-        <p className="text-text-secondary mt-16 text-center">You don&apos;t have any transactions yet this month.</p>
+        <p className="text-text-secondary mt-16 text-center">{t('transactions.emptyMonth')}</p>
       )}
 
       {!isLoading && transactions.length > 0 && filteredTransactions.length === 0 && (
-        <p className="text-text-secondary mt-16 text-center">No transactions match your filters.</p>
+        <p className="text-text-secondary mt-16 text-center">{t('transactions.emptyFiltered')}</p>
       )}
 
       {!isLoading && filteredTransactions.length > 0 && (
         <>
           <p className="text-sm text-text-secondary mt-6">
-            Total: <span className="font-semibold text-text-primary">{formatShekels(total)}</span> across{' '}
-            {filteredTransactions.length} transaction{filteredTransactions.length === 1 ? '' : 's'}
+            {t('transactions.total', {
+              count: filteredTransactions.length,
+              amount: formatShekels(total),
+            })}
           </p>
 
           <table className="w-full mt-3">
             <thead>
-              <tr className="border-b border-border-card text-left text-xs uppercase text-text-secondary">
-                <th className="py-2 pr-4 font-medium">Date</th>
-                <th className="py-2 pr-4 font-medium">Description</th>
-                <th className="py-2 pr-4 font-medium">Category</th>
-                <th className="py-2 pr-4 font-medium text-right">Amount</th>
+              <tr className="border-b border-border-card text-start text-xs uppercase text-text-secondary">
+                <th className="py-2 pe-4 font-medium">{t('transactions.dateHeader')}</th>
+                <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
+                <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
+                <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
               </tr>
             </thead>
             <tbody>
@@ -112,8 +116,8 @@ export function TransactionsPage() {
                   transaction={transaction}
                   categoryLabel={
                     transaction.envelope_id
-                      ? envelopeNameById[transaction.envelope_id] || 'Uncategorized'
-                      : 'Uncategorized'
+                      ? envelopeNameById[transaction.envelope_id] || t('transactions.uncategorized')
+                      : t('transactions.uncategorized')
                   }
                 />
               ))}

@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { Select, TextInput } from '../ui';
 import { getMonthBounds, getMonthLabel } from '../../utils/date';
+import { useLocale } from '../../context/LocaleContext';
 
 export const UNASSIGNED_VALUE = 'unassigned';
 
@@ -16,10 +18,17 @@ export function TransactionFilters({
   dateTo,
   onDateToChange,
 }) {
+  const { t } = useTranslation();
+  const { direction } = useLocale();
+  // Chevrons are directional glyphs, not text — "previous" must point toward
+  // the start of reading order, which flips with RTL, so pick the glyph
+  // rather than translate it.
+  const prevGlyph = direction === 'rtl' ? '→' : '←';
+  const nextGlyph = direction === 'rtl' ? '←' : '→';
   const { start, end } = getMonthBounds(month);
   const categoryOptions = [
-    { value: '', label: 'All categories' },
-    { value: UNASSIGNED_VALUE, label: 'Uncategorized' },
+    { value: '', label: t('transactions.allCategories') },
+    { value: UNASSIGNED_VALUE, label: t('transactions.uncategorized') },
     ...envelopeOptions,
   ];
 
@@ -30,9 +39,9 @@ export function TransactionFilters({
           type="button"
           className="px-2 py-1 text-text-secondary hover:text-text-primary"
           onClick={() => onMonthChange(-1)}
-          aria-label="Previous month"
+          aria-label={t('transactions.prevMonth')}
         >
-          ←
+          {prevGlyph}
         </button>
         <p className="text-lg font-semibold text-text-primary min-w-[10rem] text-center">
           {getMonthLabel(month)}
@@ -41,28 +50,28 @@ export function TransactionFilters({
           type="button"
           className="px-2 py-1 text-text-secondary hover:text-text-primary"
           onClick={() => onMonthChange(1)}
-          aria-label="Next month"
+          aria-label={t('transactions.nextMonth')}
         >
-          →
+          {nextGlyph}
         </button>
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
         <TextInput
-          label="Search"
-          placeholder="Search description…"
+          label={t('transactions.searchLabel')}
+          placeholder={t('transactions.searchPlaceholder')}
           value={search}
           onChange={(e) => onSearchChange(e.currentTarget.value)}
         />
         <Select
-          label="Category"
+          label={t('transactions.categoryLabel')}
           data={categoryOptions}
           value={envelopeId}
           onChange={(value) => onEnvelopeChange(value ?? '')}
           clearable
         />
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-text-primary">From</span>
+          <span className="text-sm font-medium text-text-primary">{t('transactions.fromLabel')}</span>
           <input
             type="date"
             className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
@@ -73,7 +82,7 @@ export function TransactionFilters({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-text-primary">To</span>
+          <span className="text-sm font-medium text-text-primary">{t('transactions.toLabel')}</span>
           <input
             type="date"
             className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"

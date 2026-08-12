@@ -50,17 +50,14 @@ Everywhere else — pages, feature components — import from `components/ui` vi
 
 ## i18n & RTL
 
-> **Status: infra not yet built.** There is no `react-i18next`/`i18next` dependency, no
-> `src/locales/`, and `index.html` is currently `<html lang="en">` with no `dir` attribute. All
-> four existing pages (`LandingPage`, `LoginPage`, `RegisterPage`, `DashboardPage`) hardcode
-> English strings today. The rules below are the target every *new* piece of UI must be written
-> against — retrofitting the four existing pages and standing up the locale provider is tracked as
-> a follow-up ticket (see `docs/PLAN.md`). Don't add more hardcoded strings while that ticket is
-> open.
+Infra is live: `react-i18next`/`i18next` init in `src/i18n.js`, resources in `src/locales/he.json`
+and `en.json`, direction/locale owned by `src/context/LocaleContext.jsx`, Mantine RTL wired via
+`DirectionProvider` in `src/App.jsx`. Every page and component under `src/` uses this — there is no
+remaining hardcoded-string debt to work around.
 
 - **Zero hardcoded Hebrew or English strings in JSX.** Every user-facing string comes from the
-  translation system via `t('key')` (e.g. `react-i18next`, backed by `src/locales/he.json` /
-  `en.json`).
+  translation system via `t('key')` (`react-i18next`, backed by `src/locales/he.json` /
+  `en.json`). Adding a string means adding the key to **both** locale files in the same PR.
 - Keys are semantic, not English text: `envelopes.empty.title`, not `t('No envelopes yet')`.
 - **Hebrew (`he`) is the default locale, with `dir="rtl"`.** `lang`/`dir` are set once, on
   `<html>`, driven by the locale provider — never per-component.

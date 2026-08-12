@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { useForm } from '@mantine/form';
+import { useTranslation } from 'react-i18next';
 import { Button, Modal, NumberInput, TextInput } from '../ui';
 import { shekelsToAgorot } from '../../utils/money';
 
-const SUGGESTED_CATEGORIES = ['Pets', 'Fitness', 'Gifts'];
+const SUGGESTED_CATEGORY_KEYS = ['pets', 'fitness', 'gifts'];
 
 export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   const form = useForm({
     initialValues: { name: '', budgetShekels: '' },
     validate: {
-      name: (value) => (value.trim().length > 0 ? null : 'Name is required'),
-      budgetShekels: (value) => (Number(value) > 0 ? null : 'Budget must be greater than 0'),
+      name: (value) => (value.trim().length > 0 ? null : t('addEnvelopeModal.nameRequired')),
+      budgetShekels: (value) => (Number(value) > 0 ? null : t('addEnvelopeModal.budgetInvalid')),
     },
   });
 
@@ -41,25 +43,33 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
   };
 
   return (
-    <Modal opened={opened} onClose={handleClose} title="Add envelope">
+    <Modal opened={opened} onClose={handleClose} title={t('addEnvelopeModal.title')}>
       <form onSubmit={form.onSubmit(handleSubmit)} className="flex flex-col gap-4">
         <div className="flex gap-2">
-          {SUGGESTED_CATEGORIES.map((category) => (
-            <Button
-              key={category}
-              type="button"
-              variant="outline"
-              color="gray"
-              size="xs"
-              onClick={() => form.setFieldValue('name', category)}
-            >
-              {category}
-            </Button>
-          ))}
+          {SUGGESTED_CATEGORY_KEYS.map((key) => {
+            const label = t(`addEnvelopeModal.suggestedCategories.${key}`);
+            return (
+              <Button
+                key={key}
+                type="button"
+                variant="outline"
+                color="gray"
+                size="xs"
+                onClick={() => form.setFieldValue('name', label)}
+              >
+                {label}
+              </Button>
+            );
+          })}
         </div>
-        <TextInput label="Name" placeholder="e.g. Groceries" required {...form.getInputProps('name')} />
+        <TextInput
+          label={t('addEnvelopeModal.nameLabel')}
+          placeholder={t('addEnvelopeModal.namePlaceholder')}
+          required
+          {...form.getInputProps('name')}
+        />
         <NumberInput
-          label="Monthly budget"
+          label={t('addEnvelopeModal.budgetLabel')}
           placeholder="0"
           leftSection="₪"
           min={0}
@@ -73,10 +83,10 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
         )}
         <div className="flex justify-end gap-3 mt-2">
           <Button type="button" variant="outline" color="gray" onClick={handleClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="filled" color="accent" loading={isSubmitting}>
-            Add Envelope
+            {t('addEnvelopeModal.submit')}
           </Button>
         </div>
       </form>

@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui';
 import { AddEnvelopeModal } from '../components/envelopes/AddEnvelopeModal';
 import { EnvelopeCard } from '../components/envelopes/EnvelopeCard';
 import { SummaryBar } from '../components/envelopes/SummaryBar';
+import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
 import { useAuth } from '../context/AuthContext';
 import envelopeService from '../services/envelopeService';
+import transactionService from '../services/transactionService';
 import { getCurrentMonth } from '../utils/month';
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
   const month = getCurrentMonth();
   const queryKey = ['envelopes', user.id, month];
 
@@ -31,24 +36,37 @@ export function DashboardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
+  const quickEntryMutation = useMutation({
+    mutationFn: (payload) => transactionService.create(user.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
+    },
+  });
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">Envelope Dashboard</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t('dashboard.title')}</h1>
         <div className="flex items-center gap-4">
           <Link to="/transactions" className="text-sm text-text-secondary hover:text-text-primary">
-            Transactions
+            {t('nav.transactions')}
           </Link>
           <Button variant="outline" color="gray" size="md" onClick={logout}>
-            Log out
+            {t('nav.logout')}
           </Button>
         </div>
       </div>
-      <Button mt="md" variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-        Add Envelope
-      </Button>
+      <div className="flex gap-3 mt-4">
+        <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
+          {t('dashboard.addEnvelope')}
+        </Button>
+        <Button variant="outline" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
+          {t('dashboard.quickAdd')}
+        </Button>
+      </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">Loading envelopes…</p>}
+      {isLoading && <p className="text-text-secondary mt-6">{t('dashboard.loading')}</p>}
 
       {!isLoading && envelopes.length > 0 && (
         <div className="mt-6">
@@ -58,9 +76,9 @@ export function DashboardPage() {
 
       {!isLoading && envelopes.length === 0 && (
         <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
-          <p className="text-text-secondary">You don&apos;t have any envelopes yet this month.</p>
+          <p className="text-text-secondary">{t('dashboard.empty')}</p>
           <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-            Add your first envelope
+            {t('dashboard.addFirstEnvelope')}
           </Button>
         </div>
       )}
@@ -77,6 +95,12 @@ export function DashboardPage() {
         opened={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSubmit={(payload) => createMutation.mutateAsync(payload)}
+      />
+
+      <QuickEntryModal
+        opened={isQuickEntryOpen}
+        onClose={() => setIsQuickEntryOpen(false)}
+        onConfirm={(payload) => quickEntryMutation.mutateAsync(payload)}
       />
     </div>
   );

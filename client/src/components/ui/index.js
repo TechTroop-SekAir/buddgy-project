@@ -6,3 +6,4 @@ export { Modal } from './Modal';
 export { Badge } from './Badge';
 export { Progress } from './Progress';
 export { Select } from './Select';
+export { Textarea } from './Textarea';
