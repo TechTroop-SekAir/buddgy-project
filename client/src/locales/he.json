@@ -135,5 +135,88 @@
       "validation": "יש להזין טקסט המתאר את ההוצאה.",
       "retry": "ניסיון נוסף"
     }
+  },
+  "csvImport": {
+    "title": "ייבוא CSV",
+    "select": {
+      "label": "בחירת קובץ CSV",
+      "hint": "יש לייצא קובץ היסטוריית תנועות מהבנק שלך ולהעלות אותו כאן.",
+      "submit": "העלאה"
+    },
+    "uploading": {
+      "title": "קורא את הקובץ שלך…",
+      "body": "זה עשוי לקחת עד 15 שניות בזמן זיהוי העמודות."
+    },
+    "mapping": {
+      "title": "התאמת עמודות",
+      "dateLabel": "עמודת תאריך",
+      "amountLabel": "עמודת סכום",
+      "descriptionLabel": "עמודת תיאור",
+      "descriptionNone": "ללא",
+      "notDetected": "לא זוהה — יש לבחור ידנית",
+      "previewTitle": "תצוגה מקדימה",
+      "dateHeader": "תאריך",
+      "amountHeader": "סכום",
+      "descriptionHeader": "תיאור",
+      "back": "בחירת קובץ אחר",
+      "confirm": "ייבוא"
+    },
+    "done": {
+      "title": "הייבוא הושלם",
+      "summary_one": "יובאה תנועה אחת, {{duplicatesSkipped}} כפילות דולגה",
+      "summary_other": "יובאו {{imported}} תנועות, {{duplicatesSkipped}} כפילויות דולגו",
+      "unassignedNote": "התנועות שיובאו עדיין לא משויכות למעטפה — ניתן לשייך אותן מעמוד התנועות.",
+      "viewTransactions": "צפייה בתנועות",
+      "importAnother": "ייבוא קובץ נוסף"
+    },
+    "error": {
+      "fileTooLarge": "הקובץ גדול מדי (מקסימום 10MB).",
+      "notCsv": "יש להעלות קובץ מסוג CSV.",
+      "unparseable": "לא הצלחנו לקרוא את הקובץ הזה כ-CSV.",
+      "noRows": "לקובץ הזה אין שורות.",
+      "unparseableAmount": "לא ניתן היה לקרוא סכום אחד או יותר — יש לבדוק את עמודת הסכום.",
+      "unparseableDate": "לא ניתן היה לקרוא תאריך אחד או יותר — יש לבדוק את עמודת התאריך.",
+      "mapping": "יש לבחור גם עמודת תאריך וגם עמודת סכום.",
+      "aiFailed": "לא הצלחנו לזהות את העמודות באופן אוטומטי. יש לבחור אותן ידנית למטה.",
+      "storage": "משהו השתבש בשמירת הקובץ. יש לנסות שוב.",
+      "generic": "משהו השתבש. יש לנסות שוב."
+    }
+  },
+  "calendar": {
+    "title": "יומן Google",
+    "notConnected": "יש לחבר את יומן Google שלך כדי לייבא הוצאות מתוכננות באופן אוטומטי.",
+    "connect": "חיבור יומן Google",
+    "connected": "מחובר",
+    "connectedBody": "באדג'י קורא אירועים קרובים עם סכום בכותרת והופך אותם להוצאות מתוכננות.",
+    "sync": "סנכרון עכשיו",
+    "syncing": "מסנכרן…",
+    "syncResult_one": "נמצאה הוצאה מתוכננת חדשה אחת.",
+    "syncResult_other": "נמצאו {{count}} הוצאות מתוכננות חדשות.",
+    "syncResultZero": "לא נמצאו אירועים חדשים. רק אירועים עם סכום בכותרת (למשל \"שכירות ₪4500\") נקלטים.",
+    "disconnect": "ניתוק",
+    "disconnectConfirmTitle": "לנתק את יומן Google?",
+    "disconnectConfirmBody": "באדג'י יפסיק לסנכרן אירועים חדשים. הוצאות מתוכננות שכבר יובאו יישארו.",
+    "callbackSuccess": "יומן Google חובר בהצלחה.",
+    "callbackError": "משהו השתבש בחיבור יומן Google. יש לנסות שוב.",
+    "error": {
+      "notConnected": "יומן Google עדיין לא מחובר.",
+      "revoked": "הגישה ליומן Google בוטלה. יש לחבר מחדש כדי להמשיך לסנכרן.",
+      "rateLimited": "יומן Google מוגבל כרגע בקצב. יש לנסות שוב בקרוב.",
+      "unavailable": "יומן Google אינו זמין כרגע. יש לנסות שוב בקרוב.",
+      "generic": "משהו השתבש. יש לנסות שוב."
+    }
+  },
+  "plannedExpenses": {
+    "title": "הוצאות מתוכננות",
+    "loading": "טוען הוצאות מתוכננות…",
+    "empty": "אין עדיין הוצאות מתוכננות — יש לחבר ולסנכרן את היומן מהגדרות.",
+    "goToSettings": "מעבר להגדרות",
+    "dateHeader": "תאריך יעד",
+    "titleHeader": "כותרת",
+    "amountHeader": "סכום",
+    "envelopeHeader": "מעטפה",
+    "confirmedHeader": "אושר",
+    "envelopeNone": "ללא שיוך",
+    "confirm": "אישור"
   }
 }

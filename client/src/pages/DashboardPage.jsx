@@ -52,6 +52,15 @@ export function DashboardPage() {
           <Link to="/transactions" className="text-sm text-text-secondary hover:text-text-primary">
             {t('nav.transactions')}
           </Link>
+          <Link to="/imports" className="text-sm text-text-secondary hover:text-text-primary">
+            {t('csvImport.title')}
+          </Link>
+          <Link to="/planned-expenses" className="text-sm text-text-secondary hover:text-text-primary">
+            {t('plannedExpenses.title')}
+          </Link>
+          <Link to="/settings" className="text-sm text-text-secondary hover:text-text-primary">
+            {t('calendar.title')}
+          </Link>
           <Button variant="outline" color="gray" size="md" onClick={logout}>
             {t('nav.logout')}
           </Button>

@@ -6,6 +6,9 @@ import { TOKEN_KEY } from './api';
 // just in memory) so a page refresh during dev still resolves an existing
 // session via /auth/me, matching how a real backend would behave.
 const USERS_KEY = 'buddgy_mock_users';
+// Read by mockCalendarService.js — kept separate from USERS_KEY so calendar
+// connect/disconnect doesn't need to touch the users map.
+const CALENDAR_CONNECTED_KEY = 'buddgy_mock_calendar_connected';
 
 function loadUsers() {
   try {
@@ -38,6 +41,22 @@ function assertPresent({ email, password }) {
   if (!password) throw new Error('validation failed: password');
 }
 
+// Mirrors server/services/authService.js's derived `connected` boolean —
+// read by mockCalendarService.js's connect/disconnect (ticket A-12).
+function isConnected(userId) {
+  try {
+    const raw = localStorage.getItem(CALENDAR_CONNECTED_KEY);
+    const connectedIds = raw ? JSON.parse(raw) : [];
+    return connectedIds.includes(userId);
+  } catch {
+    return false;
+  }
+}
+
+function withConnected(user) {
+  return { ...user, connected: isConnected(user.id) };
+}
+
 export async function register({ email, password }) {
   await delay(300);
   assertPresent({ email, password });
@@ -47,7 +66,7 @@ export async function register({ email, password }) {
   fakeUsers.set(email, { user, password });
   saveUsers(fakeUsers);
 
-  return { token: encodeToken({ userId: user.id, role: user.role }), user };
+  return { token: encodeToken({ userId: user.id, role: user.role }), user: withConnected(user) };
 }
 
 export async function login({ email, password }) {
@@ -57,7 +76,10 @@ export async function login({ email, password }) {
   const record = fakeUsers.get(email);
   if (!record || record.password !== password) throw new Error('unauthorized');
 
-  return { token: encodeToken({ userId: record.user.id, role: record.user.role }), user: record.user };
+  return {
+    token: encodeToken({ userId: record.user.id, role: record.user.role }),
+    user: withConnected(record.user),
+  };
 }
 
 export async function me() {
@@ -76,5 +98,5 @@ export async function me() {
   const record = [...fakeUsers.values()].find((r) => r.user.id === payload.userId);
   if (!record) throw new Error('unauthorized');
 
-  return { user: record.user };
+  return { user: withConnected(record.user) };
 }

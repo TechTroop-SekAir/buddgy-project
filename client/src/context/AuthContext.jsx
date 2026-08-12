@@ -35,7 +35,16 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const value = useMemo(() => ({ user, isLoading, login, logout }), [user, isLoading]);
+  // Re-fetches the current user without a full page reload — needed after
+  // calendar connect/disconnect (ticket A-12) so `user.connected` reflects
+  // the server without forcing a logout/login cycle.
+  const refreshUser = async () => {
+    const { user: refreshedUser } = await authService.me();
+    setUser(refreshedUser);
+    return refreshedUser;
+  };
+
+  const value = useMemo(() => ({ user, isLoading, login, logout, refreshUser }), [user, isLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -50,7 +50,7 @@ POST   /api/auth/login        { email, password }               → { token, use
 GET    /api/auth/me       🔒                                    → { user }
 ```
 
-`full_name` is optional (nullable column) — the client doesn't collect it yet.
+`full_name` is optional (nullable column) — the client doesn't collect it yet. `user` also carries a derived `connected` boolean (`Boolean(google_refresh_token)`) — never the token itself — so the client can show Connect vs Sync now (ticket A-12).
 
 ## Envelopes
 
@@ -99,7 +99,7 @@ Response `data`:
 ## CSV Import
 
 ```
-POST /api/imports/preview   🔒  (multipart/form-data)
+POST /api/imports/preview   🔒  (multipart/form-data, field name "file", max 10MB)
 ```
 
 Response `data`:
@@ -108,16 +108,19 @@ Response `data`:
   "importId": 12,
   "detectedMapping": { "date": "Transaction Date", "amount": "Charge Amount",
                        "description": "Merchant" },
-  "previewRows": [ { "date": "2026-08-01", "amount_agorot": 12990,
+  "previewRows": [ { "transaction_date": "2026-08-01", "amount_agorot": 12990,
                      "description": "Shufersal Deal" } ]
 }
 ```
 
+`detectedMapping` values are `null` where Claude found no matching column — the client must let the user pick manually. Never persists any rows.
+
 ```
-POST /api/imports/:id/confirm   🔒   → { imported: 47, duplicatesSkipped: 3 }
+POST /api/imports/:id/confirm   🔒   body: { "mapping": { "date": "...", "amount": "...", "description": "..." | null } }
+                                      → { imported: 47, duplicatesSkipped: 3 }
 ```
 
-`duplicatesSkipped` counts rows whose `dedup_hash` already existed — see [`DATABASE.md`](./DATABASE.md) § Idempotency.
+`mapping` keys are the source-file column names to use, taken from the caller (pre-filled by `detectedMapping`, editable). `date` and `amount` are required. Rows are inserted with `envelope_id: null`, `source: 'csv'`. `duplicatesSkipped` counts rows whose `dedup_hash` already existed — see [`DATABASE.md`](./DATABASE.md) § Idempotency.
 
 ## Calendar & Forecast
 
@@ -125,13 +128,20 @@ POST /api/imports/:id/confirm   🔒   → { imported: 47, duplicatesSkipped: 3 
 GET    /api/calendar/connect      🔒  → { url }   (Google consent screen URL; client redirects to it)
 GET    /api/calendar/callback         unauthed — Google redirects here; identity comes from the
                                        signed `state` param minted by /connect. Redirects the
-                                       browser to CLIENT_URL, never returns JSON.
+                                       browser to `${CLIENT_URL}/settings?calendar=connected|error`,
+                                       never returns JSON.
 POST   /api/calendar/sync         🔒  → { newEvents: 4 }
 DELETE /api/calendar/disconnect   🔒  → { connected: false }   (planned_expenses rows are kept)
-GET    /api/planned-expenses?month=2026-08   🔒  → [ planned_expense ]
-PATCH  /api/planned-expenses/:id  🔒  → planned_expense   (confirm / assign to envelope)
-GET    /api/forecast?month=2026-08   🔒
+GET    /api/planned-expenses?month=2026-08   🔒  → [ planned_expense ]   ⚠️ specified, not implemented
+PATCH  /api/planned-expenses/:id  🔒  → planned_expense   (confirm / assign to envelope)   ⚠️ specified, not implemented
+GET    /api/forecast?month=2026-08   🔒                                                    ⚠️ specified, not implemented (B-07)
 ```
+
+`/connect` returns a JSON `{ url }` pointing at Google's consent screen — the **client** performs the redirect (`window.location.href = url`); the server itself never redirects on this route (`docs/INTEGRATIONS.md` previously said otherwise — corrected).
+
+`/sync` error strings are calendar-specific, not the generic Error Catalog below: `"Google Calendar is not connected."` (401), `"Google Calendar access was revoked. Please reconnect."` (401), `"Google Calendar is rate-limited. Try again shortly."` (429), `"Google Calendar is temporarily unavailable. Try again shortly."` (502). The client must not treat every 401 here as a session expiry — only the literal `"unauthorized"` message means "log out."
+
+⚠️ **`GET /api/planned-expenses` and `PATCH /api/planned-expenses/:id` are documented but not implemented server-side.** Ticket A-12 (client) built against a client-side mock of this contract; the real routes are unowned — see `docs/PLAN.md`.
 
 Forecast response `data`:
 ```json

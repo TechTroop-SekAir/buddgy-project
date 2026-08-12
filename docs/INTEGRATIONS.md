@@ -33,7 +33,7 @@ Two call sites, both in `server/services/claudeService.js` — never called dire
 
 OAuth2, `server/services/googleCalendarService.js`.
 
-- **Connect:** `GET /api/calendar/connect` redirects to Google's consent screen; on callback, exchange the code for a refresh token and store it **encrypted** on `users.google_refresh_token` (see [`SECURITY.md`](./SECURITY.md))
+- **Connect:** `GET /api/calendar/connect` returns `{ url }` — a link to Google's consent screen; the **client** navigates there (`window.location.href = url`), the server does not redirect on this route. On callback, exchange the code for a refresh token and store it **encrypted** on `users.google_refresh_token` (see [`SECURITY.md`](./SECURITY.md))
 - **Sync:** `POST /api/calendar/sync` fetches upcoming events, extracts an amount from each event title (regex for a currency pattern, falling back to skipping the event if none is found), and `UPSERT`s into `planned_expenses` keyed on `google_event_id`
 - **Scope:** request the minimum Calendar scope needed (read-only) — never request write access to the user's calendar
 - **Disconnect:** clears `google_refresh_token`; existing `planned_expenses` rows are kept (historical record) but no further sync occurs
