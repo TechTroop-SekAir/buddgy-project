@@ -10,6 +10,7 @@ import { TransactionRow } from '../components/transactions/TransactionRow';
 import { getCurrentMonth } from '../utils/month';
 import { shiftMonth } from '../utils/date';
 import { formatShekels } from '../utils/money';
+import { getCategoryLabel } from '../utils/categoryLabel';
 
 export function TransactionsPage() {
   const { t } = useTranslation();
@@ -118,8 +119,8 @@ export function TransactionsPage() {
                   key={transaction.id}
                   transaction={transaction}
                   categoryLabel={
-                    transaction.envelope_id
-                      ? envelopeNameById[transaction.envelope_id] || t('transactions.uncategorized')
+                    transaction.envelope_id && envelopeNameById[transaction.envelope_id]
+                      ? getCategoryLabel(envelopeNameById[transaction.envelope_id], t)
                       : t('transactions.uncategorized')
                   }
                 />

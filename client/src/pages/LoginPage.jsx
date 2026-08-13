@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Card, TextInput } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import authService from '../services/authService';
+import { getErrorMessage } from '../utils/errorMessages';
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -30,7 +31,7 @@ export function LoginPage() {
       login({ token, user });
       navigate('/dashboard');
     } catch (err) {
-      setSubmitError(err.message === 'unauthorized' ? t('auth.login.errorUnauthorized') : err.message);
+      setSubmitError(getErrorMessage(err.message, t));
     } finally {
       setIsSubmitting(false);
     }

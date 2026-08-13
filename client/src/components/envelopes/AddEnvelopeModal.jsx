@@ -3,6 +3,7 @@ import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
 import { Button, Modal, NumberInput, TextInput } from '../ui';
 import { shekelsToAgorot } from '../../utils/money';
+import { getErrorMessage } from '../../utils/errorMessages';
 
 const SUGGESTED_CATEGORY_KEYS = ['pets', 'fitness', 'gifts'];
 
@@ -36,7 +37,7 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
       form.reset();
       onClose();
     } catch (err) {
-      setSubmitError(err.message);
+      setSubmitError(getErrorMessage(err.message, t));
     } finally {
       setIsSubmitting(false);
     }

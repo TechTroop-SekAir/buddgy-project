@@ -27,8 +27,7 @@
       "passwordPlaceholder": "הסיסמה שלך",
       "submit": "התחברות",
       "noAccount": "אין לך חשבון?",
-      "registerLink": "הרשמה",
-      "errorUnauthorized": "אימייל או סיסמה שגויים."
+      "registerLink": "הרשמה"
     },
     "register": {
       "title": "יצירת חשבון",
@@ -37,8 +36,7 @@
       "confirmPasswordPlaceholder": "הזן/י את הסיסמה שוב",
       "submit": "יצירת חשבון",
       "haveAccount": "כבר יש לך חשבון?",
-      "loginLink": "התחברות",
-      "errorDuplicate": "כבר קיים חשבון עם כתובת אימייל זו."
+      "loginLink": "התחברות"
     },
     "validation": {
       "emailInvalid": "יש להזין כתובת אימייל תקינה",
@@ -60,7 +58,6 @@
     "totalSpent": "סך ההוצאות",
     "remainingBalance": "יתרה נותרת",
     "spentOf": "{{spent}} מתוך {{budget}} נוצלו",
-    "delete": "מחיקה",
     "deleteConfirmTitle": "למחוק את המעטפה?",
     "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\". לא ניתן לבטל פעולה זו.",
     "status": {
@@ -134,6 +131,28 @@
       "generic": "לא הצלחנו לקרוא את הרישום. אפשר לנסות שוב או לערוך את הטקסט.",
       "validation": "יש להזין טקסט המתאר את ההוצאה.",
       "retry": "ניסיון נוסף"
+    }
+  },
+"categories": {
+    "housing": "דיור",
+    "groceries": "מזון וקניות",
+    "utilities": "חשבונות וחשמל",
+    "transport": "תחבורה",
+    "healthcare": "בריאות",
+    "diningOut": "מסעדות",
+    "entertainment": "בידור",
+    "shopping": "קניות"
+  },
+  "errors": {
+    "unauthorized": "אימייל או סיסמה שגויים.",
+    "duplicate": "קיים כבר חשבון עם כתובת אימייל זו.",
+    "notFound": "הפריט לא נמצא.",
+    "generic": "משהו השתבש. נסו שוב.",
+    "validation": {
+      "email": "יש להזין כתובת אימייל תקינה",
+      "password": "נדרשת סיסמה",
+      "name": "נדרש שם",
+      "monthlyBudgetAgorot": "התקציב חייב להיות גדול מ-0"
     }
   },
   "csvImport": {

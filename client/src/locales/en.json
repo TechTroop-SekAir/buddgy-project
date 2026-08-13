@@ -27,8 +27,7 @@
       "passwordPlaceholder": "Your password",
       "submit": "Log in",
       "noAccount": "Don't have an account?",
-      "registerLink": "Register",
-      "errorUnauthorized": "Incorrect email or password."
+      "registerLink": "Register"
     },
     "register": {
       "title": "Create an account",
@@ -37,8 +36,7 @@
       "confirmPasswordPlaceholder": "Re-enter your password",
       "submit": "Create account",
       "haveAccount": "Already have an account?",
-      "loginLink": "Log in",
-      "errorDuplicate": "An account with this email already exists."
+      "loginLink": "Log in"
     },
     "validation": {
       "emailInvalid": "Enter a valid email address",
@@ -60,7 +58,6 @@
     "totalSpent": "Total Spent",
     "remainingBalance": "Remaining Balance",
     "spentOf": "{{spent}} of {{budget}} spent",
-    "delete": "Delete",
     "deleteConfirmTitle": "Delete envelope?",
     "deleteConfirmBody": "This will permanently delete \"{{name}}\". This can't be undone.",
     "status": {
@@ -134,6 +131,28 @@
       "generic": "We couldn't read that entry. You can try again or edit your text.",
       "validation": "Enter some text describing the expense.",
       "retry": "Try again"
+    }
+  },
+"categories": {
+    "housing": "Housing",
+    "groceries": "Groceries",
+    "utilities": "Utilities",
+    "transport": "Transport",
+    "healthcare": "Healthcare",
+    "diningOut": "Dining Out",
+    "entertainment": "Entertainment",
+    "shopping": "Shopping"
+  },
+  "errors": {
+    "unauthorized": "Incorrect email or password.",
+    "duplicate": "An account with this email already exists.",
+    "notFound": "Item not found.",
+    "generic": "Something went wrong. Please try again.",
+    "validation": {
+      "email": "Enter a valid email address",
+      "password": "Password is required",
+      "name": "Name is required",
+      "monthlyBudgetAgorot": "Budget must be greater than 0"
     }
   },
   "csvImport": {

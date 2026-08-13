@@ -42,7 +42,7 @@ export function EnvelopeCard({ envelope, onDelete }) {
           className="self-start"
           onClick={() => setConfirmOpen(true)}
         >
-          {t('envelopes.delete')}
+          {t('common.delete')}
         </Button>
       </div>
 
@@ -55,7 +55,7 @@ export function EnvelopeCard({ envelope, onDelete }) {
             {t('common.cancel')}
           </Button>
           <Button color="status-danger" onClick={handleConfirmDelete} loading={isDeleting}>
-            {t('envelopes.delete')}
+            {t('common.delete')}
           </Button>
         </div>
       </Modal>

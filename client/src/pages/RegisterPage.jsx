@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Card, TextInput } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import authService from '../services/authService';
+import { getErrorMessage } from '../utils/errorMessages';
 
 export function RegisterPage() {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ export function RegisterPage() {
       login({ token, user });
       navigate('/dashboard');
     } catch (err) {
-      setSubmitError(err.message === 'duplicate' ? t('auth.register.errorDuplicate') : err.message);
+      setSubmitError(getErrorMessage(err.message, t));
     } finally {
       setIsSubmitting(false);
     }
