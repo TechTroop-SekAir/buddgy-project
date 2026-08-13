@@ -14,7 +14,8 @@
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
-    "db:seed": "sequelize-cli db:seed:all"
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:dev": "node seed.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.37",
@@ -38,7 +39,6 @@
     "jest": "^29.7.0",
     "nodemon": "^3.1.4",
     "sequelize-cli": "^6.6.2",
-    "sqlite3": "^6.0.1",
     "supertest": "^7.0.0"
   }
 }

@@ -3,11 +3,14 @@ import { useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TransactionsPage } from './pages/TransactionsPage';
+import { ImportPage } from './pages/ImportPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { PlannedExpensesPage } from './pages/PlannedExpensesPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
 // Public/protected split per ticket A-02. Feature pages (envelopes,
-// transactions, quick entry, imports, calendar, admin) get their own
+// transactions, quick entry, calendar, admin) get their own
 // routes as their tickets land — this is the skeleton, not the full map.
 //
 // Both gates wait on isLoading so a refreshed session isn't bounced before
@@ -57,6 +60,30 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <TransactionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/imports"
+        element={
+          <ProtectedRoute>
+            <ImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/planned-expenses"
+        element={
+          <ProtectedRoute>
+            <PlannedExpensesPage />
           </ProtectedRoute>
         }
       />

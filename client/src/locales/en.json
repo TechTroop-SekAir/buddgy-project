@@ -133,7 +133,7 @@
       "retry": "Try again"
     }
   },
-  "categories": {
+"categories": {
     "housing": "Housing",
     "groceries": "Groceries",
     "utilities": "Utilities",
@@ -154,5 +154,88 @@
       "name": "Name is required",
       "monthlyBudgetAgorot": "Budget must be greater than 0"
     }
+  },
+  "csvImport": {
+    "title": "Import CSV",
+    "select": {
+      "label": "Choose a CSV file",
+      "hint": "Export a transaction history CSV from your bank and upload it here.",
+      "submit": "Upload"
+    },
+    "uploading": {
+      "title": "Reading your file…",
+      "body": "This can take up to 15 seconds while we detect your columns."
+    },
+    "mapping": {
+      "title": "Match your columns",
+      "dateLabel": "Date column",
+      "amountLabel": "Amount column",
+      "descriptionLabel": "Description column",
+      "descriptionNone": "None",
+      "notDetected": "Not detected — choose manually",
+      "previewTitle": "Preview",
+      "dateHeader": "Date",
+      "amountHeader": "Amount",
+      "descriptionHeader": "Description",
+      "back": "Choose a different file",
+      "confirm": "Import"
+    },
+    "done": {
+      "title": "Import complete",
+      "summary_one": "{{imported}} transaction imported, {{duplicatesSkipped}} duplicate skipped",
+      "summary_other": "{{imported}} transactions imported, {{duplicatesSkipped}} duplicates skipped",
+      "unassignedNote": "Imported transactions aren't assigned to an envelope yet — assign them from the Transactions page.",
+      "viewTransactions": "View transactions",
+      "importAnother": "Import another file"
+    },
+    "error": {
+      "fileTooLarge": "This file is too large (max 10MB).",
+      "notCsv": "Please upload a CSV file.",
+      "unparseable": "We couldn't read this file as a CSV.",
+      "noRows": "This file has no rows.",
+      "unparseableAmount": "One or more amounts couldn't be read — check your amount column.",
+      "unparseableDate": "One or more dates couldn't be read — check your date column.",
+      "mapping": "Choose both a date and an amount column.",
+      "aiFailed": "We couldn't detect your columns automatically. Choose them manually below.",
+      "storage": "Something went wrong storing your file. Please try again.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "calendar": {
+    "title": "Google Calendar",
+    "notConnected": "Connect your Google Calendar to pull upcoming planned expenses automatically.",
+    "connect": "Connect Google Calendar",
+    "connected": "Connected",
+    "connectedBody": "Buddgy reads upcoming events with an amount in the title and turns them into planned expenses.",
+    "sync": "Sync now",
+    "syncing": "Syncing…",
+    "syncResult_one": "{{count}} new planned expense found.",
+    "syncResult_other": "{{count}} new planned expenses found.",
+    "syncResultZero": "No new events found. Only events with an amount (e.g. \"Rent ₪4500\") in the title are picked up.",
+    "disconnect": "Disconnect",
+    "disconnectConfirmTitle": "Disconnect Google Calendar?",
+    "disconnectConfirmBody": "Buddgy will stop syncing new events. Planned expenses already imported are kept.",
+    "callbackSuccess": "Google Calendar connected.",
+    "callbackError": "Something went wrong connecting Google Calendar. Please try again.",
+    "error": {
+      "notConnected": "Google Calendar isn't connected yet.",
+      "revoked": "Access to Google Calendar was revoked. Reconnect to keep syncing.",
+      "rateLimited": "Google Calendar is rate-limited. Try again shortly.",
+      "unavailable": "Google Calendar is temporarily unavailable. Try again shortly.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "plannedExpenses": {
+    "title": "Planned Expenses",
+    "loading": "Loading planned expenses…",
+    "empty": "No planned expenses yet — connect and sync your calendar from Settings.",
+    "goToSettings": "Go to Settings",
+    "dateHeader": "Due",
+    "titleHeader": "Title",
+    "amountHeader": "Amount",
+    "envelopeHeader": "Envelope",
+    "confirmedHeader": "Confirmed",
+    "envelopeNone": "Unassigned",
+    "confirm": "Confirm"
   }
 }

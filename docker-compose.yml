@@ -1,0 +1,24 @@
+# Local Postgres for Buddgy dev — mirrors .github/workflows/ci.yml's `postgres`
+# service (same image tag) so local dev and CI exercise the same engine.
+# See README.md § Getting started and docs/DATABASE.md § Conventions.
+#
+# Usage: docker compose up -d --wait db
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: buddgy_dev
+    ports:
+      - '5432:5432'
+    volumes:
+      - buddgy_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  buddgy_pg_data:

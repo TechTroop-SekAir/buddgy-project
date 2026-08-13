@@ -22,7 +22,12 @@ client.interceptors.response.use(
   (error) => {
     // docs/STATE.md § Auth State: a 401 from any request clears auth state
     // and redirects to login, handled once here rather than per call-site.
-    if (error.response?.status === 401) {
+    // Narrowed to the literal "unauthorized" message — the calendar routes
+    // (server/routes/calendar.js) also return 401 for "Google Calendar is
+    // not connected." / "...access was revoked.", which must NOT log the
+    // user out of Buddgy (docs/INTEGRATIONS.md § Failure Handling: prompt
+    // to reconnect, don't silently fail the whole session).
+    if (error.response?.status === 401 && error.response?.data?.error === 'unauthorized') {
       localStorage.removeItem(TOKEN_KEY);
       if (window.location.pathname !== '/login') {
         window.location.assign('/login');

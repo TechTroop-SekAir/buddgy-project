@@ -53,15 +53,15 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [ ] **A-09** Switch client from mock to real API — *Day 5, needs Matan's B-05*
 - [x] **A-10** Quick Entry UI (text → review → confirm) — *Day 6, needs Ofek's C-02*
 - [ ] **A-19** i18n/RTL infra (Hebrew default) — *landed with A-10; react-i18next, `src/locales/`, `LocaleContext`, Mantine `DirectionProvider` all in place and every existing page/component uses it. Remaining: keep it current as new pages ship (see `client/CLAUDE.md` § i18n & RTL).*
-- [ ] **A-11** CSV import UI (upload → mapping → confirm) — *Day 7, needs Ofek's C-04*
-- [ ] **A-12** Calendar connect/sync UI + planned-expense assign — *Day 8, needs Ofek's C-06*
+- [x] **A-11** CSV import UI (upload → mapping → confirm) — *Day 7, needs Ofek's C-04*
+- [x] **A-12** Calendar connect/sync UI + planned-expense assign — *Day 8, needs Ofek's C-06*
 - [ ] **A-13** Forecast banner + at-risk highlighting — *Day 9, needs Matan's B-07*
 - [ ] **A-14** Admin panel — *Day 9, needs Matan's B-08*
 - [ ] **A-15** Month history navigation — *Day 10*
 - [ ] **A-16** Responsive pass across all pages — *Day 10*
 - [ ] **A-17** Empty/loading/error states audit — *Day 10*
 - [ ] **A-18** Client E2E tests (Playwright) — *Day 11, feature freeze day*
-- [x] **A-19** i18n & RTL infrastructure + retrofit existing pages — *Day 4*
+- [ ] **A-20** Server: `GET /api/planned-expenses?month=` + `PATCH /api/planned-expenses/:id` — *unowned; documented in `API.md` § Calendar & Forecast but not implemented. A-12 built the client against a mock of this exact contract (`client/src/services/mockPlannedExpenseService.js`) so it flips to real once this lands — no UI rework expected. Blocks nothing today; blocks A-13's at-risk-envelope math from seeing real assignments.*
 
 ## Matan — Server + DB
 

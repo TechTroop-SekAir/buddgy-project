@@ -162,7 +162,7 @@ async function previewImport(userId, file) {
   const csvImport = await CsvImport.create({
     user_id: userId,
     file_url: fileUrl,
-    column_mapping: JSON.stringify(detectedMapping),
+    column_mapping: detectedMapping,
     rows_imported: null,
   });
 
@@ -239,7 +239,7 @@ async function confirmImport(userId, importId, mapping) {
     }
 
     await csvImport.update(
-      { column_mapping: JSON.stringify(mapping), rows_imported: toInsert.length },
+      { column_mapping: mapping, rows_imported: toInsert.length },
       { transaction: t }
     );
 
