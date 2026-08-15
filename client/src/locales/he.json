@@ -3,6 +3,7 @@
     "appName": "באדג'י",
     "cancel": "ביטול",
     "delete": "מחיקה",
+    "edit": "עריכה",
     "back": "חזרה",
     "loading": "טוען…"
   },
@@ -79,6 +80,10 @@
       "fitness": "כושר",
       "gifts": "מתנות"
     }
+  },
+  "editEnvelopeModal": {
+    "title": "עריכת מעטפה",
+    "submit": "שמירת שינויים"
   },
   "transactions": {
     "title": "תנועות",

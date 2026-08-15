@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
 import { Button, Modal, NumberInput, TextInput } from '../ui';
-import { shekelsToAgorot } from '../../utils/money';
+import { agorotToShekels, shekelsToAgorot } from '../../utils/money';
 import { getErrorMessage } from '../../utils/errorMessages';
 
-const SUGGESTED_CATEGORY_KEYS = ['pets', 'fitness', 'gifts'];
-
-export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
+export function EditEnvelopeModal({ opened, envelope, onClose, onSubmit }) {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   const form = useForm({
-    initialValues: { name: '', budgetShekels: '' },
+    initialValues: {
+      name: envelope?.name ?? '',
+      budgetShekels: envelope ? String(agorotToShekels(envelope.monthly_budget_agorot)) : '',
+    },
     validate: {
       name: (value) => (value.trim().length > 0 ? null : t('addEnvelopeModal.nameRequired')),
       budgetShekels: (value) => (Number(value) > 0 ? null : t('addEnvelopeModal.budgetInvalid')),
@@ -34,7 +35,6 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
         name: values.name.trim(),
         monthly_budget_agorot: shekelsToAgorot(Number(values.budgetShekels)),
       });
-      form.reset();
       onClose();
     } catch (err) {
       setSubmitError(getErrorMessage(err.message, t));
@@ -44,27 +44,10 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
   };
 
   return (
-    <Modal opened={opened} onClose={handleClose} title={t('addEnvelopeModal.title')}>
+    <Modal opened={opened} onClose={handleClose} title={t('editEnvelopeModal.title')}>
       <form onSubmit={form.onSubmit(handleSubmit)} className="flex flex-col gap-4">
-        <div className="flex gap-2">
-          {SUGGESTED_CATEGORY_KEYS.map((key) => {
-            const label = t(`addEnvelopeModal.suggestedCategories.${key}`);
-            return (
-              <Button
-                key={key}
-                type="button"
-                variant="outline"
-                color="gray"
-                size="xs"
-                onClick={() => form.setFieldValue('name', label)}
-              >
-                {label}
-              </Button>
-            );
-          })}
-        </div>
         <TextInput
-          id="envelope-name"
+          id="envelope-edit-name"
           name="name"
           autoComplete="off"
           label={t('addEnvelopeModal.nameLabel')}
@@ -73,7 +56,7 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
           {...form.getInputProps('name')}
         />
         <NumberInput
-          id="envelope-budget"
+          id="envelope-edit-budget"
           name="monthlyBudget"
           autoComplete="off"
           label={t('addEnvelopeModal.budgetLabel')}
@@ -93,7 +76,7 @@ export function AddEnvelopeModal({ opened, onClose, onSubmit }) {
             {t('common.cancel')}
           </Button>
           <Button type="submit" variant="filled" color="accent" loading={isSubmitting}>
-            {t('addEnvelopeModal.submit')}
+            {t('editEnvelopeModal.submit')}
           </Button>
         </div>
       </form>

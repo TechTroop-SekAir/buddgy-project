@@ -3,6 +3,7 @@
     "appName": "Buddgy",
     "cancel": "Cancel",
     "delete": "Delete",
+    "edit": "Edit",
     "back": "Back",
     "loading": "Loading…"
   },
@@ -79,6 +80,10 @@
       "fitness": "Fitness",
       "gifts": "Gifts"
     }
+  },
+  "editEnvelopeModal": {
+    "title": "Edit envelope",
+    "submit": "Save changes"
   },
   "transactions": {
     "title": "Transactions",

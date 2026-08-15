@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge, Button, Card, Modal, Progress } from '../ui';
+import { EditEnvelopeModal } from './EditEnvelopeModal';
 import { getEnvelopeStatus } from '../../utils/envelopeStatus';
 import { formatShekels } from '../../utils/money';
 
-export function EnvelopeCard({ envelope, onDelete }) {
+export function EnvelopeCard({ envelope, onDelete, onEdit }) {
   const { t } = useTranslation();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { color, status, percentUsed } = getEnvelopeStatus(envelope);
 
@@ -35,16 +37,22 @@ export function EnvelopeCard({ envelope, onDelete }) {
             budget: formatShekels(envelope.monthly_budget_agorot),
           })}
         </p>
-        <Button
-          variant="outline"
-          color="status-danger"
-          size="sm"
-          className="self-start"
-          onClick={() => setConfirmOpen(true)}
-        >
-          {t('common.delete')}
-        </Button>
+        <div className="flex gap-2 self-start">
+          <Button variant="outline" color="gray" size="sm" onClick={() => setEditOpen(true)}>
+            {t('common.edit')}
+          </Button>
+          <Button variant="outline" color="status-danger" size="sm" onClick={() => setConfirmOpen(true)}>
+            {t('common.delete')}
+          </Button>
+        </div>
       </div>
+
+      <EditEnvelopeModal
+        opened={editOpen}
+        envelope={envelope}
+        onClose={() => setEditOpen(false)}
+        onSubmit={(payload) => onEdit(envelope.id, payload)}
+      />
 
       <Modal opened={confirmOpen} onClose={() => setConfirmOpen(false)} title={t('envelopes.deleteConfirmTitle')}>
         <p className="text-sm text-text-secondary mb-6">
