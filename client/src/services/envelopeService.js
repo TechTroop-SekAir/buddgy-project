@@ -1,9 +1,9 @@
 import api from './api';
 import * as mockEnvelopeService from './mockEnvelopeService';
 
-// Real implementation. No envelopeRoutes.js exists on the server yet
-// (server/routes/index.js has it commented out), so these calls will 404
-// until that ticket lands — matches authService.js's mock/real switcher shape.
+// Real implementation, matching docs/API.md's Envelopes contract — mounted at
+// /api/envelopes (server/routes/index.js). Matches authService.js's mock/real
+// switcher shape.
 async function list(userId, month) {
   return api.get('/envelopes', { params: { month } });
 }

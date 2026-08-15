@@ -31,6 +31,11 @@ export function DashboardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }) => envelopeService.update(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => envelopeService.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
@@ -95,7 +100,12 @@ export function DashboardPage() {
       {!isLoading && envelopes.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           {envelopes.map((envelope) => (
-            <EnvelopeCard key={envelope.id} envelope={envelope} onDelete={(id) => deleteMutation.mutateAsync(id)} />
+            <EnvelopeCard
+              key={envelope.id}
+              envelope={envelope}
+              onDelete={(id) => deleteMutation.mutateAsync(id)}
+              onEdit={(id, payload) => updateMutation.mutateAsync({ id, payload })}
+            />
           ))}
         </div>
       )}
