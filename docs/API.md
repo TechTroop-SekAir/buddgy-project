@@ -183,4 +183,11 @@ PATCH  /api/admin/users/:id        🔒admin  → { id, disabled }
 GET    /api/admin/stats            🔒admin  → { userCount, transactionCount, aiCallCount }
 ```
 
-`categories` backs a table not yet listed in [`DATABASE.md`](./DATABASE.md) — add it there in the same PR that implements this endpoint (Track B).
+`category` object:
+```json
+{ "id": 1, "name_he": "מזון", "name_en": "Food", "color": "#f97316",
+  "is_active": true, "created_at": "2026-08-16T13:44:49.479Z" }
+```
+`POST` body: `name_he`, `name_en` required; `color`, `is_active` (default `true`) optional. `PUT` accepts a partial body of any of `name_he`, `name_en`, `color`, `is_active` — an empty body is `400`. A duplicate `name_en` is `409 duplicate`. `DELETE` is a hard delete; retiring a category without deleting it is `PUT` with `is_active: false`.
+
+`categories` is a standalone global catalog (see [`DATABASE.md`](./DATABASE.md) § categories) — it feeds the AI classification engine's taxonomy and has no relation to the client UI's "Category" (which is `envelopes`; see `client/src/services/categoryService.js`).

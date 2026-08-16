@@ -68,9 +68,9 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **B-01** Migrations: `users`, `envelopes`, `transactions`, `planned_expenses`, `csv_imports` + indexes *(scaffolded)*
 - [x] **B-02** Sequelize models + associations *(scaffolded)*
 - [x] **B-04** Error middleware + response envelope helper *(scaffolded)*
-- [ ] **B-03** Auth: register/login/me, JWT middleware — *Day 2*
+- [x] **B-03** Auth: register/login/me, JWT middleware — *Day 2. Verified implemented: `server/routes/authRoutes.js` (`POST /register`, `POST /login`, `GET /me`), `server/controllers/authController.js`, JWT middleware in `server/middleware/auth.js` (`requireAuth`). Checkbox was stale relative to code.*
 - [x] **B-05** Envelope + transaction CRUD endpoints — *Day 3. Verified implemented: `server/routes/envelopes.js` (GET/POST/PUT/PATCH/DELETE) and `server/routes/transactions.js` (GET/POST/PATCH/DELETE, plus `/parse`), both matching `docs/API.md` exactly. Checkbox was stale relative to code.*
-- [ ] **B-06** `categories` migration + model + endpoints (admin catalog) — *Day 4*
+- [x] **B-06** `categories` migration + model + endpoints (admin catalog) — *Day 4. Implemented: `server/migrations/20260809000600-create-categories.js`, `server/models/category.js`, `server/services/categoryService.js`, `server/routes/admin.js` + `adminCategories.js` (mounted at `/api/admin/categories`, gated by `requireAuth`+`requireAdmin`), tests in `server/__tests__/adminCategories.test.js`. Schema (`name_he`/`name_en`/`color`/`is_active`) documented in `docs/DATABASE.md` § categories and `docs/API.md` § Admin, since neither had it before. Standalone table, no FK — not to be confused with the client's "Category" (`envelopes`, see A-06). `server/seed.js` now also seeds an admin login (`admin@buddgy.com` / `password123`) and a default 10-row Hebrew catalog. `/api/admin/users` + `/api/admin/stats` remain B-08.*
 - [ ] **B-07** Forecast computation endpoint — *Day 5–8*
 - [ ] **B-08** Admin endpoints (categories CRUD, user list/disable, stats) — *Day 9*
 - [ ] **B-09** Server integration tests for all of the above — *Day 10*
