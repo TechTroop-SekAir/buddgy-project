@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge, Select, Table } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import plannedExpenseService from '../services/plannedExpenseService';
-import envelopeService from '../services/envelopeService';
+import categoryService from '../services/categoryService';
 import { getCurrentMonth } from '../utils/month';
 import { formatDate } from '../utils/date';
 import { formatShekels } from '../utils/money';
@@ -21,11 +21,11 @@ export function PlannedExpensesPage() {
     queryFn: () => plannedExpenseService.list(user.id, month),
   });
 
-  const { data: envelopes = [] } = useQuery({
-    queryKey: ['envelopes', user.id, month],
-    queryFn: () => envelopeService.list(user.id, month),
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', user.id, month],
+    queryFn: () => categoryService.list(user.id, month),
   });
-  const envelopeOptions = envelopes.map((envelope) => ({ value: String(envelope.id), label: envelope.name }));
+  const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }) => plannedExpenseService.update(id, payload),
@@ -73,7 +73,7 @@ export function PlannedExpensesPage() {
                   <Table.Td className="text-start">
                     <Select
                       placeholder={t('plannedExpenses.envelopeNone')}
-                      data={envelopeOptions}
+                      data={categoryOptions}
                       value={expense.envelope_id != null ? String(expense.envelope_id) : null}
                       onChange={(value) =>
                         updateMutation.mutate({

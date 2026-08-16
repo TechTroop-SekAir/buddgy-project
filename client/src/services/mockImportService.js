@@ -1,5 +1,4 @@
-// Fake backend for ticket A-11, mirroring mockTransactionService.js's
-// structure. Real C-04 endpoints (server/routes/imports.js) exist and work,
+// Fake backend for ticket A-11. Real C-04 endpoints (server/routes/imports.js) exist and work,
 // but this keeps VITE_USE_MOCK_API=true fully functional without a running
 // server/Cloudinary/Claude key. Reuses buddgy_mock_transactions so imported
 // rows show up on the Transactions page next to seeded/quick-entry ones.
@@ -96,8 +95,7 @@ function mapRow(row, header, mapping) {
   };
 }
 
-// Deterministic failure trigger, matching mockTransactionService.parse's
-// "fail" token: a filename containing "fail" fakes Claude mapping detection
+// Deterministic failure trigger: a filename containing "fail" fakes Claude mapping detection
 // throwing, so the 422-equivalent path is demoable without a server.
 export async function preview(file, userId) {
   await delay(600);

@@ -3,12 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui';
-import { AddEnvelopeModal } from '../components/envelopes/AddEnvelopeModal';
-import { EnvelopeCard } from '../components/envelopes/EnvelopeCard';
-import { SummaryBar } from '../components/envelopes/SummaryBar';
+import { CategoryFormModal } from '../components/categories/CategoryFormModal';
+import { CategoryCard } from '../components/categories/CategoryCard';
+import { SummaryBar } from '../components/categories/SummaryBar';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
 import { useAuth } from '../context/AuthContext';
-import envelopeService from '../services/envelopeService';
+import categoryService from '../services/categoryService';
 import transactionService from '../services/transactionService';
 import { getCurrentMonth } from '../utils/month';
 
@@ -19,25 +19,25 @@ export function DashboardPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
   const month = getCurrentMonth();
-  const queryKey = ['envelopes', user.id, month];
+  const queryKey = ['categories', user.id, month];
 
-  const { data: envelopes = [], isLoading } = useQuery({
+  const { data: categories = [], isLoading } = useQuery({
     queryKey,
-    queryFn: () => envelopeService.list(user.id, month),
+    queryFn: () => categoryService.list(user.id, month),
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload) => envelopeService.create(user.id, { ...payload, month }),
+    mutationFn: (payload) => categoryService.create(user.id, { ...payload, month }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }) => envelopeService.update(id, payload),
+    mutationFn: ({ id, payload }) => categoryService.update(id, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => envelopeService.remove(id),
+    mutationFn: (id) => categoryService.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
@@ -73,36 +73,36 @@ export function DashboardPage() {
       </div>
       <div className="flex gap-3 mt-4">
         <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-          {t('dashboard.addEnvelope')}
+          {t('dashboard.addCategory')}
         </Button>
         <Button variant="outline" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
-          {t('dashboard.quickAdd')}
+          {t('dashboard.addTransaction')}
         </Button>
       </div>
 
       {isLoading && <p className="text-text-secondary mt-6">{t('dashboard.loading')}</p>}
 
-      {!isLoading && envelopes.length > 0 && (
+      {!isLoading && categories.length > 0 && (
         <div className="mt-6">
-          <SummaryBar envelopes={envelopes} />
+          <SummaryBar categories={categories} />
         </div>
       )}
 
-      {!isLoading && envelopes.length === 0 && (
+      {!isLoading && categories.length === 0 && (
         <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
           <p className="text-text-secondary">{t('dashboard.empty')}</p>
           <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-            {t('dashboard.addFirstEnvelope')}
+            {t('dashboard.addFirstCategory')}
           </Button>
         </div>
       )}
 
-      {!isLoading && envelopes.length > 0 && (
+      {!isLoading && categories.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {envelopes.map((envelope) => (
-            <EnvelopeCard
-              key={envelope.id}
-              envelope={envelope}
+          {categories.map((category) => (
+            <CategoryCard
+              key={category.id}
+              category={category}
               onDelete={(id) => deleteMutation.mutateAsync(id)}
               onEdit={(id, payload) => updateMutation.mutateAsync({ id, payload })}
             />
@@ -110,7 +110,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      <AddEnvelopeModal
+      <CategoryFormModal
         opened={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSubmit={(payload) => createMutation.mutateAsync(payload)}

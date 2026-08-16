@@ -9,7 +9,7 @@ import { PlannedExpensesPage } from './pages/PlannedExpensesPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
-// Public/protected split per ticket A-02. Feature pages (envelopes,
+// Public/protected split per ticket A-02. Feature pages (categories,
 // transactions, quick entry, calendar, admin) get their own
 // routes as their tickets land — this is the skeleton, not the full map.
 //

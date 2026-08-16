@@ -10,9 +10,9 @@ export function TransactionFilters({
   onMonthChange,
   search,
   onSearchChange,
-  envelopeId,
-  onEnvelopeChange,
-  envelopeOptions,
+  categoryId,
+  onCategoryChange,
+  categoryOptions,
   dateFrom,
   onDateFromChange,
   dateTo,
@@ -26,10 +26,10 @@ export function TransactionFilters({
   const prevGlyph = direction === 'rtl' ? '→' : '←';
   const nextGlyph = direction === 'rtl' ? '←' : '→';
   const { start, end } = getMonthBounds(month);
-  const categoryOptions = [
+  const filterOptions = [
     { value: '', label: t('transactions.allCategories') },
     { value: UNASSIGNED_VALUE, label: t('transactions.uncategorized') },
-    ...envelopeOptions,
+    ...categoryOptions,
   ];
 
   return (
@@ -71,9 +71,9 @@ export function TransactionFilters({
         />
         <Select
           label={t('transactions.categoryLabel')}
-          data={categoryOptions}
-          value={envelopeId}
-          onChange={(value) => onEnvelopeChange(value ?? '')}
+          data={filterOptions}
+          value={categoryId}
+          onChange={(value) => onCategoryChange(value ?? '')}
           clearable
         />
         <label className="flex flex-col gap-1">

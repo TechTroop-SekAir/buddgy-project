@@ -1,6 +1,9 @@
-// Maps the seeded mock envelope/category names (see mockEnvelopeService.js's
-// DEFAULT_ENVELOPES) to translated labels. Real user-entered envelope names
-// fall through untranslated — this only covers the known demo set.
+// Maps the seeded demo category names (see categoryService.js's real
+// /api/envelopes-backed data) to translated labels. Real user-entered
+// category names fall through untranslated — this only covers the known
+// demo set. Unrelated to the `categoryManagement.*` i18n namespace used by
+// the category create/edit/delete UI (client/src/components/categories/) —
+// this file's `categories.*` keys are display-label translations only.
 const CATEGORY_KEYS = {
   Housing: 'housing',
   Groceries: 'groceries',

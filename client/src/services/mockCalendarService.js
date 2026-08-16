@@ -1,5 +1,4 @@
-// Fake backend for ticket A-12's connect/sync half, mirroring
-// mockTransactionService.js's structure. C-05/C-06 are real and working
+// Fake backend for ticket A-12's connect/sync half. C-05/C-06 are real and working
 // server-side, but this keeps VITE_USE_MOCK_API=true fully functional
 // without live Google OAuth creds. Writes into buddgy_mock_planned_expenses,
 // read by mockPlannedExpenseService.js.
