@@ -145,8 +145,8 @@ GET    /api/calendar/callback         unauthed — Google redirects here; identi
                                        never returns JSON.
 POST   /api/calendar/sync         🔒  → { newEvents: 4 }
 DELETE /api/calendar/disconnect   🔒  → { connected: false }   (planned_expenses rows are kept)
-GET    /api/planned-expenses?month=2026-08   🔒  → [ planned_expense ]   ⚠️ specified, not implemented
-PATCH  /api/planned-expenses/:id  🔒  → planned_expense   (confirm / assign to envelope)   ⚠️ specified, not implemented
+GET    /api/planned-expenses?month=2026-08   🔒  → [ planned_expense ]
+PATCH  /api/planned-expenses/:id  🔒  → planned_expense   (confirm / assign to envelope)
 GET    /api/forecast?month=2026-08   🔒                                                    ⚠️ specified, not implemented (B-07)
 ```
 
@@ -154,7 +154,12 @@ GET    /api/forecast?month=2026-08   🔒                                       
 
 `/sync` error strings are calendar-specific, not the generic Error Catalog below: `"Google Calendar is not connected."` (401), `"Google Calendar access was revoked. Please reconnect."` (401), `"Google Calendar is rate-limited. Try again shortly."` (429), `"Google Calendar is temporarily unavailable. Try again shortly."` (502). The client must not treat every 401 here as a session expiry — only the literal `"unauthorized"` message means "log out."
 
-⚠️ **`GET /api/planned-expenses` and `PATCH /api/planned-expenses/:id` are documented but not implemented server-side.** Ticket A-12 (client) built against a client-side mock of this contract; the real routes are unowned — see `docs/PLAN.md`.
+`planned_expense` shape (ticket A-20):
+```json
+{ "id": 3, "user_id": 1, "envelope_id": 10, "title": "Car service", "amount_agorot": 45000,
+  "due_date": "2026-08-20", "google_event_id": "evt_3", "is_confirmed": true }
+```
+`GET` filters by `due_date` falling within the given month. `PATCH` accepts a partial body with any of `envelope_id` (nullable — must belong to the caller), `title`, `amount_agorot`, `due_date`, `is_confirmed`; `google_event_id` is sync-owned and never client-writable.
 
 Forecast response `data`:
 ```json

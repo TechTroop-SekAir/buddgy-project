@@ -50,7 +50,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **A-06** Envelope create/edit/delete forms — *Day 4. Re-verified: delete failures now surface an inline error instead of silently closing the confirm dialog, and Add/Edit were consolidated into one reusable `CategoryFormModal`. UI now labels this "Category" throughout (component dir `components/categories/`, `categoryService.js`) — the underlying DB table/model/`/api/envelopes` routes are unchanged and deliberately still called "envelope"; see `categoryService.js` for the mapping note and the naming-collision flag against the separate admin category catalog (B-06/B-08).*
 - [x] **A-07** Transaction list + filters — *Day 4*
 - [x] **A-08** Manual transaction form — *Day 5. Superseded the standalone `AddTransactionModal` with a single unified entry point: one "הוספת תנועה" button on both Dashboard and Transactions pages opens `QuickEntryModal`, which still tries the AI parse (`POST /api/transactions/parse`) first but falls back to local regex parsing (`utils/parseQuickEntryText.js`, no network dependency) when the AI call fails/times out, always landing on an editable review screen. Uncategorized parses default to an auto-created "הוצאות כלליות" category rather than blocking. Code-complete and builds clean; not yet exercised against a running backend in a browser — verify manually before demo.*
-- [ ] **A-09** Switch client from mock to real API — *Day 5, needs Matan's B-05*
+- [x] **A-09** Switch client from mock to real API — *Day 5, needs Matan's B-05. Verified: `authService`/`calendarService`/`importService`/`plannedExpenseService` all gate on `VITE_USE_MOCK_API`, `categoryService`/`transactionService` call the real API unconditionally, `api.js` correctly unwraps `{ data, error }` and handles 401. The one remaining gap (planned-expenses endpoints not implemented server-side) is closed by A-20.*
 - [x] **A-10** Quick Entry UI (text → review → confirm) — *Day 6, needs Ofek's C-02*
 - [ ] **A-19** i18n/RTL infra (Hebrew default) — *landed with A-10; react-i18next, `src/locales/`, `LocaleContext`, Mantine `DirectionProvider` all in place and every existing page/component uses it. Remaining: keep it current as new pages ship (see `client/CLAUDE.md` § i18n & RTL).*
 - [x] **A-11** CSV import UI (upload → mapping → confirm) — *Day 7, needs Ofek's C-04*
@@ -61,7 +61,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [ ] **A-16** Responsive pass across all pages — *Day 10*
 - [ ] **A-17** Empty/loading/error states audit — *Day 10*
 - [ ] **A-18** Client E2E tests (Playwright) — *Day 11, feature freeze day*
-- [ ] **A-20** Server: `GET /api/planned-expenses?month=` + `PATCH /api/planned-expenses/:id` — *unowned; documented in `API.md` § Calendar & Forecast but not implemented. A-12 built the client against a mock of this exact contract (`client/src/services/mockPlannedExpenseService.js`) so it flips to real once this lands — no UI rework expected. Blocks nothing today; blocks A-13's at-risk-envelope math from seeing real assignments.*
+- [x] **A-20** Server: `GET /api/planned-expenses?month=` + `PATCH /api/planned-expenses/:id` — *implemented (`server/routes/plannedExpenses.js`, `server/controllers/plannedExpensesController.js`, `server/services/plannedExpenseService.js`), tests in `server/__tests__/plannedExpenses.test.js`. A-12's client (`client/src/services/plannedExpenseService.js`) now hits the real endpoint when `VITE_USE_MOCK_API=false` — no UI rework needed.*
 
 ## Matan — Server + DB
 
@@ -69,7 +69,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **B-02** Sequelize models + associations *(scaffolded)*
 - [x] **B-04** Error middleware + response envelope helper *(scaffolded)*
 - [ ] **B-03** Auth: register/login/me, JWT middleware — *Day 2*
-- [ ] **B-05** Envelope + transaction CRUD endpoints — *Day 3*
+- [x] **B-05** Envelope + transaction CRUD endpoints — *Day 3. Verified implemented: `server/routes/envelopes.js` (GET/POST/PUT/PATCH/DELETE) and `server/routes/transactions.js` (GET/POST/PATCH/DELETE, plus `/parse`), both matching `docs/API.md` exactly. Checkbox was stale relative to code.*
 - [ ] **B-06** `categories` migration + model + endpoints (admin catalog) — *Day 4*
 - [ ] **B-07** Forecast computation endpoint — *Day 5–8*
 - [ ] **B-08** Admin endpoints (categories CRUD, user list/disable, stats) — *Day 9*
