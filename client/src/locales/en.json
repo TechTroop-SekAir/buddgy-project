@@ -248,5 +248,8 @@
     "confirmedHeader": "Confirmed",
     "envelopeNone": "Unassigned",
     "confirm": "Confirm"
+  },
+  "forecast": {
+    "recommendation": "Cut {{amount}} from the {{envelope}} envelope"
   }
 }

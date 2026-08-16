@@ -248,5 +248,8 @@
     "confirmedHeader": "אושר",
     "envelopeNone": "ללא שיוך",
     "confirm": "אישור"
+  },
+  "forecast": {
+    "recommendation": "כדאי לקצץ {{amount}} מהקטגוריה {{envelope}}"
   }
 }

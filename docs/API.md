@@ -147,7 +147,7 @@ POST   /api/calendar/sync         🔒  → { newEvents: 4 }
 DELETE /api/calendar/disconnect   🔒  → { connected: false }   (planned_expenses rows are kept)
 GET    /api/planned-expenses?month=2026-08   🔒  → [ planned_expense ]
 PATCH  /api/planned-expenses/:id  🔒  → planned_expense   (confirm / assign to envelope)
-GET    /api/forecast?month=2026-08   🔒                                                    ⚠️ specified, not implemented (B-07)
+GET    /api/forecast?month=2026-08   🔒  → forecast
 ```
 
 `/connect` returns a JSON `{ url }` pointing at Google's consent screen — the **client** performs the redirect (`window.location.href = url`); the server itself never redirects on this route (`docs/INTEGRATIONS.md` previously said otherwise — corrected).
@@ -161,11 +161,14 @@ GET    /api/forecast?month=2026-08   🔒                                       
 ```
 `GET` filters by `due_date` falling within the given month. `PATCH` accepts a partial body with any of `envelope_id` (nullable — must belong to the caller), `title`, `amount_agorot`, `due_date`, `is_confirmed`; `google_event_id` is sync-owned and never client-writable.
 
-Forecast response `data`:
+Forecast response `data` (ticket B-07):
 ```json
 { "projectedBalanceAgorot": -48000, "atRiskEnvelopes": [3],
-  "recommendation": "Cut 500 ILS from the Entertainment envelope" }
+  "recommendation": { "envelopeId": 3, "envelopeName": "Entertainment", "cutAgorot": 50000 } }
 ```
+`projectedBalanceAgorot` = sum of `envelopes.monthly_budget_agorot` for the month, minus recorded `transactions.amount_agorot` (including unassigned rows), minus `planned_expenses.amount_agorot` where `is_confirmed = true` and `due_date` falls in the month — see `docs/ARCHITECTURE.md` § Forecast Computation for the full breakdown. `atRiskEnvelopes` are envelope ids whose own projection (same math, scoped to that envelope's transactions/planned expenses for the month) goes negative.
+
+`recommendation` is a **structured object, not a display sentence** — the client defaults to Hebrew (`client/src/i18n.js`), so the server can't hand back a finished English string; it names the envelope with the most headroom to absorb the shortfall (`envelopeId`, `envelopeName`, `cutAgorot`) and the client interpolates the translated wording (`forecast.recommendation` in `client/src/locales/*.json`), same pattern as `client/src/utils/errorMessages.js`. It's `null` when the projection isn't negative, or when no envelope has positive headroom to recommend cutting from.
 
 `atRiskEnvelopes` must resolve to `[]` (not error) when the user has zero envelopes or zero planned expenses for the month — see `.claude/commands/qa.md` § Buddgy Critical Test Cases.
 
