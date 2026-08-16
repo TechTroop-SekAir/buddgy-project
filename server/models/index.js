@@ -17,6 +17,7 @@ db.Envelope = require('./envelope')(sequelize, DataTypes);
 db.Transaction = require('./transaction')(sequelize, DataTypes);
 db.PlannedExpense = require('./plannedExpense')(sequelize, DataTypes);
 db.CsvImport = require('./csvImport')(sequelize, DataTypes);
+db.Category = require('./category')(sequelize, DataTypes);
 
 // Associations — mirrors docs/DATABASE.md § ERD
 db.User.hasMany(db.Envelope, { foreignKey: 'user_id', onDelete: 'CASCADE' });

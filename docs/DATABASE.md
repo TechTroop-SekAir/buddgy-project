@@ -11,6 +11,7 @@
 | [transactions](#transactions) | Actual spend, from any of the 3 input channels |
 | [planned_expenses](#planned_expenses) | Future spend synced from Google Calendar |
 | [csv_imports](#csv_imports) | Audit trail of bank-statement uploads |
+| [categories](#categories) | Global admin category catalog (feeds AI classification) |
 | [Indexes](#indexes) | What's indexed and why |
 | [Idempotency](#idempotency) | How duplicate imports/syncs are prevented |
 | [Migration Conventions](#migration-conventions) | Naming, up/down rules |
@@ -101,6 +102,19 @@ erDiagram
 | column_mapping | JSONB | Mapping confirmed by the user |
 | rows_imported | INTEGER | |
 | created_at | TIMESTAMP | DEFAULT now() |
+
+## categories
+
+| Column | Type | Notes |
+|---|---|---|
+| id | SERIAL PK | |
+| name_he | VARCHAR(80) | Hebrew display name |
+| name_en | VARCHAR(80) | UNIQUE — English name, canonical key for the AI classification engine |
+| color | VARCHAR(7) | Display color (hex) |
+| is_active | BOOLEAN | DEFAULT true — retiring a category sets this rather than deleting it |
+| created_at | TIMESTAMP | DEFAULT now() |
+
+**Note:** this is a standalone, admin-managed reference table with no FK to any other table — it does not appear in the ERD above. It backs `/api/admin/categories` (see [`API.md`](./API.md) § Admin) and feeds the free-text classification engine's taxonomy (`docs/OVERVIEW.md` § Admin); it is unrelated to `envelopes`, which the client UI also labels "Category" — see `client/src/services/categoryService.js`'s header comment and `docs/PLAN.md` ticket A-06 for that naming collision. `DELETE /api/admin/categories/:id` is a hard delete; `is_active` is the soft-retire path.
 
 ## Indexes
 
