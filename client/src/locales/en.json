@@ -15,7 +15,7 @@
   },
   "landing": {
     "title": "Buddgy",
-    "subtitle": "Envelope budgeting with AI-parsed entries, CSV import, and calendar-synced forecasts.",
+    "subtitle": "Category budgeting with AI-parsed entries, CSV import, and calendar-synced forecasts.",
     "login": "Log in",
     "register": "Create account"
   },
@@ -47,19 +47,19 @@
     }
   },
   "dashboard": {
-    "title": "Envelope Dashboard",
-    "addEnvelope": "Add Envelope",
-    "addFirstEnvelope": "Add your first envelope",
-    "quickAdd": "Quick Add",
-    "loading": "Loading envelopes…",
-    "empty": "You don't have any envelopes yet this month."
+    "title": "Category Dashboard",
+    "addCategory": "Add Category",
+    "addFirstCategory": "Add your first category",
+    "addTransaction": "Add Transaction",
+    "loading": "Loading categories…",
+    "empty": "You don't have any categories yet this month."
   },
-  "envelopes": {
+  "categoryManagement": {
     "totalBudget": "Total Budget",
     "totalSpent": "Total Spent",
     "remainingBalance": "Remaining Balance",
     "spentOf": "{{spent}} of {{budget}} spent",
-    "deleteConfirmTitle": "Delete envelope?",
+    "deleteConfirmTitle": "Delete category?",
     "deleteConfirmBody": "This will permanently delete \"{{name}}\". This can't be undone.",
     "status": {
       "overBudget": "Over budget",
@@ -67,12 +67,12 @@
       "onTrack": "On track"
     }
   },
-  "addEnvelopeModal": {
-    "title": "Add envelope",
+  "addCategoryModal": {
+    "title": "Add category",
     "nameLabel": "Name",
     "namePlaceholder": "e.g. Groceries",
     "budgetLabel": "Monthly budget",
-    "submit": "Add Envelope",
+    "submit": "Add Category",
     "nameRequired": "Name is required",
     "budgetInvalid": "Budget must be greater than 0",
     "suggestedCategories": {
@@ -81,8 +81,8 @@
       "gifts": "Gifts"
     }
   },
-  "editEnvelopeModal": {
-    "title": "Edit envelope",
+  "editCategoryModal": {
+    "title": "Edit category",
     "submit": "Save changes"
   },
   "transactions": {
@@ -104,7 +104,8 @@
     "dateHeader": "Date",
     "descriptionHeader": "Description",
     "categoryHeader": "Category",
-    "amountHeader": "Amount"
+    "amountHeader": "Amount",
+    "addTransaction": "Add Transaction"
   },
   "quickEntry": {
     "openButton": "Quick Add",
@@ -124,17 +125,18 @@
       "amountLabel": "Amount",
       "descriptionLabel": "Description",
       "dateLabel": "Date",
-      "envelopeLabel": "Envelope",
-      "envelopeNone": "No envelope suggested — pick one",
-      "categoryBadge": "Suggested category: {{category}}",
+      "envelopeLabel": "Category",
+      "envelopeNone": "No category suggested — pick one",
+      "categoryBadge": "Category: {{category}}",
       "lowConfidenceWarning": "Low confidence — double-check these details.",
-      "noEnvelopeWarning": "No envelope was suggested. Choose one before saving.",
+      "noEnvelopeWarning": "No category was suggested. Choose one before saving.",
       "confirm": "Save transaction",
       "back": "Edit text"
     },
     "error": {
       "generic": "We couldn't read that entry. You can try again or edit your text.",
       "validation": "Enter some text describing the expense.",
+      "noAmount": "Couldn't find an amount in that text — try including a number, e.g. 18 or ₪18.",
       "retry": "Try again"
     }
   },
@@ -157,7 +159,11 @@
       "email": "Enter a valid email address",
       "password": "Password is required",
       "name": "Name is required",
-      "monthlyBudgetAgorot": "Budget must be greater than 0"
+      "monthlyBudgetAgorot": "Budget must be greater than 0",
+      "envelopeId": "Choose a category",
+      "amountAgorot": "Amount must be greater than 0",
+      "transactionDate": "Enter a valid date",
+      "description": "Description is required"
     }
   },
   "csvImport": {
@@ -189,7 +195,7 @@
       "title": "Import complete",
       "summary_one": "{{imported}} transaction imported, {{duplicatesSkipped}} duplicate skipped",
       "summary_other": "{{imported}} transactions imported, {{duplicatesSkipped}} duplicates skipped",
-      "unassignedNote": "Imported transactions aren't assigned to an envelope yet — assign them from the Transactions page.",
+      "unassignedNote": "Imported transactions aren't assigned to a category yet — assign them from the Transactions page.",
       "viewTransactions": "View transactions",
       "importAnother": "Import another file"
     },
@@ -238,7 +244,7 @@
     "dateHeader": "Due",
     "titleHeader": "Title",
     "amountHeader": "Amount",
-    "envelopeHeader": "Envelope",
+    "envelopeHeader": "Category",
     "confirmedHeader": "Confirmed",
     "envelopeNone": "Unassigned",
     "confirm": "Confirm"

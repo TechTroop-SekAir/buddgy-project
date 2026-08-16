@@ -1,25 +1,30 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Badge, Button, Modal, NumberInput, Select, Textarea, TextInput } from '../ui';
 import { useAuth } from '../../context/AuthContext';
-import envelopeService from '../../services/envelopeService';
+import categoryService from '../../services/categoryService';
 import transactionService from '../../services/transactionService';
 import { agorotToShekels, shekelsToAgorot } from '../../utils/money';
 import { getCurrentMonth } from '../../utils/month';
+import { getErrorMessage } from '../../utils/errorMessages';
+import { parseQuickEntryText } from '../../utils/parseQuickEntryText';
 
 const MAX_TEXT_LENGTH = 500;
 const LOW_CONFIDENCE_THRESHOLD = 0.6;
+const DEFAULT_CATEGORY_NAME = 'הוצאות כלליות';
+const DEFAULT_CATEGORY_BUDGET_SHEKELS = 1000;
 
 const STEP = { INPUT: 'input', PARSING: 'parsing', REVIEW: 'review' };
 
 // Modal-owned three-step flow (input → parsing → review/confirm) launched
-// from DashboardPage, matching AddEnvelopeModal.jsx's local-state pattern.
+// from DashboardPage, matching CategoryFormModal.jsx's local-state pattern.
 // The parse step never saves anything on its own — root CLAUDE.md § External
 // Integrations: "never auto-save an AI-parsed transaction."
 export function QuickEntryModal({ opened, onClose, onConfirm }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const month = getCurrentMonth();
 
   const [step, setStep] = useState(STEP.INPUT);
@@ -29,12 +34,36 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const { data: envelopes = [] } = useQuery({
-    queryKey: ['envelopes', user.id, month],
-    queryFn: () => envelopeService.list(user.id, month),
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', user.id, month],
+    queryFn: () => categoryService.list(user.id, month),
     enabled: opened,
   });
-  const envelopeOptions = envelopes.map((envelope) => ({ value: String(envelope.id), label: envelope.name }));
+  const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
+
+  // No AI service is guaranteed to be available (see claudeService.js) —
+  // whenever the AI doesn't return a confident envelope match, or the AI
+  // call fails entirely (handleParse's catch branch), fall back to this
+  // catch-all category instead of leaving the transaction unclassified.
+  // Auto-created on first use so the flow never blocks on missing setup.
+  async function resolveDefaultCategoryId() {
+    try {
+      const existing = categories.find((category) => category.name === DEFAULT_CATEGORY_NAME);
+      if (existing) return String(existing.id);
+
+      const created = await categoryService.create(user.id, {
+        name: DEFAULT_CATEGORY_NAME,
+        monthly_budget_agorot: shekelsToAgorot(DEFAULT_CATEGORY_BUDGET_SHEKELS),
+        month,
+      });
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      return String(created.id);
+    } catch {
+      // Backend also unreachable — degrade to the existing "no category
+      // suggested" state rather than blocking the whole parse.
+      return '';
+    }
+  }
 
   const reset = () => {
     setStep(STEP.INPUT);
@@ -54,18 +83,34 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
     setStep(STEP.PARSING);
     try {
       const result = await transactionService.parse(text.trim(), user.id);
+      const envelopeId =
+        result.suggested_envelope_id != null
+          ? String(result.suggested_envelope_id)
+          : await resolveDefaultCategoryId();
       setReview({
         amountShekels: String(agorotToShekels(result.amount_agorot)),
         description: result.description,
         transactionDate: result.transaction_date,
-        envelopeId: result.suggested_envelope_id != null ? String(result.suggested_envelope_id) : '',
-        category: result.category,
+        envelopeId,
         confidence: result.confidence,
       });
       setStep(STEP.REVIEW);
-    } catch (err) {
-      setParseError(err.message === 'unprocessable: ai parse failed' ? t('quickEntry.error.generic') : err.message);
-      setStep(STEP.INPUT);
+    } catch {
+      // AI unreachable/failed/timed out — this flow has no hard AI
+      // dependency, so fall back to local parsing rather than blocking.
+      const local = parseQuickEntryText(text.trim());
+      if (!local) {
+        setParseError(t('quickEntry.error.noAmount'));
+        setStep(STEP.INPUT);
+        return;
+      }
+      setReview({
+        amountShekels: String(local.amountShekels),
+        description: local.description,
+        transactionDate: new Date().toISOString().slice(0, 10),
+        envelopeId: await resolveDefaultCategoryId(),
+      });
+      setStep(STEP.REVIEW);
     }
   };
 
@@ -82,7 +127,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
       reset();
       onClose();
     } catch (err) {
-      setSubmitError(err.message);
+      setSubmitError(getErrorMessage(err.message, t));
     } finally {
       setIsSubmitting(false);
     }
@@ -90,6 +135,9 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
 
   const isLowConfidence = review && review.confidence < LOW_CONFIDENCE_THRESHOLD;
   const hasNoEnvelope = review && !review.envelopeId;
+  const selectedCategoryName = review
+    ? categories.find((category) => String(category.id) === review.envelopeId)?.name ?? t('transactions.uncategorized')
+    : '';
 
   return (
     <Modal opened={opened} onClose={handleClose} title={t('quickEntry.modalTitle')}>
@@ -140,7 +188,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
         <div className="flex flex-col gap-4">
           <p className="text-base font-medium text-text-primary">{t('quickEntry.review.title')}</p>
           <Badge color="gray" className="self-start">
-            {t('quickEntry.review.categoryBadge', { category: review.category })}
+            {t('quickEntry.review.categoryBadge', { category: selectedCategoryName })}
           </Badge>
 
           {isLowConfidence && (
@@ -173,7 +221,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
           <Select
             label={t('quickEntry.review.envelopeLabel')}
             placeholder={t('quickEntry.review.envelopeNone')}
-            data={envelopeOptions}
+            data={categoryOptions}
             value={review.envelopeId || null}
             onChange={(value) => setReview((prev) => ({ ...prev, envelopeId: value ?? '' }))}
             clearable

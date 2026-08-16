@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import transactionService from '../services/transactionService';
-import envelopeService from '../services/envelopeService';
+import categoryService from '../services/categoryService';
 import { TransactionFilters, UNASSIGNED_VALUE } from '../components/transactions/TransactionFilters';
 import { TransactionRow } from '../components/transactions/TransactionRow';
+import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
 import { getCurrentMonth } from '../utils/month';
 import { shiftMonth } from '../utils/date';
 import { formatShekels } from '../utils/money';
@@ -15,27 +17,37 @@ import { getCategoryLabel } from '../utils/categoryLabel';
 export function TransactionsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [month, setMonth] = useState(getCurrentMonth());
   const [search, setSearch] = useState('');
-  const [envelopeId, setEnvelopeId] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', user.id, month],
     queryFn: () => transactionService.list(user.id, month),
   });
 
-  const { data: envelopes = [] } = useQuery({
-    queryKey: ['envelopes', user.id, month],
-    queryFn: () => envelopeService.list(user.id, month),
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', user.id, month],
+    queryFn: () => categoryService.list(user.id, month),
+  });
+
+  const quickEntryMutation = useMutation({
+    mutationFn: (payload) => transactionService.create(user.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
+    },
   });
 
   // Mantine's Select requires string option values (client/CLAUDE.md § Component
-  // Boundary components pass through Mantine as-is) — envelope.id is a number
+  // Boundary components pass through Mantine as-is) — category.id is a number
   // from the real API. Same conversion as QuickEntryModal.jsx / PlannedExpensesPage.jsx.
-  const envelopeOptions = envelopes.map((envelope) => ({ value: String(envelope.id), label: envelope.name }));
-  const envelopeNameById = Object.fromEntries(envelopes.map((envelope) => [envelope.id, envelope.name]));
+  const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
+  const categoryNameById = Object.fromEntries(categories.map((category) => [category.id, category.name]));
 
   const handleMonthChange = (delta) => {
     setMonth((current) => shiftMonth(current, delta));
@@ -48,15 +60,15 @@ export function TransactionsPage() {
     return transactions.filter((transaction) => {
       if (query && !transaction.description.toLowerCase().includes(query)) return false;
 
-      if (envelopeId === UNASSIGNED_VALUE && transaction.envelope_id) return false;
-      if (envelopeId && envelopeId !== UNASSIGNED_VALUE && String(transaction.envelope_id) !== envelopeId) return false;
+      if (categoryId === UNASSIGNED_VALUE && transaction.envelope_id) return false;
+      if (categoryId && categoryId !== UNASSIGNED_VALUE && String(transaction.envelope_id) !== categoryId) return false;
 
       if (dateFrom && transaction.transaction_date < dateFrom) return false;
       if (dateTo && transaction.transaction_date > dateTo) return false;
 
       return true;
     });
-  }, [transactions, search, envelopeId, dateFrom, dateTo]);
+  }, [transactions, search, categoryId, dateFrom, dateTo]);
 
   const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.amount_agorot, 0);
 
@@ -64,9 +76,14 @@ export function TransactionsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-text-primary">{t('transactions.title')}</h1>
-        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-          {t('nav.backToDashboard')}
-        </Link>
+        <div className="flex items-center gap-4">
+          <Button variant="filled" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
+            {t('transactions.addTransaction')}
+          </Button>
+          <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
+            {t('nav.backToDashboard')}
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6">
@@ -75,9 +92,9 @@ export function TransactionsPage() {
           onMonthChange={handleMonthChange}
           search={search}
           onSearchChange={setSearch}
-          envelopeId={envelopeId}
-          onEnvelopeChange={setEnvelopeId}
-          envelopeOptions={envelopeOptions}
+          categoryId={categoryId}
+          onCategoryChange={setCategoryId}
+          categoryOptions={categoryOptions}
           dateFrom={dateFrom}
           onDateFromChange={setDateFrom}
           dateTo={dateTo}
@@ -119,8 +136,8 @@ export function TransactionsPage() {
                   key={transaction.id}
                   transaction={transaction}
                   categoryLabel={
-                    transaction.envelope_id && envelopeNameById[transaction.envelope_id]
-                      ? getCategoryLabel(envelopeNameById[transaction.envelope_id], t)
+                    transaction.envelope_id && categoryNameById[transaction.envelope_id]
+                      ? getCategoryLabel(categoryNameById[transaction.envelope_id], t)
                       : t('transactions.uncategorized')
                   }
                 />
@@ -129,6 +146,12 @@ export function TransactionsPage() {
           </table>
         </>
       )}
+
+      <QuickEntryModal
+        opened={isQuickEntryOpen}
+        onClose={() => setIsQuickEntryOpen(false)}
+        onConfirm={(payload) => quickEntryMutation.mutateAsync(payload)}
+      />
     </div>
   );
 }

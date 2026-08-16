@@ -47,9 +47,9 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **A-03** `components/ui/` adapters: Button, TextInput, NumberInput, Card, Modal *(scaffolded)*
 - [x] **A-04** Auth pages (register/login) — *Day 3, against mock*
 - [x] **A-05** Envelope dashboard (grid, status colors, empty state) — *Day 3, against mock*
-- [x] **A-06** Envelope create/edit/delete forms — *Day 4*
+- [x] **A-06** Envelope create/edit/delete forms — *Day 4. Re-verified: delete failures now surface an inline error instead of silently closing the confirm dialog, and Add/Edit were consolidated into one reusable `CategoryFormModal`. UI now labels this "Category" throughout (component dir `components/categories/`, `categoryService.js`) — the underlying DB table/model/`/api/envelopes` routes are unchanged and deliberately still called "envelope"; see `categoryService.js` for the mapping note and the naming-collision flag against the separate admin category catalog (B-06/B-08).*
 - [x] **A-07** Transaction list + filters — *Day 4*
-- [ ] **A-08** Manual transaction form — *Day 5 (transactionService.create + mock landed with A-10; needs its own entry form/UI)*
+- [x] **A-08** Manual transaction form — *Day 5. Superseded the standalone `AddTransactionModal` with a single unified entry point: one "הוספת תנועה" button on both Dashboard and Transactions pages opens `QuickEntryModal`, which still tries the AI parse (`POST /api/transactions/parse`) first but falls back to local regex parsing (`utils/parseQuickEntryText.js`, no network dependency) when the AI call fails/times out, always landing on an editable review screen. Uncategorized parses default to an auto-created "הוצאות כלליות" category rather than blocking. Code-complete and builds clean; not yet exercised against a running backend in a browser — verify manually before demo.*
 - [ ] **A-09** Switch client from mock to real API — *Day 5, needs Matan's B-05*
 - [x] **A-10** Quick Entry UI (text → review → confirm) — *Day 6, needs Ofek's C-02*
 - [ ] **A-19** i18n/RTL infra (Hebrew default) — *landed with A-10; react-i18next, `src/locales/`, `LocaleContext`, Mantine `DirectionProvider` all in place and every existing page/component uses it. Remaining: keep it current as new pages ship (see `client/CLAUDE.md` § i18n & RTL).*

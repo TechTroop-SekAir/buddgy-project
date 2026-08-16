@@ -15,7 +15,7 @@
   },
   "landing": {
     "title": "באדג'י",
-    "subtitle": "תקצוב מעטפות עם רישום חכם באמצעות AI, ייבוא קובצי CSV ותחזיות מסונכרנות עם היומן.",
+    "subtitle": "תקצוב קטגוריות עם רישום חכם באמצעות AI, ייבוא קובצי CSV ותחזיות מסונכרנות עם היומן.",
     "login": "התחברות",
     "register": "יצירת חשבון"
   },
@@ -47,19 +47,19 @@
     }
   },
   "dashboard": {
-    "title": "לוח בקרה למעטפות",
-    "addEnvelope": "הוספת מעטפה",
-    "addFirstEnvelope": "הוספת המעטפה הראשונה שלך",
-    "quickAdd": "רישום מהיר",
-    "loading": "טוען מעטפות…",
-    "empty": "אין לך עדיין מעטפות החודש."
+    "title": "לוח בקרה לקטגוריות",
+    "addCategory": "הוספת קטגוריה",
+    "addFirstCategory": "הוספת הקטגוריה הראשונה שלך",
+    "addTransaction": "הוספת תנועה",
+    "loading": "טוען קטגוריות…",
+    "empty": "אין לך עדיין קטגוריות החודש."
   },
-  "envelopes": {
+  "categoryManagement": {
     "totalBudget": "תקציב כולל",
     "totalSpent": "סך ההוצאות",
     "remainingBalance": "יתרה נותרת",
     "spentOf": "{{spent}} מתוך {{budget}} נוצלו",
-    "deleteConfirmTitle": "למחוק את המעטפה?",
+    "deleteConfirmTitle": "למחוק את הקטגוריה?",
     "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\". לא ניתן לבטל פעולה זו.",
     "status": {
       "overBudget": "חריגה מהתקציב",
@@ -67,12 +67,12 @@
       "onTrack": "במסלול"
     }
   },
-  "addEnvelopeModal": {
-    "title": "הוספת מעטפה",
+  "addCategoryModal": {
+    "title": "הוספת קטגוריה",
     "nameLabel": "שם",
     "namePlaceholder": "לדוגמה: מצרכים",
     "budgetLabel": "תקציב חודשי",
-    "submit": "הוספת מעטפה",
+    "submit": "הוספת קטגוריה",
     "nameRequired": "יש להזין שם",
     "budgetInvalid": "התקציב חייב להיות גדול מ-0",
     "suggestedCategories": {
@@ -81,8 +81,8 @@
       "gifts": "מתנות"
     }
   },
-  "editEnvelopeModal": {
-    "title": "עריכת מעטפה",
+  "editCategoryModal": {
+    "title": "עריכת קטגוריה",
     "submit": "שמירת שינויים"
   },
   "transactions": {
@@ -104,7 +104,8 @@
     "dateHeader": "תאריך",
     "descriptionHeader": "תיאור",
     "categoryHeader": "קטגוריה",
-    "amountHeader": "סכום"
+    "amountHeader": "סכום",
+    "addTransaction": "הוספת תנועה"
   },
   "quickEntry": {
     "openButton": "רישום מהיר",
@@ -124,17 +125,18 @@
       "amountLabel": "סכום",
       "descriptionLabel": "תיאור",
       "dateLabel": "תאריך",
-      "envelopeLabel": "מעטפה",
-      "envelopeNone": "לא הוצעה מעטפה — יש לבחור אחת",
-      "categoryBadge": "קטגוריה מוצעת: {{category}}",
+      "envelopeLabel": "קטגוריה",
+      "envelopeNone": "לא הוצעה קטגוריה — יש לבחור אחת",
+      "categoryBadge": "קטגוריה: {{category}}",
       "lowConfidenceWarning": "רמת ביטחון נמוכה — כדאי לבדוק את הפרטים.",
-      "noEnvelopeWarning": "לא הוצעה מעטפה. יש לבחור אחת לפני השמירה.",
+      "noEnvelopeWarning": "לא הוצעה קטגוריה. יש לבחור אחת לפני השמירה.",
       "confirm": "שמירת תנועה",
       "back": "עריכת הטקסט"
     },
     "error": {
       "generic": "לא הצלחנו לקרוא את הרישום. אפשר לנסות שוב או לערוך את הטקסט.",
       "validation": "יש להזין טקסט המתאר את ההוצאה.",
+      "noAmount": "לא נמצא סכום בטקסט — יש לנסות לכלול מספר, לדוגמה 18 או ₪18.",
       "retry": "ניסיון נוסף"
     }
   },
@@ -157,7 +159,11 @@
       "email": "יש להזין כתובת אימייל תקינה",
       "password": "נדרשת סיסמה",
       "name": "נדרש שם",
-      "monthlyBudgetAgorot": "התקציב חייב להיות גדול מ-0"
+      "monthlyBudgetAgorot": "התקציב חייב להיות גדול מ-0",
+      "envelopeId": "יש לבחור קטגוריה",
+      "amountAgorot": "הסכום חייב להיות גדול מ-0",
+      "transactionDate": "יש להזין תאריך תקין",
+      "description": "יש להזין תיאור"
     }
   },
   "csvImport": {
@@ -189,7 +195,7 @@
       "title": "הייבוא הושלם",
       "summary_one": "יובאה תנועה אחת, {{duplicatesSkipped}} כפילות דולגה",
       "summary_other": "יובאו {{imported}} תנועות, {{duplicatesSkipped}} כפילויות דולגו",
-      "unassignedNote": "התנועות שיובאו עדיין לא משויכות למעטפה — ניתן לשייך אותן מעמוד התנועות.",
+      "unassignedNote": "התנועות שיובאו עדיין לא משויכות לקטגוריה — ניתן לשייך אותן מעמוד התנועות.",
       "viewTransactions": "צפייה בתנועות",
       "importAnother": "ייבוא קובץ נוסף"
     },
@@ -238,7 +244,7 @@
     "dateHeader": "תאריך יעד",
     "titleHeader": "כותרת",
     "amountHeader": "סכום",
-    "envelopeHeader": "מעטפה",
+    "envelopeHeader": "קטגוריה",
     "confirmedHeader": "אושר",
     "envelopeNone": "ללא שיוך",
     "confirm": "אישור"

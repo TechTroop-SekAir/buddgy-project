@@ -66,7 +66,7 @@ export function ImportPage() {
     mutationFn: () => importService.confirm(importId, mapping, user.id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
-      queryClient.invalidateQueries({ queryKey: ['envelopes', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
       setResult(data);
       setStep(STEP.DONE);
     },
