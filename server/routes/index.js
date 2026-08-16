@@ -13,5 +13,6 @@ router.use('/envelopes', require('./envelopes'));
 router.use('/transactions', require('./transactions'));
 router.use('/calendar', require('./calendar'));
 router.use('/imports', require('./imports'));
+router.use('/planned-expenses', require('./plannedExpenses'));
 
 module.exports = router;
