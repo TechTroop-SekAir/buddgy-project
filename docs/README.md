@@ -14,6 +14,7 @@ This directory is the single source of truth for the Buddgy spec.
 | [`INTEGRATIONS.md`](./INTEGRATIONS.md) | Claude, Google Calendar, Cloudinary/S3 — what each does and how failures are handled |
 | [`SECURITY.md`](./SECURITY.md) | Permission matrix, row-level access, JWT lifecycle, secrets |
 | [`DESIGN.md`](./DESIGN.md) | Palette, tokens, status colors, responsive breakpoints, the Mantine boundary |
+| [`DASHBOARD-REDESIGN.md`](./DASHBOARD-REDESIGN.md) | Implementation spec for adopting the `design-ref/` visuals — token additions, new UI adapters, app header, per-component rework |
 | [`TESTING.md`](./TESTING.md) | Test strategy, coverage targets, Buddgy-critical cases, mocking policy |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Railway setup, environments, release process, smoke checks |
 | [`PLAN.md`](./PLAN.md) | Per-person checklist (Darya/Matan/Ofek), dates, definition of done, risks |
