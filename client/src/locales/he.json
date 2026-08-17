@@ -249,7 +249,8 @@
     "missingAmountTitle": "סכומים חסרים",
     "missingAmountBody": "להוצאות המתוכננות הבאות, שסונכרנו מהיומן, אין עדיין סכום — יש להוסיף הערכה כדי שייכללו בתחזית.",
     "missingAmountSubmit": "שמירה",
-    "missingAmountInvalid": "הסכום חייב להיות גדול מ-0"
+    "missingAmountInvalid": "הסכום חייב להיות גדול מ-0",
+    "recommendation": "כדאי לקצץ {{amount}} מהקטגוריה {{envelope}}"
   },
   "plannedExpenses": {
     "title": "הוצאות מתוכננות",

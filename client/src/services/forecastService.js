@@ -1,24 +1,45 @@
 import api from './api';
-import mockForecastService from './mockForecastService';
+import categoryService from './categoryService';
+import plannedExpenseService from './plannedExpenseService';
+import { hasMissingAmount } from '../utils/plannedExpenseStatus';
 
-// GET /api/forecast?month= is documented in docs/API.md § Calendar & Forecast
-// but does not exist server-side yet — no /forecast route is registered in
-// server/routes/index.js (ticket B-07, unshipped). Unlike
-// plannedExpenseService.js/calendarService.js/importService.js, whose real
-// endpoints already exist and work, calling this one would just 404 for
-// every dev regardless of VITE_USE_MOCK_API (which is committed as `false`
-// in client/.env now that envelopes/transactions/planned-expenses are real).
-// So this falls back to the mock unconditionally, not gated on the flag, to
-// avoid that 404. Swap the export back to the commented-out toggle below
-// once B-07 ships.
+// GET /api/forecast?month= — docs/API.md § Calendar & Forecast (ticket B-07, done).
+// The server only computes projectedBalanceAgorot/atRiskEnvelopes/recommendation;
+// the SummaryBar totals and the missing-amount prompt (A-13) aren't server-computed,
+// so this derives them client-side from the same envelope/planned-expense data the
+// rest of the dashboard already loads — same posture the old mockForecastService.js
+// took, just sourcing the core numbers from the real endpoint instead of reimplementing
+// the formula. hasMissingAmount() stays the single source of truth shared with
+// PlannedExpensesPage.jsx.
 async function get(userId, month) {
-  return api.get('/forecast', { params: { month } });
+  const [forecast, envelopes, plannedExpenses] = await Promise.all([
+    api.get('/forecast', { params: { month } }),
+    categoryService.list(userId, month),
+    plannedExpenseService.list(userId, month),
+  ]);
+
+  const prefix = month.slice(0, 7); // 'YYYY-MM-01' -> 'YYYY-MM'
+  const monthPlannedExpenses = plannedExpenses.filter((p) => p.due_date.startsWith(prefix));
+  const missingAmountPlannedExpenses = monthPlannedExpenses
+    .filter(hasMissingAmount)
+    .map(({ id, title, due_date }) => ({ id, title, due_date }));
+
+  const totalBudget = envelopes.reduce((sum, e) => sum + e.monthly_budget_agorot, 0);
+  const totalPlannedExpensesAgorot = monthPlannedExpenses
+    .filter((p) => p.is_confirmed)
+    .reduce((sum, p) => sum + (p.amount_agorot ?? 0), 0);
+  const totalEndOfMonthSpendAgorot = totalBudget - forecast.projectedBalanceAgorot;
+  const totalActualSpentAgorot = totalEndOfMonthSpendAgorot - totalPlannedExpensesAgorot;
+
+  return {
+    ...forecast,
+    totalActualSpentAgorot,
+    totalPlannedExpensesAgorot,
+    totalEndOfMonthSpendAgorot,
+    missingAmountPlannedExpenses,
+  };
 }
 
-const realForecastService = { get };
-
-// const forecastService =
-//   import.meta.env.VITE_USE_MOCK_API === 'true' ? mockForecastService : realForecastService;
-const forecastService = mockForecastService;
+const forecastService = { get };
 
 export default forecastService;

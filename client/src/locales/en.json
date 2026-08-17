@@ -249,7 +249,8 @@
     "missingAmountTitle": "Missing amounts",
     "missingAmountBody": "These calendar-synced expenses have no amount yet — add an estimate so they count toward your forecast.",
     "missingAmountSubmit": "Save",
-    "missingAmountInvalid": "Amount must be greater than 0"
+    "missingAmountInvalid": "Amount must be greater than 0",
+    "recommendation": "Cut {{amount}} from the {{envelope}} envelope"
   },
   "plannedExpenses": {
     "title": "Planned Expenses",

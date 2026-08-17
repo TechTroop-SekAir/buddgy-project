@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const { Transaction, Envelope } = require('../models');
 const AppError = require('../utils/AppError');
 const { normalizeMonth } = require('./envelopeService');
+const { monthRange } = require('../utils/month');
 
 const PUBLIC_ATTRIBUTES = [
   'id',
@@ -14,14 +15,6 @@ const PUBLIC_ATTRIBUTES = [
   'source',
   'transaction_date',
 ];
-
-/** First/last calendar day of the given month, inclusive — for a transaction_date BETWEEN filter. */
-function monthRange(month) {
-  const [year, mon] = month.split('-').map(Number);
-  const from = month;
-  const to = new Date(Date.UTC(year, mon, 0)).toISOString().slice(0, 10); // day 0 of next month = last day of this one
-  return { from, to };
-}
 
 /** A caller may only ever point a transaction at their own envelope, or none. */
 async function assertEnvelopeOwnership(userId, envelopeId) {

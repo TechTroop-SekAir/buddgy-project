@@ -147,7 +147,7 @@ POST   /api/calendar/sync         🔒  → { newEvents: 4 }
 DELETE /api/calendar/disconnect   🔒  → { connected: false }   (planned_expenses rows are kept)
 GET    /api/planned-expenses?month=2026-08   🔒  → [ planned_expense ]
 PATCH  /api/planned-expenses/:id  🔒  → planned_expense   (confirm / assign to envelope)
-GET    /api/forecast?month=2026-08   🔒                                                    ⚠️ specified, not implemented (B-07)
+GET    /api/forecast?month=2026-08   🔒  → forecast
 ```
 
 `/connect` returns a JSON `{ url }` pointing at Google's consent screen — the **client** performs the redirect (`window.location.href = url`); the server itself never redirects on this route (`docs/INTEGRATIONS.md` previously said otherwise — corrected).
@@ -161,21 +161,18 @@ GET    /api/forecast?month=2026-08   🔒                                       
 ```
 `GET` filters by `due_date` falling within the given month. `PATCH` accepts a partial body with any of `envelope_id` (nullable — must belong to the caller), `title`, `amount_agorot`, `due_date`, `is_confirmed`; `google_event_id` is sync-owned and never client-writable. `amount_agorot` **can** be `null` or `0` ("missing amount") at rest — the DB column has no `NOT NULL` constraint — but neither current write path actually produces that today: calendar sync skips any event it can't parse an amount from rather than inserting one with a missing amount (`server/services/calendarSyncService.js`), and `PATCH`'s validation (`server/routes/plannedExpenses.js`) requires `amount_agorot` to be a positive integer whenever it's included, so a client can fill in a missing amount but can't currently clear one back to null via this route. In practice a missing amount is only reachable today through the client's mock calendar path (`VITE_USE_MOCK_CALENDAR=true`, the committed local-dev default), which writes directly to a local mock store with no such validation — worth a follow-up once the real endpoint is the default, if the product still wants a genuine "unknown amount" state representable server-side. The client (ticket A-13) treats it as a real case regardless of source, surfacing an actionable prompt rather than silently formatting a missing amount as ₪0.00.
 
-Forecast response `data`:
+Forecast response `data` (ticket B-07):
 ```json
 { "projectedBalanceAgorot": -48000, "atRiskEnvelopes": [3],
-  "recommendation": "Cut 500 ILS from the Entertainment envelope",
-  "totalActualSpentAgorot": 320000, "totalPlannedExpensesAgorot": 45000,
-  "totalEndOfMonthSpendAgorot": 365000,
-  "missingAmountPlannedExpenses": [
-    { "id": 7, "title": "Dentist", "due_date": "2026-08-22" }
-  ] }
+  "recommendation": { "envelopeId": 3, "envelopeName": "Entertainment", "cutAgorot": 50000 } }
 ```
-`totalPlannedExpensesAgorot` sums only **confirmed** (`is_confirmed: true`) planned expenses for the month — the same commitment-based set already used for `projectedBalanceAgorot`/`atRiskEnvelopes`, so the totals stay internally consistent. `totalEndOfMonthSpendAgorot = totalActualSpentAgorot + totalPlannedExpensesAgorot`, and `projectedBalanceAgorot = totalBudget − totalEndOfMonthSpendAgorot` (the "Remaining Total Budget" the client shows — no separate field, it's the same number). `missingAmountPlannedExpenses` lists that month's planned expenses (confirmed or not) with a null/0 `amount_agorot`, for the client's actionable prompt; entries excluded from `totalPlannedExpensesAgorot` until their amount is filled in via `PATCH`.
+`projectedBalanceAgorot` = sum of `envelopes.monthly_budget_agorot` for the month, minus recorded `transactions.amount_agorot` (including unassigned rows), minus `planned_expenses.amount_agorot` where `is_confirmed = true` and `due_date` falls in the month — see `docs/ARCHITECTURE.md` § Forecast Computation for the full breakdown. `atRiskEnvelopes` are envelope ids whose own projection (same math, scoped to that envelope's transactions/planned expenses for the month) goes negative.
 
-`atRiskEnvelopes` must resolve to `[]` (not error) when the user has zero envelopes or zero planned expenses for the month — see `.claude/commands/qa.md` § Buddgy Critical Test Cases. The same degrade-gracefully rule now also applies to the new totals (all `0`) and `missingAmountPlannedExpenses` (`[]`).
+`recommendation` is a **structured object, not a display sentence** — the client defaults to Hebrew (`client/src/i18n.js`), so the server can't hand back a finished English string; it names the envelope with the most headroom to absorb the shortfall (`envelopeId`, `envelopeName`, `cutAgorot`) and the client interpolates the translated wording (`forecast.recommendation` in `client/src/locales/*.json`), same pattern as `client/src/utils/errorMessages.js`. It's `null` when the projection isn't negative, or when no envelope has positive headroom to recommend cutting from.
 
-**Client note:** until B-07 ships server-side, `client/src/services/forecastService.js` is hard-wired to `mockForecastService.js`, which computes this exact shape client-side from the real envelope/transaction/planned-expense data (see `docs/ARCHITECTURE.md` § Forecast Computation).
+**Client-derived fields (ticket A-13):** the endpoint above does not return `totalActualSpentAgorot`, `totalPlannedExpensesAgorot`, `totalEndOfMonthSpendAgorot`, or `missingAmountPlannedExpenses` — `client/src/services/forecastService.js` computes these itself from `GET /api/envelopes?month=` and `GET /api/planned-expenses?month=` (both already real), using the same confirmed-planned-expenses/missing-amount rules described above, so the client doesn't need a second server round trip to decide what counts. `totalPlannedExpensesAgorot` sums only confirmed (`is_confirmed: true`) planned expenses for the month; `totalEndOfMonthSpendAgorot = totalActualSpentAgorot + totalPlannedExpensesAgorot`, and `projectedBalanceAgorot = totalBudget − totalEndOfMonthSpendAgorot` (the "Remaining Total Budget" the client shows — no separate field, it's the same number returned by the endpoint). `missingAmountPlannedExpenses` lists that month's planned expenses (confirmed or not) with a null/0 `amount_agorot`, for the client's actionable prompt; entries are excluded from `totalPlannedExpensesAgorot` until filled in via `PATCH`. If the backend ever computes these fields itself, this client-side derivation can be deleted in favor of the server response.
+
+`atRiskEnvelopes` must resolve to `[]` (not error) when the user has zero envelopes or zero planned expenses for the month — see `.claude/commands/qa.md` § Buddgy Critical Test Cases. The same degrade-gracefully rule now also applies to the client-derived totals (all `0`) and `missingAmountPlannedExpenses` (`[]`).
 
 ## Admin
 
@@ -191,4 +188,11 @@ PATCH  /api/admin/users/:id        🔒admin  → { id, disabled }
 GET    /api/admin/stats            🔒admin  → { userCount, transactionCount, aiCallCount }
 ```
 
-`categories` backs a table not yet listed in [`DATABASE.md`](./DATABASE.md) — add it there in the same PR that implements this endpoint (Track B).
+`category` object:
+```json
+{ "id": 1, "name_he": "מזון", "name_en": "Food", "color": "#f97316",
+  "is_active": true, "created_at": "2026-08-16T13:44:49.479Z" }
+```
+`POST` body: `name_he`, `name_en` required; `color`, `is_active` (default `true`) optional. `PUT` accepts a partial body of any of `name_he`, `name_en`, `color`, `is_active` — an empty body is `400`. A duplicate `name_en` is `409 duplicate`. `DELETE` is a hard delete; retiring a category without deleting it is `PUT` with `is_active: false`.
+
+`categories` is a standalone global catalog (see [`DATABASE.md`](./DATABASE.md) § categories) — it feeds the AI classification engine's taxonomy and has no relation to the client UI's "Category" (which is `envelopes`; see `client/src/services/categoryService.js`).

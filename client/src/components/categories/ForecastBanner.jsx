@@ -3,13 +3,10 @@ import { Badge, Card } from '../ui';
 import { getForecastBannerState } from '../../utils/forecastStatus';
 import { formatShekels } from '../../utils/money';
 
-// `forecast.recommendation` (docs/API.md § Calendar & Forecast) is
-// server-generated free text with an interpolated envelope name, not
-// client-authored UI copy — there's no t() key for it, same as how
-// errorMessages.js surfaces raw server strings. Known gap: it renders in
-// Hebrew from mockForecastService.js today, but nothing guarantees B-07
-// will localize it once it ships — worth a follow-up against B-07, not
-// something to solve in A-13.
+// `forecast.recommendation` (docs/API.md § Calendar & Forecast) is a structured
+// object { envelopeId, envelopeName, cutAgorot } — the server can't hand back a
+// finished sentence since the client defaults to Hebrew, so this interpolates it
+// via the `forecast.recommendation` i18n key, same pattern as `forecast.shortfall`.
 export function ForecastBanner({ forecast, isLoading, isError }) {
   const { t } = useTranslation();
 
@@ -37,7 +34,12 @@ export function ForecastBanner({ forecast, isLoading, isError }) {
             {t('forecast.shortfall', { amount: formatShekels(Math.abs(projectedBalanceAgorot)) })}
           </p>
         </div>
-        <p className="text-sm text-text-secondary">{recommendation}</p>
+        <p className="text-sm text-text-secondary">
+          {t('forecast.recommendation', {
+            amount: formatShekels(recommendation.cutAgorot),
+            envelope: recommendation.envelopeName,
+          })}
+        </p>
       </div>
     </Card>
   );
