@@ -113,4 +113,4 @@ Before checking a box:
 
 | Item | Notes |
 |---|---|
-| Mock transaction descriptions are English-only (`DEFAULT_TRANSACTIONS` in `mockTransactionService.js` — "Rent payment", "Electric bill", etc.) | Translate to Hebrew to match the rest of the now Hebrew-default UI (`A-19`) |
+| None currently tracked | The prior entry here (English-only mock transaction descriptions in `mockTransactionService.js`) no longer applies — that file was removed in the categories refactor, and the last remaining English mock strings (`mockCalendarService.js`'s `SAMPLE_EVENTS` titles) were translated to Hebrew during the A-13 refinement pass |

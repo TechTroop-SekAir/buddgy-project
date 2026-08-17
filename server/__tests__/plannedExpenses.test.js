@@ -13,6 +13,7 @@ jest.mock('../services/claudeService', () => ({
 
 const mockPlannedExpenseFindAll = jest.fn();
 const mockPlannedExpenseFindOne = jest.fn();
+const mockPlannedExpenseCreate = jest.fn();
 const mockEnvelopeFindOne = jest.fn();
 
 // Mock at the models boundary, same shape as __tests__/envelopes.test.js and
@@ -22,6 +23,7 @@ jest.mock('../models', () => ({
   PlannedExpense: {
     findAll: (...args) => mockPlannedExpenseFindAll(...args),
     findOne: (...args) => mockPlannedExpenseFindOne(...args),
+    create: (...args) => mockPlannedExpenseCreate(...args),
   },
   Envelope: {
     findOne: (...args) => mockEnvelopeFindOne(...args),
@@ -99,6 +101,74 @@ describe('GET /api/planned-expenses', () => {
     const res = await request(app).get('/api/planned-expenses?month=2026-08');
     expect(res.status).toBe(401);
     expect(mockPlannedExpenseFindAll).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/planned-expenses', () => {
+  it('creates a manual planned expense owned by the caller', async () => {
+    mockEnvelopeFindOne.mockResolvedValue({ id: OWNED_ENVELOPE_ID });
+    mockPlannedExpenseCreate.mockResolvedValue(
+      makePlannedExpenseInstance({
+        id: 7,
+        user_id: AUTHED_USER_ID,
+        envelope_id: OWNED_ENVELOPE_ID,
+        title: 'Water bill',
+        amount_agorot: 8000,
+        due_date: '2026-08-25',
+        google_event_id: null,
+        is_confirmed: false,
+        source: 'manual',
+      })
+    );
+
+    const res = await request(app)
+      .post('/api/planned-expenses')
+      .set('Authorization', authHeader())
+      .send({ envelope_id: OWNED_ENVELOPE_ID, title: 'Water bill', amount_agorot: 8000, due_date: '2026-08-25' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data).toEqual(expect.objectContaining({ id: 7, source: 'manual', google_event_id: null }));
+    expect(mockPlannedExpenseCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: AUTHED_USER_ID,
+        envelope_id: OWNED_ENVELOPE_ID,
+        google_event_id: null,
+        is_confirmed: false,
+        source: 'manual',
+      })
+    );
+  });
+
+  it('rejects a foreign envelope_id without creating anything', async () => {
+    mockEnvelopeFindOne.mockResolvedValue(null);
+
+    const res = await request(app)
+      .post('/api/planned-expenses')
+      .set('Authorization', authHeader())
+      .send({ envelope_id: FOREIGN_ENVELOPE_ID, title: 'Water bill', amount_agorot: 8000, due_date: '2026-08-25' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('validation failed: envelope_id');
+    expect(mockPlannedExpenseCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects missing required fields', async () => {
+    const res = await request(app)
+      .post('/api/planned-expenses')
+      .set('Authorization', authHeader())
+      .send({ title: 'Water bill' });
+
+    expect(res.status).toBe(400);
+    expect(mockPlannedExpenseCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects with 401 when unauthenticated', async () => {
+    const res = await request(app)
+      .post('/api/planned-expenses')
+      .send({ title: 'Water bill', amount_agorot: 8000, due_date: '2026-08-25' });
+
+    expect(res.status).toBe(401);
+    expect(mockPlannedExpenseCreate).not.toHaveBeenCalled();
   });
 });
 

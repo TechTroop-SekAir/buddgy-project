@@ -137,7 +137,7 @@ sequenceDiagram
 
 1. Sum `envelopes.monthly_budget_agorot` across all envelopes for the month → `totalBudget`
 2. Sum `transactions.amount_agorot` already recorded (including unassigned ones) → `totalActualSpentAgorot`
-3. Sum `planned_expenses.amount_agorot` where `is_confirmed = true` and `due_date` falls in the month → `totalPlannedExpensesAgorot` (commitment-based: only confirmed planned expenses count, matching the "confirm" action on the Planned Expenses page)
+3. Sum `planned_expenses.amount_agorot` where `is_confirmed = true` and `due_date` falls in the month → `totalPlannedExpensesAgorot` (commitment-based: only confirmed planned expenses count, matching the "confirm" action on the Planned Expenses page). This sums every confirmed row regardless of `source` — a manually-entered planned expense (`source: 'manual'`, `POST /api/planned-expenses`) counts identically to a calendar-synced one; no separate handling needed.
 4. `totalEndOfMonthSpendAgorot` = `totalActualSpentAgorot` + `totalPlannedExpensesAgorot`
 5. `projectedBalanceAgorot` = `totalBudget` − `totalEndOfMonthSpendAgorot` (also shown to the user as "Remaining Total Budget"; negative is highlighted as a projected deficit)
 6. `atRiskEnvelopes` = envelopes whose individual remaining balance goes negative under the same projection

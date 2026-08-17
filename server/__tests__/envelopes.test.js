@@ -94,6 +94,23 @@ describe('GET /api/envelopes', () => {
     expect(mockEnvelopeFindAll).toHaveBeenNthCalledWith(2, expect.objectContaining({ where: expect.objectContaining({ month: '2026-08-01' }) }));
   });
 
+  it('scopes the spent_agorot sum to the queried month, excluding transactions dated outside it', async () => {
+    mockEnvelopeFindAll.mockResolvedValue([
+      makeEnvelopeInstance({ id: 1, user_id: AUTHED_USER_ID, name: 'Groceries', monthly_budget_agorot: 200000, color: null, month: '2026-08-01' }),
+    ]);
+    mockTransactionFindAll.mockResolvedValue([]);
+
+    await request(app).get('/api/envelopes?month=2026-08').set('Authorization', authHeader());
+
+    expect(mockTransactionFindAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          transaction_date: { [require('sequelize').Op.between]: ['2026-08-01', '2026-08-31'] },
+        }),
+      })
+    );
+  });
+
   it('returns [] without querying transactions when the caller has no envelopes', async () => {
     mockEnvelopeFindAll.mockResolvedValue([]);
 

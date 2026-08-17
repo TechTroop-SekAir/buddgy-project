@@ -3,6 +3,7 @@
 const { Op, fn, col } = require('sequelize');
 const { Envelope, Transaction } = require('../models');
 const AppError = require('../utils/AppError');
+const { monthRange } = require('../utils/month');
 
 // Envelopes are scoped to a single month (docs/DATABASE.md § envelopes,
 // first-of-month convention) — every caller normalizes to that shape so a
@@ -38,8 +39,13 @@ async function list(userId, monthInput) {
   if (!envelopes.length) return [];
 
   const envelopeIds = envelopes.map((e) => e.id);
+  const { from, to } = monthRange(month);
   const sums = await Transaction.findAll({
-    where: { user_id: userId, envelope_id: { [Op.in]: envelopeIds } },
+    where: {
+      user_id: userId,
+      envelope_id: { [Op.in]: envelopeIds },
+      transaction_date: { [Op.between]: [from, to] },
+    },
     attributes: ['envelope_id', [fn('COALESCE', fn('SUM', col('amount_agorot')), 0), 'spent_agorot']],
     group: ['envelope_id'],
     raw: true,

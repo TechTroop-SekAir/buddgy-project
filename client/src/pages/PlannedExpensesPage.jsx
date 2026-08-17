@@ -1,14 +1,14 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Badge, Select, Table } from '../components/ui';
+import { Button, Table } from '../components/ui';
+import { PlannedExpenseFormModal } from '../components/plannedExpenses/PlannedExpenseFormModal';
+import { PlannedExpenseRow } from '../components/plannedExpenses/PlannedExpenseRow';
 import { useAuth } from '../context/AuthContext';
 import plannedExpenseService from '../services/plannedExpenseService';
 import categoryService from '../services/categoryService';
 import { getCurrentMonth } from '../utils/month';
-import { formatDate } from '../utils/date';
-import { formatShekels } from '../utils/money';
-import { hasMissingAmount } from '../utils/plannedExpenseStatus';
 
 export function PlannedExpensesPage() {
   const { t } = useTranslation();
@@ -16,6 +16,7 @@ export function PlannedExpensesPage() {
   const queryClient = useQueryClient();
   const month = getCurrentMonth();
   const queryKey = ['planned-expenses', user.id, month];
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const { data: plannedExpenses = [], isLoading } = useQuery({
     queryKey,
@@ -39,14 +40,34 @@ export function PlannedExpensesPage() {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: (payload) => plannedExpenseService.create(user.id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-text-primary">{t('plannedExpenses.title')}</h1>
-        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-          {t('nav.backToDashboard')}
-        </Link>
+        <div className="flex items-center gap-4">
+          <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
+            {t('plannedExpenses.addButton')}
+          </Button>
+          <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
+            {t('nav.backToDashboard')}
+          </Link>
+        </div>
       </div>
+
+      <PlannedExpenseFormModal
+        opened={isAddOpen}
+        categoryOptions={categoryOptions}
+        onClose={() => setIsAddOpen(false)}
+        onSubmit={(payload) => createMutation.mutateAsync(payload)}
+      />
 
       {isLoading && <p className="text-text-secondary mt-6">{t('plannedExpenses.loading')}</p>}
 
@@ -73,46 +94,15 @@ export function PlannedExpensesPage() {
             </Table.Thead>
             <Table.Tbody>
               {plannedExpenses.map((expense) => (
-                <Table.Tr key={expense.id}>
-                  <Table.Td className="text-start">{formatDate(expense.due_date)}</Table.Td>
-                  <Table.Td className="text-start">{expense.title}</Table.Td>
-                  <Table.Td className="text-end">
-                    {hasMissingAmount(expense) ? (
-                      <Badge color="status-warning">{t('plannedExpenses.missingAmount.badge')}</Badge>
-                    ) : (
-                      formatShekels(expense.amount_agorot)
-                    )}
-                  </Table.Td>
-                  <Table.Td className="text-start">
-                    <Select
-                      placeholder={t('plannedExpenses.envelopeNone')}
-                      data={categoryOptions}
-                      value={expense.envelope_id != null ? String(expense.envelope_id) : null}
-                      onChange={(value) =>
-                        updateMutation.mutate({
-                          id: expense.id,
-                          payload: { envelope_id: value ? Number(value) : null },
-                        })
-                      }
-                      clearable
-                    />
-                  </Table.Td>
-                  <Table.Td className="text-start">
-                    {expense.is_confirmed ? (
-                      <Badge color="status-ok">{t('plannedExpenses.confirm')}</Badge>
-                    ) : (
-                      <Badge
-                        color="gray"
-                        className="cursor-pointer"
-                        onClick={() =>
-                          updateMutation.mutate({ id: expense.id, payload: { is_confirmed: true } })
-                        }
-                      >
-                        {t('plannedExpenses.confirm')}
-                      </Badge>
-                    )}
-                  </Table.Td>
-                </Table.Tr>
+                <PlannedExpenseRow
+                  key={expense.id}
+                  plannedExpense={expense}
+                  categoryOptions={categoryOptions}
+                  onReassign={(id, envelopeId) =>
+                    updateMutation.mutateAsync({ id, payload: { envelope_id: envelopeId } })
+                  }
+                  onConfirm={(id) => updateMutation.mutateAsync({ id, payload: { is_confirmed: true } })}
+                />
               ))}
             </Table.Tbody>
           </Table>

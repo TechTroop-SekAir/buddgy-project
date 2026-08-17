@@ -113,6 +113,17 @@
     "amountHeader": "סכום",
     "addTransaction": "הוספת תנועה"
   },
+  "transactionEditModal": {
+    "title": "עריכת תנועה",
+    "amountLabel": "סכום",
+    "descriptionLabel": "תיאור",
+    "dateLabel": "תאריך",
+    "envelopeLabel": "קטגוריה",
+    "submit": "שמירת שינויים",
+    "amountInvalid": "הסכום חייב להיות גדול מ-0",
+    "descriptionRequired": "יש להזין תיאור",
+    "dateRequired": "יש לבחור תאריך"
+  },
   "quickEntry": {
     "openButton": "רישום מהיר",
     "modalTitle": "רישום מהיר",
@@ -269,9 +280,22 @@
     "confirmedHeader": "אושר",
     "envelopeNone": "ללא שיוך",
     "confirm": "אישור",
+    "addButton": "הוספת הוצאה מתוכננת",
     "missingAmount": {
       "badge": "סכום חסר"
     }
+  },
+  "addPlannedExpenseModal": {
+    "title": "הוספת הוצאה מתוכננת",
+    "titleLabel": "כותרת",
+    "titlePlaceholder": "לדוגמה: שכר דירה",
+    "amountLabel": "סכום",
+    "dueDateLabel": "תאריך יעד",
+    "envelopeLabel": "קטגוריה",
+    "submit": "הוספה",
+    "titleRequired": "יש להזין כותרת",
+    "amountInvalid": "הסכום חייב להיות גדול מ-0",
+    "dueDateRequired": "יש לבחור תאריך יעד"
   },
   "admin": {
     "title": "פאנל ניהול",
