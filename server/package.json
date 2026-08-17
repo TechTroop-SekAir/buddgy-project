@@ -11,9 +11,11 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "test": "jest --runInBand --passWithNoTests",
+    "test:integration": "node scripts/runWithTestDb.js jest --config jest.integration.config.js --runInBand",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
+    "db:migrate:test": "node scripts/runWithTestDb.js sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all",
     "db:seed:dev": "node seed.js"
   },

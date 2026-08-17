@@ -26,6 +26,12 @@ env:
   GOOGLE_REDIRECT_URI: http://localhost:4000/api/calendar/callback
   CLIENT_URL: http://localhost:5173
   DATABASE_URL: postgres://postgres:postgres@localhost:5432/buddgy_ci
+  # Same database as DATABASE_URL above — CI only provisions one Postgres
+  # service, so there's no separate buddgy_ci_test. Locally these point at
+  # two different databases (buddgy_dev vs buddgy_test, see
+  # scripts/create-test-db.sh) so `npm run test:integration`'s
+  # TRUNCATE-between-tests can never touch real dev data (ticket B-09).
+  DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/buddgy_ci
 
 jobs:
   server:
@@ -60,9 +66,7 @@ jobs:
         working-directory: server
 
       # Postgres alignment: run the real migrations, and their down side,
-      # against a real Postgres instance — this is the only place the
-      # production dialect actually gets exercised (both Jest test files
-      # fully mock the DB), and the only check that would catch a
+      # against a real Postgres instance — the only check that would catch a
       # migration written against SQLite-only syntax before it reaches
       # Railway. docs/DATABASE.md § Migration Conventions requires every
       # migration to have a complete `down`; `db:migrate:undo:all` is what
@@ -81,6 +85,15 @@ jobs:
 
       - name: Run tests
         run: npm test
+        working-directory: server
+
+      # server/__tests__/ (above) mocks ../models entirely — real Postgres,
+      # real constraints, and real requireAuth DB lookups only get exercised
+      # here, against server/tests/ (ticket B-09). No extra migrate step
+      # needed: DATABASE_URL_TEST points at the same buddgy_ci database the
+      # steps above already migrated, under the same NODE_ENV: test.
+      - name: Run integration tests
+        run: npm run test:integration
         working-directory: server
 
   client:
