@@ -12,9 +12,16 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const idParamsSchema = z.object({ id: z.coerce.number().int().positive() });
 const listQuerySchema = z.object({ month: z.string().regex(MONTH_RE, 'invalid month') });
-// google_event_id and user_id are never client-writable — google_event_id is
-// sync-owned (server/services/calendarSyncService.js UPSERTs it), user_id is
-// derived from the JWT.
+// google_event_id, source, and user_id are never client-writable — google_event_id
+// is sync-owned (server/services/calendarSyncService.js UPSERTs it), source is
+// server-assigned ('manual' for anything created here), user_id is derived
+// from the JWT.
+const createBodySchema = z.object({
+  envelope_id: z.number().int().positive().nullable().optional(),
+  title: z.string().trim().min(1).max(160),
+  amount_agorot: z.number().int().positive(),
+  due_date: z.string().regex(DATE_RE, 'invalid date'),
+});
 const updateBodySchema = z
   .object({
     envelope_id: z.number().int().positive().nullable(),
@@ -31,6 +38,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get('/', validate(listQuerySchema, 'query'), asyncHandler(plannedExpensesController.list));
+router.post('/', validate(createBodySchema), asyncHandler(plannedExpensesController.create));
 router
   .route('/:id')
   .all(validate(idParamsSchema, 'params'))

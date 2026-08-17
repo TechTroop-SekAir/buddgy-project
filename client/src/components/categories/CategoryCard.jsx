@@ -15,9 +15,10 @@ export function CategoryCard({ category, onDelete, onEdit, atRiskEnvelopeIds = [
 
   const { color, status, percentUsed } = getCategoryStatus(category);
   // Forward-looking forecast signal, independent of the percent-used status
-  // above — distinct from the "overBudget" badge (already-happened) so the
-  // two don't collapse into the same red for the user.
-  const atRisk = isCategoryAtRisk(category.id, atRiskEnvelopeIds);
+  // above — distinct from the "overBudget" badge (already-happened). Suppressed
+  // once the category has actually exceeded its budget: "at risk" means
+  // "projected to exceed," which is meaningless (and redundant) once it already has.
+  const atRisk = status !== 'overBudget' && isCategoryAtRisk(category.id, atRiskEnvelopeIds);
 
   const openConfirm = () => {
     setDeleteError('');

@@ -11,7 +11,11 @@ async function update(id, payload) {
   return api.patch(`/planned-expenses/${id}`, payload);
 }
 
-const realPlannedExpenseService = { list, update };
+async function create(userId, payload) {
+  return api.post('/planned-expenses', payload);
+}
+
+const realPlannedExpenseService = { list, update, create };
 
 // Paired with calendarService.js on the same VITE_USE_MOCK_CALENDAR flag
 // (not the global VITE_USE_MOCK_API — see calendarService.js's comment for

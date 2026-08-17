@@ -113,6 +113,17 @@
     "amountHeader": "Amount",
     "addTransaction": "Add Transaction"
   },
+  "transactionEditModal": {
+    "title": "Edit transaction",
+    "amountLabel": "Amount",
+    "descriptionLabel": "Description",
+    "dateLabel": "Date",
+    "envelopeLabel": "Category",
+    "submit": "Save changes",
+    "amountInvalid": "Amount must be greater than 0",
+    "descriptionRequired": "Description is required",
+    "dateRequired": "Date is required"
+  },
   "quickEntry": {
     "openButton": "Quick Add",
     "modalTitle": "Quick Add",
@@ -269,9 +280,22 @@
     "confirmedHeader": "Confirmed",
     "envelopeNone": "Unassigned",
     "confirm": "Confirm",
+    "addButton": "Add planned expense",
     "missingAmount": {
       "badge": "Missing amount"
     }
+  },
+  "addPlannedExpenseModal": {
+    "title": "Add planned expense",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Rent",
+    "amountLabel": "Amount",
+    "dueDateLabel": "Due date",
+    "envelopeLabel": "Category",
+    "submit": "Add",
+    "titleRequired": "Title is required",
+    "amountInvalid": "Amount must be greater than 0",
+    "dueDateRequired": "Due date is required"
   },
   "admin": {
     "title": "Admin Panel",

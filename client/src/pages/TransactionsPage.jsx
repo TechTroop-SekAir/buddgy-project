@@ -9,10 +9,10 @@ import categoryService from '../services/categoryService';
 import { TransactionFilters, UNASSIGNED_VALUE } from '../components/transactions/TransactionFilters';
 import { TransactionRow } from '../components/transactions/TransactionRow';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
+import { TransactionEditModal } from '../components/transactions/TransactionEditModal';
 import { getCurrentMonth } from '../utils/month';
 import { shiftMonth } from '../utils/date';
 import { formatShekels } from '../utils/money';
-import { getCategoryLabel } from '../utils/categoryLabel';
 
 export function TransactionsPage() {
   const { t } = useTranslation();
@@ -24,6 +24,7 @@ export function TransactionsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', user.id, month],
@@ -46,11 +47,21 @@ export function TransactionsPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }) => transactionService.update(id, payload),
+    onSuccess: () => {
+      // Reassigning envelope_id changes both the old and new envelope's
+      // spent totals, plus overall forecast — same invalidation set as create.
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+
   // Mantine's Select requires string option values (client/CLAUDE.md § Component
   // Boundary components pass through Mantine as-is) — category.id is a number
   // from the real API. Same conversion as QuickEntryModal.jsx / PlannedExpensesPage.jsx.
   const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
-  const categoryNameById = Object.fromEntries(categories.map((category) => [category.id, category.name]));
 
   const handleMonthChange = (delta) => {
     setMonth((current) => shiftMonth(current, delta));
@@ -131,6 +142,7 @@ export function TransactionsPage() {
                 <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
                 <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
                 <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
+                <th className="py-2 ps-0 font-medium text-end">{t('common.edit')}</th>
               </tr>
             </thead>
             <tbody>
@@ -138,11 +150,9 @@ export function TransactionsPage() {
                 <TransactionRow
                   key={transaction.id}
                   transaction={transaction}
-                  categoryLabel={
-                    transaction.envelope_id && categoryNameById[transaction.envelope_id]
-                      ? getCategoryLabel(categoryNameById[transaction.envelope_id], t)
-                      : t('transactions.uncategorized')
-                  }
+                  categoryOptions={categoryOptions}
+                  onReassign={(id, envelopeId) => updateMutation.mutate({ id, payload: { envelope_id: envelopeId } })}
+                  onEdit={setEditingTransaction}
                 />
               ))}
             </tbody>
@@ -154,6 +164,14 @@ export function TransactionsPage() {
         opened={isQuickEntryOpen}
         onClose={() => setIsQuickEntryOpen(false)}
         onConfirm={(payload) => quickEntryMutation.mutateAsync(payload)}
+      />
+
+      <TransactionEditModal
+        opened={editingTransaction != null}
+        transaction={editingTransaction}
+        categoryOptions={categoryOptions}
+        onClose={() => setEditingTransaction(null)}
+        onSubmit={(payload) => updateMutation.mutateAsync({ id: editingTransaction.id, payload })}
       />
     </div>
   );

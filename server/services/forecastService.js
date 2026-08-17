@@ -5,7 +5,26 @@ const { Envelope, Transaction, PlannedExpense } = require('../models');
 const { normalizeMonth } = require('./envelopeService');
 const { monthRange } = require('../utils/month');
 
-const EMPTY_FORECAST = { projectedBalanceAgorot: 0, atRiskEnvelopes: [], recommendation: null };
+const EMPTY_FORECAST = {
+  projectedBalanceAgorot: 0,
+  atRiskEnvelopes: [],
+  recommendation: null,
+  totalActualSpentAgorot: 0,
+  totalPlannedExpensesAgorot: 0,
+  totalEndOfMonthSpendAgorot: 0,
+  missingAmountPlannedExpenses: [],
+};
+
+const MISSING_AMOUNT_ATTRIBUTES = [
+  'id',
+  'envelope_id',
+  'title',
+  'amount_agorot',
+  'due_date',
+  'google_event_id',
+  'is_confirmed',
+  'source',
+];
 
 /** COALESCE'd SUM as a plain number — Postgres returns SUM as a string, and COALESCE keeps an empty aggregate at 0 rather than null. */
 async function sumAgorot(Model, column, where) {
@@ -60,12 +79,40 @@ async function get(userId, monthInput) {
     is_confirmed: true,
     due_date: { [Op.between]: [from, to] },
   });
+  const totalEndOfMonthSpendAgorot = overallActual + overallPlanned;
+
+  // Step 8 of docs/ARCHITECTURE.md § Forecast Computation — surfaced as an
+  // actionable prompt (MissingAmountPrompt.jsx) regardless of confirmation
+  // state, since an unconfirmed row can still need its amount filled in
+  // before the user ever gets to confirm it.
+  const missingAmountPlannedExpenses = (
+    await PlannedExpense.findAll({
+      where: {
+        user_id: userId,
+        due_date: { [Op.between]: [from, to] },
+        [Op.or]: [{ amount_agorot: null }, { amount_agorot: 0 }],
+      },
+      attributes: MISSING_AMOUNT_ATTRIBUTES,
+      order: [['due_date', 'ASC'], ['id', 'ASC']],
+      raw: true,
+    })
+  );
 
   if (!envelopes.length) {
     // Degrade gracefully rather than throw or divide by zero — docs/ARCHITECTURE.md
     // § Forecast Computation and .claude/commands/qa.md § Buddgy Critical Test Cases.
-    if (overallActual === 0 && overallPlanned === 0) return EMPTY_FORECAST;
-    return { projectedBalanceAgorot: -overallActual - overallPlanned, atRiskEnvelopes: [], recommendation: null };
+    if (overallActual === 0 && overallPlanned === 0 && missingAmountPlannedExpenses.length === 0) {
+      return EMPTY_FORECAST;
+    }
+    return {
+      projectedBalanceAgorot: -overallActual - overallPlanned,
+      atRiskEnvelopes: [],
+      recommendation: null,
+      totalActualSpentAgorot: overallActual,
+      totalPlannedExpensesAgorot: overallPlanned,
+      totalEndOfMonthSpendAgorot,
+      missingAmountPlannedExpenses,
+    };
   }
 
   const envelopeIds = envelopes.map((e) => e.id);
@@ -106,7 +153,15 @@ async function get(userId, monthInput) {
     }
   }
 
-  return { projectedBalanceAgorot, atRiskEnvelopes, recommendation };
+  return {
+    projectedBalanceAgorot,
+    atRiskEnvelopes,
+    recommendation,
+    totalActualSpentAgorot: overallActual,
+    totalPlannedExpensesAgorot: overallPlanned,
+    totalEndOfMonthSpendAgorot,
+    missingAmountPlannedExpenses,
+  };
 }
 
 module.exports = { get };

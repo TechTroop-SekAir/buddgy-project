@@ -16,6 +16,10 @@ async function create(userId, payload) {
   return api.post('/transactions', payload);
 }
 
-const transactionService = { list, parse, create };
+async function update(id, payload) {
+  return api.patch(`/transactions/${id}`, payload);
+}
+
+const transactionService = { list, parse, create, update };
 
 export default transactionService;

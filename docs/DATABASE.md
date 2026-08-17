@@ -9,7 +9,7 @@
 | [users](#users) | Auth identity, role, Google token |
 | [envelopes](#envelopes) | Per-month budget buckets |
 | [transactions](#transactions) | Actual spend, from any of the 3 input channels |
-| [planned_expenses](#planned_expenses) | Future spend synced from Google Calendar |
+| [planned_expenses](#planned_expenses) | Future spend, from calendar sync or manual entry |
 | [csv_imports](#csv_imports) | Audit trail of bank-statement uploads |
 | [categories](#categories) | Global admin category catalog (feeds AI classification) |
 | [Indexes](#indexes) | What's indexed and why |
@@ -66,6 +66,8 @@ erDiagram
 
 **Note:** an envelope is scoped to a single month — "Groceries" for August and "Groceries" for September are two rows. This is what makes month-over-month history (`GET /api/envelopes?month=`) and per-month budgets work without a separate versioning table.
 
+`spent_agorot` (returned by `GET /api/envelopes`, not a stored column) is computed by summing `transactions.amount_agorot` for the envelope, filtered to `transaction_date` within the envelope's own month — matching how the forecast endpoint scopes its per-envelope headroom, so the two numbers never disagree over a transaction dated outside the envelope's month.
+
 ## transactions
 
 | Column | Type | Notes |
@@ -86,11 +88,12 @@ erDiagram
 | id | SERIAL PK | |
 | user_id | INT FK → users | `ON DELETE CASCADE` |
 | envelope_id | INT FK → envelopes | `ON DELETE SET NULL` — nullable until the user assigns it |
-| title | VARCHAR(160) | Calendar event title |
-| amount_agorot | INTEGER | Extracted from event title |
+| title | VARCHAR(160) | Calendar event title, or user-entered title for a manual row |
+| amount_agorot | INTEGER | Extracted from event title, or user-entered for a manual row |
 | due_date | DATE | |
-| google_event_id | VARCHAR(128) | UNIQUE — prevents duplicate sync |
+| google_event_id | VARCHAR(128) | UNIQUE — prevents duplicate sync; NULL for manual rows |
 | is_confirmed | BOOLEAN | DEFAULT false |
+| source | VARCHAR(20) | `'calendar'` \| `'manual'` — DEFAULT `'calendar'` |
 
 ## csv_imports
 
