@@ -16,8 +16,8 @@ Related: `.claude/commands/qa.md` (full process — this file is the spec, that 
 ## Strategy
 
 Three layers, detailed in `.claude/commands/qa.md` § Test Layers:
-- **Unit** (Jest) — pure functions and service logic, mocked externals
-- **Integration** (Jest + Supertest) — API endpoints against a real test DB
+- **Unit** (Jest) — pure functions and service logic, mocked externals. `server/__tests__/*.test.js`, run via `npm test`.
+- **Integration** (Jest + Supertest) — API endpoints against a real test DB. `server/tests/*.integration.test.js` (ticket B-09), run via `npm run test:integration`, which points `DATABASE_URL` at `DATABASE_URL_TEST` (a dedicated `buddgy_test` database — see `scripts/create-test-db.sh` for local one-time setup; CI reuses its existing `buddgy_ci` service). `server/tests/helpers/db.js`'s `resetDb()` truncates every table between tests and refuses to run against a database whose name doesn't end in `_test`, as a second guard against ever touching dev data.
 - **E2E** (Playwright) — full user flows through the browser
 
 ## Coverage Targets
