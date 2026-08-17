@@ -6,6 +6,7 @@ import { TransactionsPage } from './pages/TransactionsPage';
 import { ImportPage } from './pages/ImportPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { PlannedExpensesPage } from './pages/PlannedExpensesPage';
+import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -25,6 +26,16 @@ function PublicOnlyRoute({ children }) {
   const { user, isLoading } = useAuth();
   if (isLoading) return null;
   return user ? <Navigate to="/dashboard" replace /> : children;
+}
+
+// Nested inside ProtectedRoute (ticket A-14), so an unauthenticated visit to
+// /admin still lands on /login rather than /dashboard. Authenticated
+// non-admins are redirected to /dashboard, not /login — they're just not
+// authorized, not unauthenticated.
+function AdminRoute({ children }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+  return user?.role === 'admin' ? children : <Navigate to="/dashboard" replace />;
 }
 
 export function AppRoutes() {
@@ -84,6 +95,16 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <PlannedExpensesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
           </ProtectedRoute>
         }
       />

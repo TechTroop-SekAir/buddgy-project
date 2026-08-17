@@ -1,0 +1,41 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Tabs } from '../components/ui';
+import { AdminCategoriesTable } from '../components/admin/AdminCategoriesTable';
+import { AdminUsersTable } from '../components/admin/AdminUsersTable';
+import { AdminStatsCards } from '../components/admin/AdminStatsCards';
+
+export function AdminPage() {
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState('categories');
+
+  return (
+    <div className="p-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-text-primary">{t('admin.title')}</h1>
+        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
+          {t('nav.backToDashboard')}
+        </Link>
+      </div>
+
+      <Tabs value={activeTab} onChange={setActiveTab} className="mt-6">
+        <Tabs.List>
+          <Tabs.Tab value="categories">{t('admin.tabs.categories')}</Tabs.Tab>
+          <Tabs.Tab value="users">{t('admin.tabs.users')}</Tabs.Tab>
+          <Tabs.Tab value="stats">{t('admin.tabs.stats')}</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="categories">
+          <AdminCategoriesTable />
+        </Tabs.Panel>
+        <Tabs.Panel value="users">
+          <AdminUsersTable />
+        </Tabs.Panel>
+        <Tabs.Panel value="stats">
+          <AdminStatsCards />
+        </Tabs.Panel>
+      </Tabs>
+    </div>
+  );
+}

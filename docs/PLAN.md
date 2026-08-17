@@ -55,8 +55,8 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [ ] **A-19** i18n/RTL infra (Hebrew default) — *landed with A-10; react-i18next, `src/locales/`, `LocaleContext`, Mantine `DirectionProvider` all in place and every existing page/component uses it. Remaining: keep it current as new pages ship (see `client/CLAUDE.md` § i18n & RTL).*
 - [x] **A-11** CSV import UI (upload → mapping → confirm) — *Day 7, needs Ofek's C-04*
 - [x] **A-12** Calendar connect/sync UI + planned-expense assign — *Day 8, needs Ofek's C-06*
-- [ ] **A-13** Forecast banner + at-risk highlighting — *Day 9, needs Matan's B-07*
-- [ ] **A-14** Admin panel — *Day 9, needs Matan's B-08*
+- [x] **A-13** Forecast banner + at-risk highlighting — *Day 9. Implemented: `client/src/components/categories/ForecastBanner.jsx` (banner), `CategoryCard.jsx` (at-risk border/badge), `MissingAmountPrompt.jsx`, `SummaryBar.jsx`, `client/src/utils/forecastStatus.js` + `categoryStatus.js` (pure helpers), wired into `DashboardPage.jsx` with forecast query invalidated on every money-relevant mutation. `client/src/services/forecastService.js` calls the real `/forecast` endpoint. i18n complete in `en.json`/`he.json`.*
+- [x] **A-14** Admin panel — *Day 9, needs Matan's B-08*
 - [ ] **A-15** Month history navigation — *Day 10*
 - [ ] **A-16** Responsive pass across all pages — *Day 10*
 - [ ] **A-17** Empty/loading/error states audit — *Day 10*

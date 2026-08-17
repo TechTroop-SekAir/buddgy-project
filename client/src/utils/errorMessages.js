@@ -17,7 +17,11 @@ const ERROR_KEYS = {
   'validation failed: amount_agorot': 'errors.validation.amountAgorot',
   'validation failed: transaction_date': 'errors.validation.transactionDate',
   'validation failed: description': 'errors.validation.description',
+  'validation failed: name_he': 'errors.validation.nameHe',
+  'validation failed: name_en': 'errors.validation.nameEn',
+  'validation failed: color': 'errors.validation.color',
   'not found': 'errors.notFound',
+  forbidden: 'errors.forbidden',
 };
 
 export function getErrorMessage(message, t) {

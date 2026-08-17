@@ -10,3 +10,4 @@ export { DateInput } from './DateInput';
 export { Textarea } from './Textarea';
 export { FileInput } from './FileInput';
 export { Table } from './Table';
+export { Tabs } from './Tabs';
