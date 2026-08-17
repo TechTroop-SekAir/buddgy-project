@@ -6,9 +6,6 @@ import { Badge, Button, Card, Modal } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import calendarService from '../services/calendarService';
 
-// Server error strings from server/services/calendarSyncService.js /
-// server/services/googleCalendarService.js, mapped to translation keys —
-// never surface a raw server string (client/CLAUDE.md § Async UX Contract).
 const ERROR_KEY_BY_MESSAGE = {
   'Google Calendar is not connected.': 'calendar.error.notConnected',
   'Google Calendar access was revoked. Please reconnect.': 'calendar.error.revoked',
@@ -20,6 +17,16 @@ function resolveErrorKey(message) {
   return ERROR_KEY_BY_MESSAGE[message] || 'calendar.error.generic';
 }
 
+function checkMockConnected(userId) {
+  try {
+    const raw = localStorage.getItem('buddgy_mock_calendar_connected');
+    const ids = raw ? JSON.parse(raw) : [];
+    return ids.includes(userId) || ids.includes(String(userId)) || ids.includes(Number(userId));
+  } catch {
+    return false;
+  }
+}
+
 export function SettingsPage() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
@@ -29,9 +36,13 @@ export function SettingsPage() {
   const [syncError, setSyncError] = useState('');
   const [disconnectOpen, setDisconnectOpen] = useState(false);
 
-  // Landing spot for GET /api/calendar/callback's redirect
-  // (server/routes/calendar.js): ?calendar=connected | ?calendar=error.
-  // Stripped immediately so a refresh doesn't re-show the banner.
+  const isMock = import.meta.env.VITE_USE_MOCK_CALENDAR === 'true';
+  const isCalendarConnected = Boolean(
+    user?.connected ||
+    user?.is_calendar_connected ||
+    (isMock && checkMockConnected(user?.id))
+  );
+
   useEffect(() => {
     const calendarParam = searchParams.get('calendar');
     if (!calendarParam) return;
@@ -50,14 +61,14 @@ export function SettingsPage() {
   }, []);
 
   const connectMutation = useMutation({
-    mutationFn: () => calendarService.getConnectUrl(user.id),
+    mutationFn: () => calendarService.getConnectUrl(user?.id),
     onSuccess: ({ url }) => {
       window.location.href = url;
     },
   });
 
   const syncMutation = useMutation({
-    mutationFn: () => calendarService.sync(user.id),
+    mutationFn: () => calendarService.sync(user?.id),
     onSuccess: (data) => {
       setSyncError('');
       setSyncResult(data.newEvents);
@@ -69,7 +80,7 @@ export function SettingsPage() {
   });
 
   const disconnectMutation = useMutation({
-    mutationFn: () => calendarService.disconnect(user.id),
+    mutationFn: () => calendarService.disconnect(user?.id),
     onSuccess: () => {
       setDisconnectOpen(false);
       setSyncResult(null);
@@ -101,10 +112,10 @@ export function SettingsPage() {
         <div className="p-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-text-primary">{t('calendar.title')}</h2>
-            {user.connected && <Badge color="status-ok">{t('calendar.connected')}</Badge>}
+            {isCalendarConnected && <Badge color="status-ok">{t('calendar.connected')}</Badge>}
           </div>
 
-          {!user.connected && (
+          {!isCalendarConnected && (
             <>
               <p className="text-sm text-text-secondary">{t('calendar.notConnected')}</p>
               <Button
@@ -119,7 +130,7 @@ export function SettingsPage() {
             </>
           )}
 
-          {user.connected && (
+          {isCalendarConnected && (
             <>
               <p className="text-sm text-text-secondary">{t('calendar.connectedBody')}</p>
 
@@ -148,7 +159,12 @@ export function SettingsPage() {
                 >
                   {syncMutation.isPending ? t('calendar.syncing') : t('calendar.sync')}
                 </Button>
-                <Button variant="outline" color="status-danger" onClick={() => setDisconnectOpen(true)}>
+                <Button
+                  variant="outline"
+                  color="status-danger"
+                  disabled={syncMutation.isPending}
+                  onClick={() => setDisconnectOpen(true)}
+                >
                   {t('calendar.disconnect')}
                 </Button>
               </div>
