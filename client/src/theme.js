@@ -21,6 +21,9 @@ export const theme = createTheme({
     'status-ok': Array(10).fill(readToken('--status-ok') || '#2f9e58'),
     'status-warning': Array(10).fill(readToken('--status-warning') || '#d98c1f'),
     'status-danger': Array(10).fill(readToken('--status-danger') || '#d9483a'),
+    // Forecast banner only (docs/DESIGN.md § Status Colors) — never used for
+    // individual envelope status, which stays on status-ok/warning/danger.
+    'status-forecast-alert': Array(10).fill(readToken('--status-forecast-alert') || '#b5350f'),
   },
   fontFamily: 'system-ui, -apple-system, sans-serif',
 });

@@ -58,6 +58,10 @@
     "totalBudget": "תקציב כולל",
     "totalSpent": "סך ההוצאות",
     "remainingBalance": "יתרה נותרת",
+    "totalPlannedExpenses": "סך ההוצאות המתוכננות",
+    "totalEndOfMonthSpend": "סך ההוצאות הצפוי בסוף החודש",
+    "remainingTotalBudget": "יתרת תקציב כוללת",
+    "projectedDeficitLabel": "גירעון צפוי",
     "spentOf": "{{spent}} מתוך {{budget}} נוצלו",
     "deleteConfirmTitle": "למחוק את הקטגוריה?",
     "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\". לא ניתן לבטל פעולה זו.",
@@ -65,7 +69,8 @@
       "overBudget": "חריגה מהתקציב",
       "nearDepletion": "מתקרבת לסיום",
       "onTrack": "במסלול"
-    }
+    },
+    "atRisk": "בסיכון"
   },
   "addCategoryModal": {
     "title": "הוספת קטגוריה",
@@ -236,6 +241,16 @@
       "generic": "משהו השתבש. יש לנסות שוב."
     }
   },
+  "forecast": {
+    "badge": "התרעת תחזית",
+    "shortfall": "גירעון צפוי: {{amount}}",
+    "loading": "טוען תחזית…",
+    "error": "לא הצלחנו לטעון את התחזית. יש לנסות שוב.",
+    "missingAmountTitle": "סכומים חסרים",
+    "missingAmountBody": "להוצאות המתוכננות הבאות, שסונכרנו מהיומן, אין עדיין סכום — יש להוסיף הערכה כדי שייכללו בתחזית.",
+    "missingAmountSubmit": "שמירה",
+    "missingAmountInvalid": "הסכום חייב להיות גדול מ-0"
+  },
   "plannedExpenses": {
     "title": "הוצאות מתוכננות",
     "loading": "טוען הוצאות מתוכננות…",
@@ -247,6 +262,9 @@
     "envelopeHeader": "קטגוריה",
     "confirmedHeader": "אושר",
     "envelopeNone": "ללא שיוך",
-    "confirm": "אישור"
+    "confirm": "אישור",
+    "missingAmount": {
+      "badge": "סכום חסר"
+    }
   }
 }

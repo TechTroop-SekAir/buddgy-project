@@ -40,6 +40,9 @@ export function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
       queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
+      // New transactions change actual spend, which the forecast depends on
+      // (docs/STATE.md's money-mutation-invalidates-forecast rule).
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
     },
   });
 

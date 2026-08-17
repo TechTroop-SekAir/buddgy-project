@@ -58,6 +58,10 @@
     "totalBudget": "Total Budget",
     "totalSpent": "Total Spent",
     "remainingBalance": "Remaining Balance",
+    "totalPlannedExpenses": "Total Planned Expenses",
+    "totalEndOfMonthSpend": "Total End-of-Month Spend",
+    "remainingTotalBudget": "Remaining Total Budget",
+    "projectedDeficitLabel": "Projected Deficit",
     "spentOf": "{{spent}} of {{budget}} spent",
     "deleteConfirmTitle": "Delete category?",
     "deleteConfirmBody": "This will permanently delete \"{{name}}\". This can't be undone.",
@@ -65,7 +69,8 @@
       "overBudget": "Over budget",
       "nearDepletion": "Near depletion",
       "onTrack": "On track"
-    }
+    },
+    "atRisk": "At risk"
   },
   "addCategoryModal": {
     "title": "Add category",
@@ -236,6 +241,16 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "forecast": {
+    "badge": "Forecast alert",
+    "shortfall": "Projected shortfall: {{amount}}",
+    "loading": "Loading forecast…",
+    "error": "Couldn't load your forecast. Please try again.",
+    "missingAmountTitle": "Missing amounts",
+    "missingAmountBody": "These calendar-synced expenses have no amount yet — add an estimate so they count toward your forecast.",
+    "missingAmountSubmit": "Save",
+    "missingAmountInvalid": "Amount must be greater than 0"
+  },
   "plannedExpenses": {
     "title": "Planned Expenses",
     "loading": "Loading planned expenses…",
@@ -247,6 +262,9 @@
     "envelopeHeader": "Category",
     "confirmedHeader": "Confirmed",
     "envelopeNone": "Unassigned",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "missingAmount": {
+      "badge": "Missing amount"
+    }
   }
 }

@@ -159,15 +159,23 @@ GET    /api/forecast?month=2026-08   🔒                                       
 { "id": 3, "user_id": 1, "envelope_id": 10, "title": "Car service", "amount_agorot": 45000,
   "due_date": "2026-08-20", "google_event_id": "evt_3", "is_confirmed": true }
 ```
-`GET` filters by `due_date` falling within the given month. `PATCH` accepts a partial body with any of `envelope_id` (nullable — must belong to the caller), `title`, `amount_agorot`, `due_date`, `is_confirmed`; `google_event_id` is sync-owned and never client-writable.
+`GET` filters by `due_date` falling within the given month. `PATCH` accepts a partial body with any of `envelope_id` (nullable — must belong to the caller), `title`, `amount_agorot`, `due_date`, `is_confirmed`; `google_event_id` is sync-owned and never client-writable. `amount_agorot` **can** be `null` or `0` ("missing amount") at rest — the DB column has no `NOT NULL` constraint — but neither current write path actually produces that today: calendar sync skips any event it can't parse an amount from rather than inserting one with a missing amount (`server/services/calendarSyncService.js`), and `PATCH`'s validation (`server/routes/plannedExpenses.js`) requires `amount_agorot` to be a positive integer whenever it's included, so a client can fill in a missing amount but can't currently clear one back to null via this route. In practice a missing amount is only reachable today through the client's mock calendar path (`VITE_USE_MOCK_CALENDAR=true`, the committed local-dev default), which writes directly to a local mock store with no such validation — worth a follow-up once the real endpoint is the default, if the product still wants a genuine "unknown amount" state representable server-side. The client (ticket A-13) treats it as a real case regardless of source, surfacing an actionable prompt rather than silently formatting a missing amount as ₪0.00.
 
 Forecast response `data`:
 ```json
 { "projectedBalanceAgorot": -48000, "atRiskEnvelopes": [3],
-  "recommendation": "Cut 500 ILS from the Entertainment envelope" }
+  "recommendation": "Cut 500 ILS from the Entertainment envelope",
+  "totalActualSpentAgorot": 320000, "totalPlannedExpensesAgorot": 45000,
+  "totalEndOfMonthSpendAgorot": 365000,
+  "missingAmountPlannedExpenses": [
+    { "id": 7, "title": "Dentist", "due_date": "2026-08-22" }
+  ] }
 ```
+`totalPlannedExpensesAgorot` sums only **confirmed** (`is_confirmed: true`) planned expenses for the month — the same commitment-based set already used for `projectedBalanceAgorot`/`atRiskEnvelopes`, so the totals stay internally consistent. `totalEndOfMonthSpendAgorot = totalActualSpentAgorot + totalPlannedExpensesAgorot`, and `projectedBalanceAgorot = totalBudget − totalEndOfMonthSpendAgorot` (the "Remaining Total Budget" the client shows — no separate field, it's the same number). `missingAmountPlannedExpenses` lists that month's planned expenses (confirmed or not) with a null/0 `amount_agorot`, for the client's actionable prompt; entries excluded from `totalPlannedExpensesAgorot` until their amount is filled in via `PATCH`.
 
-`atRiskEnvelopes` must resolve to `[]` (not error) when the user has zero envelopes or zero planned expenses for the month — see `.claude/commands/qa.md` § Buddgy Critical Test Cases.
+`atRiskEnvelopes` must resolve to `[]` (not error) when the user has zero envelopes or zero planned expenses for the month — see `.claude/commands/qa.md` § Buddgy Critical Test Cases. The same degrade-gracefully rule now also applies to the new totals (all `0`) and `missingAmountPlannedExpenses` (`[]`).
+
+**Client note:** until B-07 ships server-side, `client/src/services/forecastService.js` is hard-wired to `mockForecastService.js`, which computes this exact shape client-side from the real envelope/transaction/planned-expense data (see `docs/ARCHITECTURE.md` § Forecast Computation).
 
 ## Admin
 

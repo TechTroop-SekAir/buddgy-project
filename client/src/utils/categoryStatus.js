@@ -15,3 +15,18 @@ export function getCategoryStatus(category) {
   }
   return { color: 'status-ok', status: 'onTrack', percentUsed };
 }
+
+// Forward-looking signal from the forecast (docs/ARCHITECTURE.md § Forecast
+// Computation), independent of the percent-used status above — a category
+// can be on-track today and still at-risk once confirmed planned expenses
+// land. atRiskEnvelopeIds is the forecast's atRiskEnvelopes array.
+export function isCategoryAtRisk(categoryId, atRiskEnvelopeIds = []) {
+  return atRiskEnvelopeIds.includes(categoryId);
+}
+
+// Highest-spend-first ordering for the dashboard's category breakdown
+// (ticket A-13) — surfaces the categories eating the most budget without
+// mutating the query-cached array.
+export function sortCategoriesBySpent(categories) {
+  return [...categories].sort((a, b) => b.spent_agorot - a.spent_agorot);
+}
