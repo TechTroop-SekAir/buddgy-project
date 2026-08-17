@@ -8,6 +8,7 @@ import categoryService from '../services/categoryService';
 import { getCurrentMonth } from '../utils/month';
 import { formatDate } from '../utils/date';
 import { formatShekels } from '../utils/money';
+import { hasMissingAmount } from '../utils/plannedExpenseStatus';
 
 export function PlannedExpensesPage() {
   const { t } = useTranslation();
@@ -29,7 +30,13 @@ export function PlannedExpensesPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }) => plannedExpenseService.update(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      // Envelope assignment and is_confirmed both feed directly into the
+      // forecast formula (docs/ARCHITECTURE.md § Forecast Computation), so
+      // this must invalidate forecast too (docs/STATE.md's staleness rule).
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
   });
 
   return (
@@ -69,7 +76,13 @@ export function PlannedExpensesPage() {
                 <Table.Tr key={expense.id}>
                   <Table.Td className="text-start">{formatDate(expense.due_date)}</Table.Td>
                   <Table.Td className="text-start">{expense.title}</Table.Td>
-                  <Table.Td className="text-end">{formatShekels(expense.amount_agorot)}</Table.Td>
+                  <Table.Td className="text-end">
+                    {hasMissingAmount(expense) ? (
+                      <Badge color="status-warning">{t('plannedExpenses.missingAmount.badge')}</Badge>
+                    ) : (
+                      formatShekels(expense.amount_agorot)
+                    )}
+                  </Table.Td>
                   <Table.Td className="text-start">
                     <Select
                       placeholder={t('plannedExpenses.envelopeNone')}

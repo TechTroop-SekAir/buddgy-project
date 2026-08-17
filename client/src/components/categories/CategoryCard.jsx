@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge, Button, Card, Modal, Progress } from '../ui';
 import { CategoryFormModal } from './CategoryFormModal';
-import { getCategoryStatus } from '../../utils/categoryStatus';
+import { getCategoryStatus, isCategoryAtRisk } from '../../utils/categoryStatus';
 import { formatShekels } from '../../utils/money';
 import { getErrorMessage } from '../../utils/errorMessages';
 
-export function CategoryCard({ category, onDelete, onEdit }) {
+export function CategoryCard({ category, onDelete, onEdit, atRiskEnvelopeIds = [] }) {
   const { t } = useTranslation();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -14,6 +14,10 @@ export function CategoryCard({ category, onDelete, onEdit }) {
   const [editOpen, setEditOpen] = useState(false);
 
   const { color, status, percentUsed } = getCategoryStatus(category);
+  // Forward-looking forecast signal, independent of the percent-used status
+  // above — distinct from the "overBudget" badge (already-happened) so the
+  // two don't collapse into the same red for the user.
+  const atRisk = isCategoryAtRisk(category.id, atRiskEnvelopeIds);
 
   const openConfirm = () => {
     setDeleteError('');
@@ -39,11 +43,17 @@ export function CategoryCard({ category, onDelete, onEdit }) {
   };
 
   return (
-    <Card padding={0} className="bg-bg-surface border border-border-card rounded-lg">
+    <Card
+      padding={0}
+      className={`bg-bg-surface border rounded-lg ${atRisk ? 'border-status-warning' : 'border-border-card'}`}
+    >
       <div className="px-6 py-5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-text-primary">{category.name}</h3>
-          <Badge color={color}>{t(`categoryManagement.status.${status}`)}</Badge>
+          <div className="flex items-center gap-2">
+            {atRisk && <Badge color="status-warning">{t('categoryManagement.atRisk')}</Badge>}
+            <Badge color={color}>{t(`categoryManagement.status.${status}`)}</Badge>
+          </div>
         </div>
         <Progress value={Math.min(percentUsed * 100, 100)} color={color} />
         <p className="text-sm text-text-secondary">

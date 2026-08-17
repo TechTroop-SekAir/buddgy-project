@@ -67,6 +67,9 @@ export function ImportPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
       queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      // Imported rows are new transactions, which change actual spend that
+      // the forecast depends on (docs/STATE.md's staleness rule).
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
       setResult(data);
       setStep(STEP.DONE);
     },
