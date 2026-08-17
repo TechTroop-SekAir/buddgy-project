@@ -18,6 +18,7 @@ db.Transaction = require('./transaction')(sequelize, DataTypes);
 db.PlannedExpense = require('./plannedExpense')(sequelize, DataTypes);
 db.CsvImport = require('./csvImport')(sequelize, DataTypes);
 db.Category = require('./category')(sequelize, DataTypes);
+db.AiCall = require('./aiCall')(sequelize, DataTypes);
 
 // Associations — mirrors docs/DATABASE.md § ERD
 db.User.hasMany(db.Envelope, { foreignKey: 'user_id', onDelete: 'CASCADE' });
@@ -37,6 +38,11 @@ db.PlannedExpense.belongsTo(db.Envelope, { foreignKey: 'envelope_id' });
 
 db.User.hasMany(db.CsvImport, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 db.CsvImport.belongsTo(db.User, { foreignKey: 'user_id' });
+
+// SET NULL, not CASCADE — deleting a user must not erase historical AI
+// usage from /api/admin/stats' aiCallCount (docs/DATABASE.md § ai_calls).
+db.User.hasMany(db.AiCall, { foreignKey: 'user_id', onDelete: 'SET NULL' });
+db.AiCall.belongsTo(db.User, { foreignKey: 'user_id' });
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;

@@ -155,7 +155,7 @@ async function previewImport(userId, file) {
 
   const { headerRow, rows } = parseCsvBuffer(file.buffer);
   const sampleRows = rows.slice(0, SAMPLE_ROW_COUNT_FOR_AI);
-  const detectedMapping = await claudeService.detectColumnMapping(headerRow, sampleRows);
+  const detectedMapping = await claudeService.detectColumnMapping(userId, headerRow, sampleRows);
 
   const fileUrl = await storageService.uploadCsvFile(file.buffer, file.originalname);
 

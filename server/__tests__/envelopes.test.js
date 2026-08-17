@@ -16,6 +16,10 @@ const mockEnvelopeFindAll = jest.fn();
 const mockEnvelopeFindOne = jest.fn();
 const mockEnvelopeCreate = jest.fn();
 const mockTransactionFindAll = jest.fn();
+// requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
+// caller from a DB lookup, not just the JWT claim — every test here is a
+// single non-admin user, so echoing the signed id back is enough.
+const mockUserFindByPk = jest.fn((id) => Promise.resolve({ id, role: 'user', disabled: false }));
 
 // Mock at the models boundary, same shape as __tests__/csvImport.test.js and
 // __tests__/quickEntry.test.js — the DB stays fully mocked here; CI's real
@@ -28,6 +32,9 @@ jest.mock('../models', () => ({
   },
   Transaction: {
     findAll: (...args) => mockTransactionFindAll(...args),
+  },
+  User: {
+    findByPk: (...args) => mockUserFindByPk(...args),
   },
 }));
 

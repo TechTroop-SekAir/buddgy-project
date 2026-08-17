@@ -26,6 +26,10 @@ const mockCsvImportCreate = jest.fn();
 const mockCsvImportFindOne = jest.fn();
 const mockTransactionFindAll = jest.fn();
 const mockTransactionBulkCreate = jest.fn();
+// requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
+// caller from a DB lookup, not just the JWT claim — every test here is a
+// single non-admin user, so a constant resolved value is enough.
+const mockUserFindByPk = jest.fn((id) => Promise.resolve({ id, role: 'user', disabled: false }));
 jest.mock('../models', () => ({
   CsvImport: {
     create: (...args) => mockCsvImportCreate(...args),
@@ -34,6 +38,9 @@ jest.mock('../models', () => ({
   Transaction: {
     findAll: (...args) => mockTransactionFindAll(...args),
     bulkCreate: (...args) => mockTransactionBulkCreate(...args),
+  },
+  User: {
+    findByPk: (...args) => mockUserFindByPk(...args),
   },
   sequelize: {
     transaction: async (fn) => fn({}),

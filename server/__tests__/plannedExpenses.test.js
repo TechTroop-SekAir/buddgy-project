@@ -15,6 +15,10 @@ const mockPlannedExpenseFindAll = jest.fn();
 const mockPlannedExpenseFindOne = jest.fn();
 const mockPlannedExpenseCreate = jest.fn();
 const mockEnvelopeFindOne = jest.fn();
+// requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
+// caller from a DB lookup, not just the JWT claim — every test here is a
+// single non-admin user, so echoing the signed id back is enough.
+const mockUserFindByPk = jest.fn((id) => Promise.resolve({ id, role: 'user', disabled: false }));
 
 // Mock at the models boundary, same shape as __tests__/envelopes.test.js and
 // __tests__/transactions.test.js — DB stays mocked; CI's real Postgres run
@@ -27,6 +31,9 @@ jest.mock('../models', () => ({
   },
   Envelope: {
     findOne: (...args) => mockEnvelopeFindOne(...args),
+  },
+  User: {
+    findByPk: (...args) => mockUserFindByPk(...args),
   },
 }));
 

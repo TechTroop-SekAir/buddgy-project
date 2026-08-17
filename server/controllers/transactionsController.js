@@ -19,7 +19,7 @@ async function parse(req, res) {
     attributes: ['id', 'name'],
   });
 
-  const result = await claudeService.parseQuickEntry(text.trim(), envelopes);
+  const result = await claudeService.parseQuickEntry(req.user.id, text.trim(), envelopes);
   return ok(res, result);
 }
 
