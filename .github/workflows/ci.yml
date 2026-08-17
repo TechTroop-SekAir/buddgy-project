@@ -26,12 +26,14 @@ env:
   GOOGLE_REDIRECT_URI: http://localhost:4000/api/calendar/callback
   CLIENT_URL: http://localhost:5173
   DATABASE_URL: postgres://postgres:postgres@localhost:5432/buddgy_ci
-  # Same database as DATABASE_URL above — CI only provisions one Postgres
-  # service, so there's no separate buddgy_ci_test. Locally these point at
-  # two different databases (buddgy_dev vs buddgy_test, see
-  # scripts/create-test-db.sh) so `npm run test:integration`'s
-  # TRUNCATE-between-tests can never touch real dev data (ticket B-09).
-  DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/buddgy_ci
+  # A SEPARATE database on the same Postgres service — not buddgy_ci above.
+  # server/tests/helpers/db.js's resetDb() refuses to TRUNCATE any database
+  # whose name doesn't end in "_test", as a hard guard against ever wiping
+  # real data (ticket B-09); buddgy_ci fails that check by design, so it
+  # can't be reused here even though it's disposable in CI too. Created by
+  # the "Create dedicated integration test database" step below, mirroring
+  # local dev's buddgy_dev vs buddgy_test split (scripts/create-test-db.sh).
+  DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/buddgy_ci_test
 
 jobs:
   server:
@@ -89,9 +91,19 @@ jobs:
 
       # server/__tests__/ (above) mocks ../models entirely — real Postgres,
       # real constraints, and real requireAuth DB lookups only get exercised
-      # here, against server/tests/ (ticket B-09). No extra migrate step
-      # needed: DATABASE_URL_TEST points at the same buddgy_ci database the
-      # steps above already migrated, under the same NODE_ENV: test.
+      # here, against server/tests/ (ticket B-09), on its own database
+      # (buddgy_ci_test) — resetDb()'s TRUNCATE-between-tests refuses to run
+      # against anything not named *_test, so it can't share buddgy_ci above.
+      - name: Create dedicated integration test database
+        run: psql -h localhost -U postgres -c "CREATE DATABASE buddgy_ci_test;"
+        working-directory: server
+        env:
+          PGPASSWORD: postgres
+
+      - name: Migrate the integration test database
+        run: npm run db:migrate:test
+        working-directory: server
+
       - name: Run integration tests
         run: npm run test:integration
         working-directory: server
