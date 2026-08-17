@@ -109,6 +109,11 @@ export function DashboardPage() {
           <Link to="/settings" className="text-sm text-text-secondary hover:text-text-primary">
             {t('calendar.title')}
           </Link>
+          {user.role === 'admin' && (
+            <Link to="/admin" className="text-sm text-text-secondary hover:text-text-primary">
+              {t('nav.admin')}
+            </Link>
+          )}
           <Button variant="outline" color="gray" size="md" onClick={logout}>
             {t('nav.logout')}
           </Button>

@@ -11,7 +11,8 @@
     "dashboard": "לוח בקרה",
     "transactions": "תנועות",
     "logout": "התנתקות",
-    "backToDashboard": "→ לוח בקרה"
+    "backToDashboard": "→ לוח בקרה",
+    "admin": "ניהול"
   },
   "landing": {
     "title": "באדג'י",
@@ -159,6 +160,7 @@
     "unauthorized": "אימייל או סיסמה שגויים.",
     "duplicate": "קיים כבר חשבון עם כתובת אימייל זו.",
     "notFound": "הפריט לא נמצא.",
+    "forbidden": "אין לך הרשאה לבצע פעולה זו.",
     "generic": "משהו השתבש. נסו שוב.",
     "validation": {
       "email": "יש להזין כתובת אימייל תקינה",
@@ -168,7 +170,10 @@
       "envelopeId": "יש לבחור קטגוריה",
       "amountAgorot": "הסכום חייב להיות גדול מ-0",
       "transactionDate": "יש להזין תאריך תקין",
-      "description": "יש להזין תיאור"
+      "description": "יש להזין תיאור",
+      "nameHe": "נדרש שם בעברית (עד 80 תווים)",
+      "nameEn": "נדרש שם באנגלית (עד 80 תווים)",
+      "color": "הצבע חייב להיות קוד הקסדצימלי תקין, לדוגמה #f97316"
     }
   },
   "csvImport": {
@@ -267,5 +272,61 @@
     "missingAmount": {
       "badge": "סכום חסר"
     }
+  },
+  "admin": {
+    "title": "פאנל ניהול",
+    "tabs": {
+      "categories": "קטגוריות",
+      "users": "משתמשים",
+      "stats": "סטטיסטיקות"
+    },
+    "categories": {
+      "addButton": "הוספת קטגוריה",
+      "loading": "טוען קטגוריות…",
+      "empty": "אין עדיין קטגוריות בקטלוג.",
+      "error": "לא הצלחנו לטעון את הקטגוריות. יש לנסות שוב.",
+      "nameHeHeader": "שם בעברית",
+      "nameEnHeader": "שם באנגלית",
+      "colorHeader": "צבע",
+      "statusHeader": "סטטוס",
+      "actionsHeader": "פעולות",
+      "activeBadge": "פעילה",
+      "inactiveBadge": "לא פעילה",
+      "deleteConfirmTitle": "למחוק את הקטגוריה?",
+      "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\" מהקטלוג הגלובלי. לא ניתן לבטל פעולה זו."
+    },
+    "users": {
+      "loading": "טוען משתמשים…",
+      "empty": "לא נמצאו משתמשים.",
+      "error": "לא הצלחנו לטעון את המשתמשים. יש לנסות שוב.",
+      "emailHeader": "אימייל",
+      "nameHeader": "שם",
+      "roleHeader": "תפקיד",
+      "statusHeader": "סטטוס",
+      "disabledBadge": "מושבת",
+      "activeBadge": "פעיל"
+    },
+    "stats": {
+      "loading": "טוען סטטיסטיקות…",
+      "error": "לא הצלחנו לטעון את נתוני השימוש. יש לנסות שוב.",
+      "userCount": "משתמשים",
+      "transactionCount": "תנועות",
+      "aiCallCount": "קריאות AI"
+    }
+  },
+  "adminCategoryModal": {
+    "addTitle": "הוספת קטגוריה",
+    "editTitle": "עריכת קטגוריה",
+    "nameHeLabel": "שם בעברית",
+    "nameHePlaceholder": "לדוגמה: מזון",
+    "nameEnLabel": "שם באנגלית",
+    "nameEnPlaceholder": "לדוגמה: Food",
+    "colorLabel": "צבע (אופציונלי)",
+    "colorPlaceholder": "#f97316",
+    "submitAdd": "הוספת קטגוריה",
+    "submitEdit": "שמירת שינויים",
+    "nameHeRequired": "נדרש שם בעברית (עד 80 תווים)",
+    "nameEnRequired": "נדרש שם באנגלית (עד 80 תווים)",
+    "colorInvalid": "הצבע חייב להיות קוד הקסדצימלי תקין, לדוגמה #f97316"
   }
 }

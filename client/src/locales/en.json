@@ -11,7 +11,8 @@
     "dashboard": "Dashboard",
     "transactions": "Transactions",
     "logout": "Log out",
-    "backToDashboard": "← Dashboard"
+    "backToDashboard": "← Dashboard",
+    "admin": "Admin"
   },
   "landing": {
     "title": "Buddgy",
@@ -159,6 +160,7 @@
     "unauthorized": "Incorrect email or password.",
     "duplicate": "An account with this email already exists.",
     "notFound": "Item not found.",
+    "forbidden": "You don't have permission to do that.",
     "generic": "Something went wrong. Please try again.",
     "validation": {
       "email": "Enter a valid email address",
@@ -168,7 +170,10 @@
       "envelopeId": "Choose a category",
       "amountAgorot": "Amount must be greater than 0",
       "transactionDate": "Enter a valid date",
-      "description": "Description is required"
+      "description": "Description is required",
+      "nameHe": "Hebrew name is required (max 80 characters)",
+      "nameEn": "English name is required (max 80 characters)",
+      "color": "Color must be a valid hex code, e.g. #f97316"
     }
   },
   "csvImport": {
@@ -267,5 +272,61 @@
     "missingAmount": {
       "badge": "Missing amount"
     }
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "tabs": {
+      "categories": "Categories",
+      "users": "Users",
+      "stats": "Stats"
+    },
+    "categories": {
+      "addButton": "Add category",
+      "loading": "Loading categories…",
+      "empty": "No categories in the catalog yet.",
+      "error": "Couldn't load categories. Please try again.",
+      "nameHeHeader": "Hebrew name",
+      "nameEnHeader": "English name",
+      "colorHeader": "Color",
+      "statusHeader": "Status",
+      "actionsHeader": "Actions",
+      "activeBadge": "Active",
+      "inactiveBadge": "Inactive",
+      "deleteConfirmTitle": "Delete category?",
+      "deleteConfirmBody": "This will permanently delete \"{{name}}\" from the global catalog. This can't be undone."
+    },
+    "users": {
+      "loading": "Loading users…",
+      "empty": "No users found.",
+      "error": "Couldn't load users. Please try again.",
+      "emailHeader": "Email",
+      "nameHeader": "Name",
+      "roleHeader": "Role",
+      "statusHeader": "Status",
+      "disabledBadge": "Disabled",
+      "activeBadge": "Active"
+    },
+    "stats": {
+      "loading": "Loading stats…",
+      "error": "Couldn't load usage stats. Please try again.",
+      "userCount": "Users",
+      "transactionCount": "Transactions",
+      "aiCallCount": "AI calls"
+    }
+  },
+  "adminCategoryModal": {
+    "addTitle": "Add category",
+    "editTitle": "Edit category",
+    "nameHeLabel": "Hebrew name",
+    "nameHePlaceholder": "e.g. מזון",
+    "nameEnLabel": "English name",
+    "nameEnPlaceholder": "e.g. Food",
+    "colorLabel": "Color (optional)",
+    "colorPlaceholder": "#f97316",
+    "submitAdd": "Add category",
+    "submitEdit": "Save changes",
+    "nameHeRequired": "Hebrew name is required (max 80 characters)",
+    "nameEnRequired": "English name is required (max 80 characters)",
+    "colorInvalid": "Color must be a valid hex code, e.g. #f97316"
   }
 }
