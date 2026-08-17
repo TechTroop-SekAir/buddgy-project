@@ -35,7 +35,8 @@ Related specs: [`DATABASE.md`](./DATABASE.md) (backing tables) · [`SECURITY.md`
 | HTTP | `error` message | When |
 |---|---|---|
 | 400 | `"validation failed: <field>"` | Missing/malformed input |
-| 401 | `"unauthorized"` | Missing/invalid/expired JWT |
+| 400 | `"cannot disable your own account"` | `PATCH /api/admin/users/:id` — an admin may not disable the account they're currently authenticated as |
+| 401 | `"unauthorized"` | Missing/invalid/expired JWT, or the token belongs to a disabled account (ticket B-08 — checked on every request, not just at login) |
 | 403 | `"forbidden"` | Valid token, wrong role or wrong owner |
 | 404 | `"not found"` | Resource doesn't exist or isn't owned by the caller |
 | 409 | `"duplicate"` | Unique constraint hit outside the expected dedup path |
@@ -199,3 +200,12 @@ GET    /api/admin/stats            🔒admin  → { userCount, transactionCount,
 `POST` body: `name_he`, `name_en` required; `color`, `is_active` (default `true`) optional. `PUT` accepts a partial body of any of `name_he`, `name_en`, `color`, `is_active` — an empty body is `400`. A duplicate `name_en` is `409 duplicate`. `DELETE` is a hard delete; retiring a category without deleting it is `PUT` with `is_active: false`.
 
 `categories` is a standalone global catalog (see [`DATABASE.md`](./DATABASE.md) § categories) — it feeds the AI classification engine's taxonomy and has no relation to the client UI's "Category" (which is `envelopes`; see `client/src/services/categoryService.js`).
+
+`user` object (ticket B-08):
+```json
+{ "id": 2, "email": "test@buddgy.com", "full_name": "Dev User", "avatar_url": null,
+  "role": "user", "disabled": false, "created_at": "2026-08-09T00:00:00.000Z" }
+```
+Never includes `password_hash` or `google_refresh_token` (`docs/SECURITY.md` § Secrets). `PATCH` body is `{ "disabled": boolean }`; an admin disabling their own account is `400 cannot disable your own account` — the last admin can't lock themselves out of the panel, though disabling *other* admins is allowed. Disabling takes effect immediately: `middleware/auth.js`'s `requireAuth` checks `disabled` on every request (not just at login), so an existing token is revoked the moment an admin flips it, rather than waiting out the JWT's 7-day TTL — see `docs/SECURITY.md` § JWT Lifecycle.
+
+`stats` response (ticket B-08): `userCount` and `transactionCount` are row counts. `aiCallCount` counts every real Anthropic API call — including ones the user later abandoned (`POST /api/transactions/parse` never persists) or that failed — from a dedicated `ai_calls` table logged inside `server/services/claudeService.js`, since those still cost API spend. It is **not** a proxy off `transactions`/`csv_imports`, which would undercount.

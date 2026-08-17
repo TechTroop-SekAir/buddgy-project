@@ -14,6 +14,13 @@ jest.mock('../services/claudeService', () => ({
 const mockCategoryFindAll = jest.fn();
 const mockCategoryFindOne = jest.fn();
 const mockCategoryCreate = jest.fn();
+const ADMIN_USER_ID = 1;
+// requireAuth (server/middleware/auth.js, ticket B-08) now resolves role
+// from a DB lookup, not the JWT claim — the mock keys off the signed id so
+// adminAuthHeader/userAuthHeader still produce the role each test expects.
+const mockUserFindByPk = jest.fn((id) =>
+  Promise.resolve({ id, role: id === ADMIN_USER_ID ? 'admin' : 'user', disabled: false })
+);
 
 // Mock at the models boundary, same shape as __tests__/envelopes.test.js —
 // the DB stays fully mocked here; CI's real Postgres run exercises the
@@ -24,6 +31,9 @@ jest.mock('../models', () => ({
     findOne: (...args) => mockCategoryFindOne(...args),
     create: (...args) => mockCategoryCreate(...args),
   },
+  User: {
+    findByPk: (...args) => mockUserFindByPk(...args),
+  },
 }));
 
 const jwt = require('jsonwebtoken');
@@ -31,18 +41,19 @@ const request = require('supertest');
 const app = require('../app');
 
 const UNKNOWN_CATEGORY_ID = 999;
+const NON_ADMIN_USER_ID = 2;
 
-function authHeader(role = 'admin', userId = 1) {
+function authHeader(role = 'admin', userId = ADMIN_USER_ID) {
   const token = jwt.sign({ sub: userId, role }, process.env.JWT_SECRET);
   return `Bearer ${token}`;
 }
 
 function adminAuthHeader() {
-  return authHeader('admin');
+  return authHeader('admin', ADMIN_USER_ID);
 }
 
 function userAuthHeader() {
-  return authHeader('user');
+  return authHeader('user', NON_ADMIN_USER_ID);
 }
 
 /** Builds a fake Sequelize instance with the instance methods the service calls. */

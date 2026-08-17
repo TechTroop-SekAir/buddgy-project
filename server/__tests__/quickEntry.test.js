@@ -11,7 +11,18 @@ jest.mock('ai', () => ({ generateObject: (...args) => mockGenerateObject(...args
 jest.mock('@ai-sdk/anthropic', () => ({ createAnthropic: () => () => 'mock-model' }));
 
 const mockFindAll = jest.fn();
-jest.mock('../models', () => ({ Envelope: { findAll: (...args) => mockFindAll(...args) } }));
+// requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
+// caller from a DB lookup, not just the JWT claim — every test here is a
+// single non-admin user.
+const mockUserFindByPk = jest.fn();
+// This suite loads the real claudeService.js (only 'ai'/'@ai-sdk/anthropic'
+// are mocked above), so its ai_calls logging (ticket B-08) needs a model too.
+const mockAiCallCreate = jest.fn();
+jest.mock('../models', () => ({
+  Envelope: { findAll: (...args) => mockFindAll(...args) },
+  User: { findByPk: (...args) => mockUserFindByPk(...args) },
+  AiCall: { create: (...args) => mockAiCallCreate(...args) },
+}));
 
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
@@ -28,6 +39,8 @@ function authHeader(userId = AUTHED_USER_ID) {
 beforeEach(() => {
   jest.clearAllMocks();
   mockFindAll.mockResolvedValue([{ id: 42, name: 'Cafes & Restaurants' }]);
+  mockUserFindByPk.mockResolvedValue({ id: AUTHED_USER_ID, role: 'user', disabled: false });
+  mockAiCallCreate.mockResolvedValue({ id: 1 });
 });
 
 describe('POST /api/transactions/parse', () => {

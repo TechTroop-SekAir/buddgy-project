@@ -11,6 +11,7 @@
 | [transactions](#transactions) | Actual spend, from any of the 3 input channels |
 | [planned_expenses](#planned_expenses) | Future spend, from calendar sync or manual entry |
 | [csv_imports](#csv_imports) | Audit trail of bank-statement uploads |
+| [ai_calls](#ai_calls) | Usage log backing `GET /api/admin/stats`' `aiCallCount` |
 | [categories](#categories) | Global admin category catalog (feeds AI classification) |
 | [Indexes](#indexes) | What's indexed and why |
 | [Idempotency](#idempotency) | How duplicate imports/syncs are prevented |
@@ -36,6 +37,7 @@ erDiagram
     users ||--o{ transactions : owns
     users ||--o{ planned_expenses : owns
     users ||--o{ csv_imports : uploads
+    users ||--o{ ai_calls : "logged for (nullable)"
     envelopes ||--o{ transactions : "assigned to (nullable)"
     envelopes ||--o{ planned_expenses : "assigned to"
 ```
@@ -51,6 +53,7 @@ erDiagram
 | avatar_url | TEXT | Link to external storage (Cloudinary/S3) |
 | google_refresh_token | TEXT | **Encrypted at rest**, NULL until calendar is connected — see [`SECURITY.md`](./SECURITY.md) |
 | role | VARCHAR(20) | `'user'` \| `'admin'` |
+| disabled | BOOLEAN | DEFAULT false — set via `PATCH /api/admin/users/:id` (ticket B-08); checked on every request in `middleware/auth.js`, not just at login, so disabling takes effect immediately (see [`API.md`](./API.md) § Admin) |
 | created_at | TIMESTAMP | DEFAULT now() |
 
 ## envelopes
@@ -105,6 +108,18 @@ erDiagram
 | column_mapping | JSONB | Mapping confirmed by the user |
 | rows_imported | INTEGER | |
 | created_at | TIMESTAMP | DEFAULT now() |
+
+## ai_calls
+
+| Column | Type | Notes |
+|---|---|---|
+| id | SERIAL PK | |
+| user_id | INT FK → users | **`ON DELETE SET NULL`** — deliberately not `CASCADE` like every other user-owned table above: deleting a user must not erase historical AI usage from `/api/admin/stats`' `aiCallCount` |
+| kind | VARCHAR(20) | `'quick_entry'` \| `'csv_mapping'` |
+| succeeded | BOOLEAN | NOT NULL — failed calls (timeout, rate limit, malformed model output) still cost Anthropic spend and are still counted |
+| created_at | TIMESTAMP | DEFAULT now() |
+
+**Note:** logged from inside `server/services/claudeService.js` — the single boundary both AI call sites (`parseQuickEntry`, `detectColumnMapping`) go through — never from a controller. A logging failure is caught and never allowed to break the AI feature itself (`CLAUDE.md` § Error Handling).
 
 ## categories
 
