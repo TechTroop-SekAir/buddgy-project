@@ -57,7 +57,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **A-12** Calendar connect/sync UI + planned-expense assign — *Day 8, needs Ofek's C-06*
 - [x] **A-13** Forecast banner + at-risk highlighting — *Day 9. Implemented: `client/src/components/categories/ForecastBanner.jsx` (banner), `CategoryCard.jsx` (at-risk border/badge), `MissingAmountPrompt.jsx`, `SummaryBar.jsx`, `client/src/utils/forecastStatus.js` + `categoryStatus.js` (pure helpers), wired into `DashboardPage.jsx` with forecast query invalidated on every money-relevant mutation. `client/src/services/forecastService.js` calls the real `/forecast` endpoint. i18n complete in `en.json`/`he.json`.*
 - [x] **A-14** Admin panel — *Day 9, needs Matan's B-08*
-- [ ] **A-15** Month history navigation — *Day 10*
+- [x] **A-15** Month history navigation — *Day 10*
 - [ ] **A-16** Responsive pass across all pages — *Day 10*
 - [ ] **A-17** Empty/loading/error states audit — *Day 10*
 - [ ] **A-18** Client E2E tests (Playwright) — *Day 11, feature freeze day*

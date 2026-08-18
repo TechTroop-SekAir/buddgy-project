@@ -53,7 +53,8 @@
     "addFirstCategory": "הוספת הקטגוריה הראשונה שלך",
     "addTransaction": "הוספת תנועה",
     "loading": "טוען קטגוריות…",
-    "empty": "אין לך עדיין קטגוריות החודש."
+    "empty": "אין לך עדיין קטגוריות החודש.",
+    "emptyMonth": "אין קטגוריות לחודש זה."
   },
   "categoryManagement": {
     "totalBudget": "תקציב כולל",
@@ -105,13 +106,19 @@
     "uncategorized": "ללא שיוך",
     "fromLabel": "מתאריך",
     "toLabel": "עד תאריך",
-    "prevMonth": "החודש הקודם",
-    "nextMonth": "החודש הבא",
     "dateHeader": "תאריך",
     "descriptionHeader": "תיאור",
     "categoryHeader": "קטגוריה",
     "amountHeader": "סכום",
-    "addTransaction": "הוספת תנועה"
+    "actionsHeader": "פעולות",
+    "addTransaction": "הוספת תנועה",
+    "deleteConfirmTitle": "למחוק את התנועה?",
+    "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{description}}\". לא ניתן לבטל פעולה זו."
+  },
+  "monthNavigator": {
+    "prev": "החודש הקודם",
+    "next": "החודש הבא",
+    "currentMonth": "החודש הנוכחי"
   },
   "transactionEditModal": {
     "title": "עריכת תנועה",
@@ -272,15 +279,20 @@
     "title": "הוצאות מתוכננות",
     "loading": "טוען הוצאות מתוכננות…",
     "empty": "אין עדיין הוצאות מתוכננות — יש לחבר ולסנכרן את היומן מהגדרות.",
+    "emptyMonth": "אין הוצאות מתוכננות לחודש זה.",
     "goToSettings": "מעבר להגדרות",
     "dateHeader": "תאריך יעד",
     "titleHeader": "כותרת",
     "amountHeader": "סכום",
     "envelopeHeader": "קטגוריה",
     "confirmedHeader": "אושר",
+    "actionsHeader": "פעולות",
     "envelopeNone": "ללא שיוך",
     "confirm": "אישור",
     "addButton": "הוספת הוצאה מתוכננת",
+    "deleteConfirmTitle": "למחוק את ההוצאה המתוכננת?",
+    "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{title}}\". לא ניתן לבטל פעולה זו.",
+    "deleteConfirmCalendarWarning": "ההוצאה הזו סונכרנה מיומן Google — ייתכן שתופיע שוב בסנכרון הבא.",
     "missingAmount": {
       "badge": "סכום חסר"
     }

@@ -62,6 +62,7 @@ function makePlannedExpenseInstance(data) {
       Object.assign(state, patch);
       return state;
     }),
+    destroy: jest.fn(async () => {}),
   };
 }
 
@@ -251,6 +252,45 @@ describe('PATCH /api/planned-expenses/:id', () => {
 
   it('rejects with 401 when unauthenticated', async () => {
     const res = await request(app).patch('/api/planned-expenses/3').send({ is_confirmed: true });
+    expect(res.status).toBe(401);
+    expect(mockPlannedExpenseFindOne).not.toHaveBeenCalled();
+  });
+});
+
+describe('DELETE /api/planned-expenses/:id', () => {
+  it('deletes a planned expense the caller owns', async () => {
+    const instance = makePlannedExpenseInstance({
+      id: 3,
+      user_id: AUTHED_USER_ID,
+      envelope_id: null,
+      title: 'Car service',
+      amount_agorot: 45000,
+      due_date: '2026-08-20',
+      google_event_id: 'evt_3',
+      is_confirmed: false,
+    });
+    mockPlannedExpenseFindOne.mockResolvedValue(instance);
+
+    const res = await request(app).delete('/api/planned-expenses/3').set('Authorization', authHeader());
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ id: 3 });
+    expect(instance.destroy).toHaveBeenCalled();
+  });
+
+  it('returns 404, not 403, for another user\'s planned expense and never calls destroy', async () => {
+    mockPlannedExpenseFindOne.mockResolvedValue(null);
+
+    const res = await request(app)
+      .delete(`/api/planned-expenses/${OTHER_USER_PLANNED_EXPENSE_ID}`)
+      .set('Authorization', authHeader());
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('not found');
+  });
+
+  it('rejects with 401 when unauthenticated', async () => {
+    const res = await request(app).delete('/api/planned-expenses/3');
     expect(res.status).toBe(401);
     expect(mockPlannedExpenseFindOne).not.toHaveBeenCalled();
   });

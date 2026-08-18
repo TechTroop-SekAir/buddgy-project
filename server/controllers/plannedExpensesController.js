@@ -18,4 +18,9 @@ async function update(req, res) {
   return ok(res, plannedExpense);
 }
 
-module.exports = { create, list, update };
+async function remove(req, res) {
+  const result = await plannedExpenseService.remove(req.user.id, req.params.id);
+  return ok(res, result);
+}
+
+module.exports = { create, list, update, remove };

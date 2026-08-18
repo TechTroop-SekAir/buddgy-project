@@ -53,7 +53,8 @@
     "addFirstCategory": "Add your first category",
     "addTransaction": "Add Transaction",
     "loading": "Loading categories…",
-    "empty": "You don't have any categories yet this month."
+    "empty": "You don't have any categories yet this month.",
+    "emptyMonth": "No categories for this month."
   },
   "categoryManagement": {
     "totalBudget": "Total Budget",
@@ -105,13 +106,19 @@
     "uncategorized": "Uncategorized",
     "fromLabel": "From",
     "toLabel": "To",
-    "prevMonth": "Previous month",
-    "nextMonth": "Next month",
     "dateHeader": "Date",
     "descriptionHeader": "Description",
     "categoryHeader": "Category",
     "amountHeader": "Amount",
-    "addTransaction": "Add Transaction"
+    "actionsHeader": "Actions",
+    "addTransaction": "Add Transaction",
+    "deleteConfirmTitle": "Delete transaction?",
+    "deleteConfirmBody": "This will permanently delete \"{{description}}\". This can't be undone."
+  },
+  "monthNavigator": {
+    "prev": "Previous month",
+    "next": "Next month",
+    "currentMonth": "Current month"
   },
   "transactionEditModal": {
     "title": "Edit transaction",
@@ -272,15 +279,20 @@
     "title": "Planned Expenses",
     "loading": "Loading planned expenses…",
     "empty": "No planned expenses yet — connect and sync your calendar from Settings.",
+    "emptyMonth": "No planned expenses for this month.",
     "goToSettings": "Go to Settings",
     "dateHeader": "Due",
     "titleHeader": "Title",
     "amountHeader": "Amount",
     "envelopeHeader": "Category",
     "confirmedHeader": "Confirmed",
+    "actionsHeader": "Actions",
     "envelopeNone": "Unassigned",
     "confirm": "Confirm",
     "addButton": "Add planned expense",
+    "deleteConfirmTitle": "Delete planned expense?",
+    "deleteConfirmBody": "This will permanently delete \"{{title}}\". This can't be undone.",
+    "deleteConfirmCalendarWarning": "This expense was synced from Google Calendar — it may reappear the next time you sync.",
     "missingAmount": {
       "badge": "Missing amount"
     }

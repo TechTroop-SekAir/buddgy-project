@@ -20,6 +20,10 @@ async function update(id, payload) {
   return api.patch(`/transactions/${id}`, payload);
 }
 
-const transactionService = { list, parse, create, update };
+async function remove(id) {
+  return api.delete(`/transactions/${id}`);
+}
+
+const transactionService = { list, parse, create, update, remove };
 
 export default transactionService;
