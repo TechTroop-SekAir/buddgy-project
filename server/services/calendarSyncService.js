@@ -48,8 +48,9 @@ function classifyGoogleApiError(err) {
 }
 
 // Fetches upcoming Google Calendar events for the user and upserts them into
-// planned_expenses, keyed on the UNIQUE google_event_id column so re-syncing
-// never duplicates rows. Returns { newEvents }.
+// planned_expenses, keyed on the UNIQUE (user_id, google_event_id) pair so
+// re-syncing never duplicates rows and two users invited to the same event
+// each get their own row. Returns { newEvents }.
 async function syncPlannedExpenses(userId) {
   const authedClient = await getAuthedClient(userId);
   const calendar = google.calendar({ version: 'v3', auth: authedClient });
@@ -75,7 +76,7 @@ async function syncPlannedExpenses(userId) {
         if (!dueDate) continue;
 
         const [, created] = await PlannedExpense.findOrCreate({
-          where: { google_event_id: event.id },
+          where: { user_id: userId, google_event_id: event.id },
           defaults: {
             user_id: userId,
             title: event.summary,
@@ -88,10 +89,14 @@ async function syncPlannedExpenses(userId) {
 
         // Re-syncing must not clobber a user's envelope assignment or
         // confirmation on an already-known event — only refresh title/amount/date.
+        // Scoped by user_id too: Google reuses the same event id across every
+        // attendee of a shared event, and google_event_id is only unique per
+        // user (see the scope-google-event-id-unique migration) — without
+        // this, one user's sync could read/overwrite another user's row.
         if (!created) {
           await PlannedExpense.update(
             { title: event.summary, amount_agorot: amountAgorot, due_date: dueDate },
-            { where: { google_event_id: event.id }, transaction }
+            { where: { user_id: userId, google_event_id: event.id }, transaction }
           );
         } else {
           newEvents += 1;
