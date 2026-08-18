@@ -31,3 +31,16 @@ export function getMonthBounds(month) {
   const end = `${year}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   return { start, end };
 }
+
+// Only meaningful for the current month — a "days remaining" count for a
+// past or future month has no real interpretation, so this returns null
+// rather than a misleading number. See docs/DASHBOARD-REDESIGN.md Step 3.
+/** @param {string} month 'YYYY-MM-01' @returns {number | null} */
+export function getDaysRemainingInMonth(month) {
+  const [year, m] = month.split('-').map(Number);
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === m;
+  if (!isCurrentMonth) return null;
+  const lastDay = new Date(year, m, 0).getDate();
+  return lastDay - today.getDate();
+}

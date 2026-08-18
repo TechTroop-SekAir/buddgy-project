@@ -11,3 +11,8 @@ export { Textarea } from './Textarea';
 export { FileInput } from './FileInput';
 export { Table } from './Table';
 export { Tabs } from './Tabs';
+export { Icon } from './Icon';
+export { Menu } from './Menu';
+export { ActionIcon } from './ActionIcon';
+export { Skeleton } from './Skeleton';
+export { Meter } from './Meter';

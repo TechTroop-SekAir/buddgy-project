@@ -213,7 +213,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
             <span className="text-sm font-medium text-text-primary">{t('quickEntry.review.dateLabel')}</span>
             <input
               type="date"
-              className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
+              className="rounded-sm border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
               value={review.transactionDate}
               onChange={(e) => setReview((prev) => ({ ...prev, transactionDate: e.target.value }))}
             />

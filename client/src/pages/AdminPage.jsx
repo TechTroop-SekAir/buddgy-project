@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs } from '../components/ui';
 import { AdminCategoriesTable } from '../components/admin/AdminCategoriesTable';
@@ -11,13 +10,8 @@ export function AdminPage() {
   const [activeTab, setActiveTab] = useState('categories');
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">{t('admin.title')}</h1>
-        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-          {t('nav.backToDashboard')}
-        </Link>
-      </div>
+    <div>
+      <h1 className="text-2xl font-semibold text-text-primary">{t('admin.title')}</h1>
 
       <Tabs value={activeTab} onChange={setActiveTab} className="mt-6">
         <Tabs.List>

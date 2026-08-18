@@ -1,38 +1,105 @@
 /*
- * Design tokens — single source of truth for color/spacing values.
+ * Design tokens — single source of truth for color/radius/shadow/typography values.
  * CLAUDE.md § Non-Negotiables: no hardcoded design values outside this file.
  * tailwind.config.js and src/theme.js both read these, never restate hex.
  *
- * Values below are PROVISIONAL placeholders so the app is usable on Day 1 —
- * Track A owns finalizing the real palette (docs/PLAN.md ticket A-01) and
- * must update docs/DESIGN.md § Palette & Tokens in the same PR.
+ * Palette finalized per docs/DESIGN.md § Palette & Tokens / § Status Colors /
+ * § Typography (docs/DASHBOARD-REDESIGN.md Step 1) — supersedes the Day-1
+ * placeholder values.
  */
 
 :root {
   /* Backgrounds */
-  --bg-page: #f7f8fa;
+  --bg-page: #f8fafc;
   --bg-surface: #ffffff;
   --bg-input: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-hover: #f8fafc;
 
   /* Text hierarchy */
-  --text-primary: #1a1d23;
-  --text-secondary: #4b5262;
-  --text-muted: #8a90a2;
+  --text-primary: #0f172a;
+  --text-strong: #1e293b;
+  --text-secondary: #334155;
+  --text-muted: #94a3b8;
 
   /* The one interactive color */
   --accent: #3d6bf0;
   --accent-subtle: #e8edfd;
 
   /* Borders */
-  --border-card: #e3e5eb;
-  --border-nav: #e3e5eb;
+  --border-card: #e6ebf2;
+  --border-nav: #e6ebf2;
+  --border-subtle: #f1f5f9;
 
   /* Buddgy status colors — dedicated tokens, never reuse form red/green.
-     See docs/DESIGN.md § Status Colors. */
+     See docs/DESIGN.md § Status Colors.
+
+     Two tiers per status: the "text" tier (below) is AA-contrast on white
+     and is the only tier allowed on text/Badges. The "fill" and "tint"
+     tiers further down are decorative (bars, chip backgrounds) and must
+     never be used as a text color — several fail contrast by design. */
   --status-ok: #2f9e58;
   --status-warning: #d98c1f;
+  --status-critical: #b45309;
   --status-danger: #d9483a;
   --status-forecast-alert: #b5350f;
+
+  /* Status fill tier — background-color only, never text. */
+  --status-ok-fill: #34d399;
+  --status-warning-fill: #facc15;
+  --status-critical-fill: #fb923c;
+  --status-danger-fill: #f57373;
+
+  /* Status tint backgrounds — badge/banner fills. */
+  --status-ok-tint: #eafaf3;
+  --status-warning-tint: #fefbe8;
+  --status-critical-tint: #fff4e8;
+  --status-danger-tint: #fdeeee;
+
+  /* Envelope accent palette — deterministic per-category color, see
+     src/utils/categoryIcon.js. Never read category.color directly (see
+     docs/DASHBOARD-REDESIGN.md Corrections to Assumptions). */
+  --cat-1: #38bdf8;
+  --cat-1-tint: #f0f9ff;
+  --cat-2: #f57373;
+  --cat-2-tint: #fff5f5;
+  --cat-3: #a78bfa;
+  --cat-3-tint: #faf5ff;
+  --cat-4: #34d399;
+  --cat-4-tint: #f0fdf4;
+  --cat-5: #fb923c;
+  --cat-5-tint: #fff7ed;
+  --cat-6: #22d3ee;
+  --cat-6-tint: #ecfeff;
+  --cat-fallback: #94a3b8;
+  --cat-fallback-tint: #f8fafc;
+
+  /* Brand gradient — decorative surfaces only. Use *-strong wherever the
+     gradient carries text: the plain gradient fails AA for white text. */
+  --brand-gradient: linear-gradient(135deg, #f57373, #38bdf8);
+  --brand-gradient-strong: linear-gradient(135deg, #c93f3f, #1470ad);
+  --brand-stripe: linear-gradient(90deg, #f57373 0%, #fb923c 30%, #38bdf8 70%, #7dd3fc 100%);
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-pill: 9999px;
+
+  /* Shadow — slate-tinted, not pure black. */
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.06);
+  --shadow-lg: 0 12px 32px -8px rgb(15 23 42 / 0.16), 0 4px 12px -4px rgb(15 23 42 / 0.08);
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Hebrew', sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', 'Courier New', monospace;
+  --text-2xs: 0.6875rem;
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 700ms;
 
   /* Form validation (kept distinct from status-* above) */
   --form-success: #22a35a;

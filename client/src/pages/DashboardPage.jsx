@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui';
+import { Button, Icon, Skeleton } from '../components/ui';
 import { CategoryFormModal } from '../components/categories/CategoryFormModal';
 import { CategoryCard } from '../components/categories/CategoryCard';
 import { ForecastBanner } from '../components/categories/ForecastBanner';
@@ -15,11 +14,12 @@ import transactionService from '../services/transactionService';
 import forecastService from '../services/forecastService';
 import plannedExpenseService from '../services/plannedExpenseService';
 import { getCurrentMonth } from '../utils/month';
+import { getDaysRemainingInMonth, getMonthLabel } from '../utils/date';
 import { sortCategoriesBySpent } from '../utils/categoryStatus';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
@@ -91,53 +91,47 @@ export function DashboardPage() {
   });
 
   const sortedCategories = sortCategoriesBySpent(categories);
+  const monthLabel = getMonthLabel(month);
+  const daysRemaining = getDaysRemainingInMonth(month);
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">{t('dashboard.title')}</h1>
-        <div className="flex items-center gap-4">
-          <Link to="/transactions" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('nav.transactions')}
-          </Link>
-          <Link to="/imports" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('csvImport.title')}
-          </Link>
-          <Link to="/planned-expenses" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('plannedExpenses.title')}
-          </Link>
-          <Link to="/settings" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('calendar.title')}
-          </Link>
-          {user.role === 'admin' && (
-            <Link to="/admin" className="text-sm text-text-secondary hover:text-text-primary">
-              {t('nav.admin')}
-            </Link>
-          )}
-          <Button variant="outline" color="gray" size="md" onClick={logout}>
-            {t('nav.logout')}
-          </Button>
+    <div>
+      <div className="mb-7 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">{t('dashboard.title')}</h1>
+          <p className="mt-0.5 text-sm text-text-muted">
+            {daysRemaining != null ? t('dashboard.monthMeta', { month: monthLabel, count: daysRemaining }) : monthLabel}
+          </p>
         </div>
-      </div>
-      <div className="flex gap-3 mt-4">
-        <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-          {t('dashboard.addCategory')}
-        </Button>
         <Button variant="outline" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
           {t('dashboard.addTransaction')}
         </Button>
       </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">{t('dashboard.loading')}</p>}
+      {isLoading && (
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Skeleton height={76} radius="lg" />
+            <Skeleton height={76} radius="lg" />
+            <Skeleton height={76} radius="lg" />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <Skeleton height={180} radius="lg" />
+            <Skeleton height={180} radius="lg" />
+            <Skeleton height={180} radius="lg" />
+          </div>
+        </div>
+      )}
 
       {!isLoading && categories.length > 0 && (
-        <div className="mt-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <ForecastBanner forecast={forecast} isLoading={isForecastLoading} isError={isForecastError} />
           <SummaryBar
             categories={categories}
             forecast={forecast}
             isForecastLoading={isForecastLoading}
             isForecastError={isForecastError}
+            monthLabel={monthLabel}
           />
           <MissingAmountPrompt
             plannedExpenses={forecast?.missingAmountPlannedExpenses}
@@ -147,7 +141,7 @@ export function DashboardPage() {
       )}
 
       {!isLoading && categories.length === 0 && (
-        <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
+        <div className="mt-6 flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border-card p-10 text-center">
           <p className="text-text-secondary">{t('dashboard.empty')}</p>
           <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
             {t('dashboard.addFirstCategory')}
@@ -156,17 +150,26 @@ export function DashboardPage() {
       )}
 
       {!isLoading && categories.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {sortedCategories.map((category) => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              onDelete={(id) => deleteMutation.mutateAsync(id)}
-              onEdit={(id, payload) => updateMutation.mutateAsync({ id, payload })}
-              atRiskEnvelopeIds={forecast?.atRiskEnvelopes ?? []}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mb-4 mt-7 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-text-strong">{t('categoryManagement.envelopesHeading')}</h2>
+            <Button variant="subtle" color="accent" size="sm" onClick={() => setIsAddOpen(true)}>
+              <Icon name="plus" size="sm" className="me-1" />
+              {t('dashboard.addCategory')}
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {sortedCategories.map((category) => (
+              <CategoryCard
+                key={category.id}
+                category={category}
+                onDelete={(id) => deleteMutation.mutateAsync(id)}
+                onEdit={(id, payload) => updateMutation.mutateAsync({ id, payload })}
+                atRiskEnvelopeIds={forecast?.atRiskEnvelopes ?? []}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       <CategoryFormModal

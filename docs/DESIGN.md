@@ -25,35 +25,48 @@ Constraints:
 
 ## Palette & Tokens
 
-Defined in `client/src/styles/tokens.css` (to be created by Track A). Core tokens:
+Defined in `client/src/styles/tokens.css`. Finalized per `docs/DASHBOARD-REDESIGN.md` Step 1 (supersedes the Day-1 placeholder values). Core tokens:
 
 | Token | Role |
 |---|---|
-| `--bg-page` | Root page background |
-| `--bg-surface` | Cards, nav, modals |
-| `--bg-input` | Input fields |
-| `--text-primary` / `--text-secondary` / `--text-muted` | Text hierarchy |
+| `--bg-page` / `--bg-surface` / `--bg-input` | Page / card-nav-modal / input backgrounds |
+| `--bg-subtle` / `--bg-hover` | Progress track & active nav pill / row-button hover |
+| `--text-primary` / `--text-strong` / `--text-secondary` / `--text-muted` | Text hierarchy — `text-strong` is card/section titles |
 | `--accent` / `--accent-subtle` | The one interactive color |
-| `--border-card` / `--border-nav` | Borders |
+| `--border-card` / `--border-nav` / `--border-subtle` | Borders — `border-subtle` is for list-row dividers |
+| `--cat-1`…`--cat-6` / `--cat-N-tint` / `--cat-fallback` / `--cat-fallback-tint` | Deterministic per-envelope accent + tinted chip background — see `src/utils/categoryIcon.js` |
+| `--brand-gradient` / `--brand-gradient-strong` / `--brand-stripe` | Decorative gradients; `-strong` is required wherever the gradient carries text (the plain gradient fails AA for white text) |
+| `--radius-sm` / `--radius-md` / `--radius-lg` / `--radius-pill` | Corner radius scale, surfaced as Tailwind's `rounded-sm/md/lg/pill` |
+| `--shadow-sm` / `--shadow-md` / `--shadow-lg` | Slate-tinted elevation, surfaced as Tailwind's `shadow-sm/md/lg` |
+| `--font-sans` / `--font-mono` | Body text (system stack, Hebrew-safe) / money figures (DM Mono) |
+| `--duration-fast` / `--duration-base` / `--duration-slow` | Transition durations |
 
-Exact hex values are a Track A decision to fill in during Day 1–2 (see [`PLAN.md`](./PLAN.md) ticket A-01) — this file is updated with the final palette once chosen, and that update must also touch `tailwind.config.js` and the Mantine theme override in the same PR.
+Any new token touches `tokens.css` + `tailwind.config.js` + `theme.js` in the same PR (per `CLAUDE.md` § Non-Negotiables).
 
 ## Status Colors
 
-Buddgy-specific semantic tokens (referenced in `.claude/commands/design.md` § 7 but defined here):
+Buddgy-specific semantic tokens (referenced in `.claude/commands/design.md` § 7 but defined here). Each status has **two tiers**: a text tier (AA-contrast on white; the only tier ever used for text or a `Badge` color) and a fill/tint tier (decorative — progress-bar fill and tinted chip backgrounds; several fail contrast by design and must never be used as a text color).
 
-| Token | Meaning | Notes |
+| Token (text tier) | Meaning | Notes |
 |---|---|---|
-| `--status-ok` | Envelope on track | Dedicated token — do not reuse the form-success green |
-| `--status-warning` | Envelope near depletion | Amber-toned |
-| `--status-danger` | Envelope over budget | Dedicated token — do not reuse the form-error red |
+| `--status-ok` | Envelope on track (< 75% used) | Dedicated token — do not reuse the form-success green |
+| `--status-warning` | Envelope near depletion (75–89% used) | Amber-toned |
+| `--status-critical` | Envelope near its limit (90–99% used) | Between warning and danger — added alongside the 4-tier status model in `docs/DASHBOARD-REDESIGN.md` |
+| `--status-danger` | Envelope over budget (100%+ used) | Dedicated token — do not reuse the form-error red |
 | `--status-forecast-alert` | Projected end-of-month shortfall | Used on the forecast banner, not on individual envelopes |
 
-Kept distinct from `red`/`green` (reserved for form validation and success confirmations) so a user scanning envelope cards isn't confused by two different color systems overlapping.
+| Token (fill/tint tier) | Pairs with |
+|---|---|
+| `--status-ok-fill` / `--status-ok-tint` | `--status-ok` |
+| `--status-warning-fill` / `--status-warning-tint` | `--status-warning` |
+| `--status-critical-fill` / `--status-critical-tint` | `--status-critical` |
+| `--status-danger-fill` / `--status-danger-tint` | `--status-danger` |
+
+Kept distinct from `red`/`green` (reserved for form validation and success confirmations) so a user scanning envelope cards isn't confused by two different color systems overlapping. Status must never rely on color alone — every tier also renders a Badge label (see `categoryManagement.status.*` in the locale files).
 
 ## Typography
 
-Font family: set once, globally, via `font-sans` on `<body>`. Scale and usage table live in `.claude/commands/design.md` § 5 — this file doesn't duplicate it, only the token *values* (weights, sizes in rem) belong here once chosen by Track A.
+Font family: `--font-sans` (system stack, includes Hebrew coverage) set once, globally, via `font-sans` on `<body>`. Money figures use `--font-mono` (DM Mono, loaded in `client/index.html`) — body text does not, since DM Sans/DM Mono's sans companion has no Hebrew glyphs. Scale and usage table live in `.claude/commands/design.md` § 5. Weight is capped at `font-semibold` (600) app-wide — never `font-bold` — including on monetary figures; prominence there comes from `font-mono` + size + `text-primary`, not weight.
 
 ## Responsive Breakpoints
 

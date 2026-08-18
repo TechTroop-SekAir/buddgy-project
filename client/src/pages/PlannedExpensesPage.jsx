@@ -40,13 +40,8 @@ export function PlannedExpensesPage() {
   });
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">{t('plannedExpenses.title')}</h1>
-        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-          {t('nav.backToDashboard')}
-        </Link>
-      </div>
+    <div>
+      <h1 className="text-2xl font-semibold text-text-primary">{t('plannedExpenses.title')}</h1>
 
       {isLoading && <p className="text-text-secondary mt-6">{t('plannedExpenses.loading')}</p>}
 

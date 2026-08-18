@@ -12,7 +12,12 @@
     "transactions": "Transactions",
     "logout": "Log out",
     "backToDashboard": "← Dashboard",
-    "admin": "Admin"
+    "admin": "Admin",
+    "imports": "Imports",
+    "plannedExpenses": "Planned expenses",
+    "settings": "Settings",
+    "menu": "Menu",
+    "profileMenu": "Account menu"
   },
   "landing": {
     "title": "Buddgy",
@@ -53,7 +58,9 @@
     "addFirstCategory": "Add your first category",
     "addTransaction": "Add Transaction",
     "loading": "Loading categories…",
-    "empty": "You don't have any categories yet this month."
+    "empty": "You don't have any categories yet this month.",
+    "monthMeta_one": "{{month}} · {{count}} day remaining",
+    "monthMeta_other": "{{month}} · {{count}} days remaining"
   },
   "categoryManagement": {
     "totalBudget": "Total Budget",
@@ -68,10 +75,22 @@
     "deleteConfirmBody": "This will permanently delete \"{{name}}\". This can't be undone.",
     "status": {
       "overBudget": "Over budget",
+      "nearLimit": "Near limit",
       "nearDepletion": "Near depletion",
       "onTrack": "On track"
     },
-    "atRisk": "At risk"
+    "atRisk": "At risk",
+    "budgetLabel": "{{amount}} budget",
+    "spentLabel": "Spent",
+    "leftLabel": "Left",
+    "overByLabel": "Over by",
+    "percentUsed": "{{percent}}% used",
+    "envelopesHeading": "Envelopes",
+    "safeToSpend": "Safe to spend",
+    "overallSpending": "Overall spending — {{month}}",
+    "remainingOf": "{{remaining}} remaining of {{budget}}",
+    "cardMenu": "Actions for {{name}}",
+    "budgetMeterLabel": "{{name}} budget usage"
   },
   "addCategoryModal": {
     "title": "Add category",

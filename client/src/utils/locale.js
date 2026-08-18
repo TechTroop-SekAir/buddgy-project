@@ -5,6 +5,7 @@ import i18n from '../i18n';
 // — money.js/date.js never need to change.
 const INTL_LOCALES = {
   he: 'he-IL',
+  en: 'en-IL',
 };
 
 export function getIntlLocale() {

@@ -79,7 +79,7 @@ export function TransactionFilters({
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium text-text-primary">{t('transactions.fromLabel')}</span>
           <DateInput
-            className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
+            className="rounded-sm border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
             min={start}
             max={dateTo || end}
             value={dateFrom}
@@ -89,7 +89,7 @@ export function TransactionFilters({
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium text-text-primary">{t('transactions.toLabel')}</span>
           <DateInput
-            className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
+            className="rounded-sm border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
             min={dateFrom || start}
             max={end}
             value={dateTo}

@@ -7,13 +7,19 @@ export function getCategoryStatus(category) {
   const { spent_agorot, monthly_budget_agorot } = category;
   const percentUsed = monthly_budget_agorot > 0 ? spent_agorot / monthly_budget_agorot : 0;
 
+  // `fill` is the bright bar-only tier (Meter), distinct from `color` (text/
+  // Badge, AA-contrast) — see docs/DESIGN.md § Status Colors. percentUsed is
+  // an unclamped ratio; callers decide how to clamp for display.
   if (percentUsed >= 1) {
-    return { color: 'status-danger', status: 'overBudget', percentUsed };
+    return { color: 'status-danger', fill: 'status-danger-fill', status: 'overBudget', percentUsed };
+  }
+  if (percentUsed >= 0.9) {
+    return { color: 'status-critical', fill: 'status-critical-fill', status: 'nearLimit', percentUsed };
   }
   if (percentUsed >= 0.75) {
-    return { color: 'status-warning', status: 'nearDepletion', percentUsed };
+    return { color: 'status-warning', fill: 'status-warning-fill', status: 'nearDepletion', percentUsed };
   }
-  return { color: 'status-ok', status: 'onTrack', percentUsed };
+  return { color: 'status-ok', fill: 'status-ok-fill', status: 'onTrack', percentUsed };
 }
 
 // Forward-looking signal from the forecast (docs/ARCHITECTURE.md § Forecast

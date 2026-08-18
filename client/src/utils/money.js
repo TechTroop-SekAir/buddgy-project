@@ -19,3 +19,17 @@ export function formatShekels(agorot) {
     currency: 'ILS',
   }).format(agorotToShekels(agorot));
 }
+
+// Zero-decimal variant for summary-altitude figures (stat tiles, the overall
+// progress footnote, a card's budget subtitle) — never for a decision-
+// relevant amount like a remaining/over-by balance, where rounding a few
+// agorot to "₪0" would mislead. See docs/DASHBOARD-REDESIGN.md Step 3.
+/** @param {number} agorot */
+export function formatShekelsRounded(agorot) {
+  return new Intl.NumberFormat(getIntlLocale(), {
+    style: 'currency',
+    currency: 'ILS',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(agorotToShekels(agorot));
+}

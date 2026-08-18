@@ -12,7 +12,12 @@
     "transactions": "תנועות",
     "logout": "התנתקות",
     "backToDashboard": "→ לוח בקרה",
-    "admin": "ניהול"
+    "admin": "ניהול",
+    "imports": "ייבוא",
+    "plannedExpenses": "הוצאות מתוכננות",
+    "settings": "הגדרות",
+    "menu": "תפריט",
+    "profileMenu": "תפריט חשבון"
   },
   "landing": {
     "title": "באדג'י",
@@ -53,7 +58,10 @@
     "addFirstCategory": "הוספת הקטגוריה הראשונה שלך",
     "addTransaction": "הוספת תנועה",
     "loading": "טוען קטגוריות…",
-    "empty": "אין לך עדיין קטגוריות החודש."
+    "empty": "אין לך עדיין קטגוריות החודש.",
+    "monthMeta_one": "{{month}} · נותר יום אחד",
+    "monthMeta_two": "{{month}} · נותרו יומיים",
+    "monthMeta_other": "{{month}} · נותרו {{count}} ימים"
   },
   "categoryManagement": {
     "totalBudget": "תקציב כולל",
@@ -68,10 +76,22 @@
     "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\". לא ניתן לבטל פעולה זו.",
     "status": {
       "overBudget": "חריגה מהתקציב",
+      "nearLimit": "קרוב לתקרה",
       "nearDepletion": "מתקרבת לסיום",
       "onTrack": "במסלול"
     },
-    "atRisk": "בסיכון"
+    "atRisk": "בסיכון",
+    "budgetLabel": "תקציב {{amount}}",
+    "spentLabel": "הוצא",
+    "leftLabel": "נותר",
+    "overByLabel": "חריגה של",
+    "percentUsed": "{{percent}}% נוצלו",
+    "envelopesHeading": "מעטפות",
+    "safeToSpend": "בטוח לבזבז",
+    "overallSpending": "הוצאות סה״כ — {{month}}",
+    "remainingOf": "{{remaining}} מתוך {{budget}} נותרו",
+    "cardMenu": "פעולות עבור {{name}}",
+    "budgetMeterLabel": "ניצול תקציב {{name}}"
   },
   "addCategoryModal": {
     "title": "הוספת קטגוריה",

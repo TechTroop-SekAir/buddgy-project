@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
@@ -76,17 +75,12 @@ export function TransactionsPage() {
   const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.amount_agorot, 0);
 
   return (
-    <div className="p-8">
+    <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-text-primary">{t('transactions.title')}</h1>
-        <div className="flex items-center gap-4">
-          <Button variant="filled" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
-            {t('transactions.addTransaction')}
-          </Button>
-          <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('nav.backToDashboard')}
-          </Link>
-        </div>
+        <Button variant="filled" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
+          {t('transactions.addTransaction')}
+        </Button>
       </div>
 
       <div className="mt-6">

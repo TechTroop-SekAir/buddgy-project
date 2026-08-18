@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { AppShellLayout } from './components/layout/AppShellLayout';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TransactionsPage } from './pages/TransactionsPage';
@@ -59,55 +60,26 @@ export function AppRoutes() {
         }
       />
       <Route
-        path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <AppShellLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/transactions"
-        element={
-          <ProtectedRoute>
-            <TransactionsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/imports"
-        element={
-          <ProtectedRoute>
-            <ImportPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/planned-expenses"
-        element={
-          <ProtectedRoute>
-            <PlannedExpensesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
+        <Route path="/imports" element={<ImportPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/planned-expenses" element={<PlannedExpensesPage />} />
+        <Route
+          path="/admin"
+          element={
             <AdminRoute>
               <AdminPage />
             </AdminRoute>
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
+      </Route>
     </Routes>
   );
 }

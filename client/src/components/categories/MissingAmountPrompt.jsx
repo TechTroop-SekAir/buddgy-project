@@ -32,8 +32,8 @@ function MissingAmountRow({ plannedExpense, onSubmit }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-      <div className="flex-1 min-w-[10rem]">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 border-b border-border-subtle py-3 last:border-0">
+      <div className="min-w-40 flex-1">
         <p className="text-sm font-medium text-text-primary">{plannedExpense.title}</p>
         <p className="text-xs text-text-secondary">{formatDate(plannedExpense.due_date)}</p>
       </div>
@@ -60,13 +60,13 @@ export function MissingAmountPrompt({ plannedExpenses, onSubmit }) {
   if (!plannedExpenses || plannedExpenses.length === 0) return null;
 
   return (
-    <Card padding={0} className="bg-bg-surface border border-border-card rounded-lg">
-      <div className="px-6 py-5 flex flex-col gap-4">
+    <Card padding={0} className="bg-bg-surface border border-border-card rounded-lg shadow-sm">
+      <div className="px-6 py-5 flex flex-col gap-2">
         <div>
-          <h2 className="text-base font-semibold text-text-primary">{t('forecast.missingAmountTitle')}</h2>
+          <h2 className="text-base font-semibold text-text-strong">{t('forecast.missingAmountTitle')}</h2>
           <p className="text-sm text-text-secondary">{t('forecast.missingAmountBody')}</p>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
           {plannedExpenses.map((plannedExpense) => (
             <MissingAmountRow key={plannedExpense.id} plannedExpense={plannedExpense} onSubmit={onSubmit} />
           ))}
