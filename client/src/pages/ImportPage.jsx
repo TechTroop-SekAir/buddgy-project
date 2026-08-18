@@ -8,6 +8,7 @@ import importService from '../services/importService';
 import { getCurrentMonth } from '../utils/month';
 import { formatDate } from '../utils/date';
 import { formatShekels } from '../utils/money';
+import { PageHeader } from '../components/shared/PageHeader';
 
 const STEP = { SELECT: 'select', UPLOADING: 'uploading', MAPPING: 'mapping', DONE: 'done' };
 
@@ -119,13 +120,10 @@ export function ImportPage() {
   const canConfirm = Boolean(mapping.date && mapping.amount);
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">{t('csvImport.title')}</h1>
-        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-          {t('nav.backToDashboard')}
-        </Link>
-      </div>
+    <>
+      <PageHeader />
+      <div className="p-8">
+      <h1 className="text-2xl font-semibold text-text-primary">{t('csvImport.title')}</h1>
 
       {step === STEP.SELECT && (
         <div className="flex flex-col gap-4 mt-6 max-w-md">
@@ -271,6 +269,7 @@ export function ImportPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

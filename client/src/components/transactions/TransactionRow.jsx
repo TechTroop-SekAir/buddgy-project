@@ -39,8 +39,8 @@ export function TransactionRow({ transaction, categoryOptions, onReassign, onEdi
       <td className="py-3 pe-4 text-sm text-text-secondary whitespace-nowrap">
         {formatDate(transaction.transaction_date)}
       </td>
-      <td className="py-3 pe-4 text-sm text-text-primary">{transaction.description}</td>
-      <td className="py-3 pe-4 text-sm text-text-secondary whitespace-nowrap">
+      <td className="py-3 pe-4 text-sm text-text-primary min-w-[140px]">{transaction.description}</td>
+      <td className="py-3 pe-4 text-sm text-text-secondary whitespace-nowrap min-w-[140px]">
         <Select
           size="xs"
           placeholder={t('transactions.uncategorized')}
@@ -55,10 +55,10 @@ export function TransactionRow({ transaction, categoryOptions, onReassign, onEdi
       </td>
       <td className="py-3 ps-0 text-sm text-end whitespace-nowrap">
         <div className="flex justify-end gap-2">
-          <Button variant="subtle" color="gray" size="xs" onClick={() => onEdit(transaction)}>
+          <Button variant="subtle" color="gray" size="md" onClick={() => onEdit(transaction)}>
             {t('common.edit')}
           </Button>
-          <Button variant="subtle" color="status-danger" size="xs" onClick={openConfirm}>
+          <Button variant="subtle" color="status-danger" size="md" onClick={openConfirm}>
             {t('common.delete')}
           </Button>
         </div>

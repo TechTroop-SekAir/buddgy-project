@@ -11,3 +11,5 @@ export { Textarea } from './Textarea';
 export { FileInput } from './FileInput';
 export { Table } from './Table';
 export { Tabs } from './Tabs';
+export { Burger } from './Burger';
+export { Drawer } from './Drawer';

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +11,7 @@ import { TransactionRow } from '../components/transactions/TransactionRow';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
 import { TransactionEditModal } from '../components/transactions/TransactionEditModal';
 import { formatShekels } from '../utils/money';
+import { PageHeader } from '../components/shared/PageHeader';
 
 export function TransactionsPage() {
   const { t } = useTranslation();
@@ -100,17 +100,14 @@ export function TransactionsPage() {
   const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.amount_agorot, 0);
 
   return (
-    <div className="p-8">
+    <>
+      <PageHeader />
+      <div className="p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-text-primary">{t('transactions.title')}</h1>
-        <div className="flex items-center gap-4">
-          <Button variant="filled" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
-            {t('transactions.addTransaction')}
-          </Button>
-          <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('nav.backToDashboard')}
-          </Link>
-        </div>
+        <Button variant="filled" color="accent" onClick={() => setIsQuickEntryOpen(true)}>
+          {t('transactions.addTransaction')}
+        </Button>
       </div>
 
       <div className="mt-6">
@@ -146,29 +143,31 @@ export function TransactionsPage() {
             })}
           </p>
 
-          <table className="w-full mt-3">
-            <thead>
-              <tr className="border-b border-border-card text-start text-xs uppercase text-text-secondary">
-                <th className="py-2 pe-4 font-medium">{t('transactions.dateHeader')}</th>
-                <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
-                <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
-                <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
-                <th className="py-2 ps-0 font-medium text-end">{t('transactions.actionsHeader')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((transaction) => (
-                <TransactionRow
-                  key={transaction.id}
-                  transaction={transaction}
-                  categoryOptions={categoryOptions}
-                  onReassign={(id, envelopeId) => updateMutation.mutate({ id, payload: { envelope_id: envelopeId } })}
-                  onEdit={setEditingTransaction}
-                  onDelete={(id) => deleteMutation.mutateAsync(id)}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border-card text-start text-xs uppercase text-text-secondary">
+                  <th className="py-2 pe-4 font-medium">{t('transactions.dateHeader')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
+                  <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
+                  <th className="py-2 ps-0 font-medium text-end">{t('transactions.actionsHeader')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactions.map((transaction) => (
+                  <TransactionRow
+                    key={transaction.id}
+                    transaction={transaction}
+                    categoryOptions={categoryOptions}
+                    onReassign={(id, envelopeId) => updateMutation.mutate({ id, payload: { envelope_id: envelopeId } })}
+                    onEdit={setEditingTransaction}
+                    onDelete={(id) => deleteMutation.mutateAsync(id)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
@@ -185,6 +184,7 @@ export function TransactionsPage() {
         onClose={() => setEditingTransaction(null)}
         onSubmit={(payload) => updateMutation.mutateAsync({ id: editingTransaction.id, payload })}
       />
-    </div>
+      </div>
+    </>
   );
 }

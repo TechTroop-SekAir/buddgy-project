@@ -17,12 +17,12 @@ export function MonthNavigator() {
   const isCurrentMonth = month === getCurrentMonth();
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <Button
         type="button"
         variant="subtle"
         color="gray"
-        size="xs"
+        size="md"
         className="px-2 py-1 text-text-secondary hover:text-text-primary"
         onClick={goToPreviousMonth}
         aria-label={t('monthNavigator.prev')}
@@ -34,7 +34,7 @@ export function MonthNavigator() {
         type="button"
         variant="subtle"
         color="gray"
-        size="xs"
+        size="md"
         className="px-2 py-1 text-text-secondary hover:text-text-primary"
         onClick={goToNextMonth}
         aria-label={t('monthNavigator.next')}
@@ -42,7 +42,7 @@ export function MonthNavigator() {
         {nextGlyph}
       </Button>
       {!isCurrentMonth && (
-        <Button type="button" variant="outline" color="gray" size="xs" onClick={goToCurrentMonth}>
+        <Button type="button" variant="outline" color="gray" size="md" onClick={goToCurrentMonth}>
           {t('monthNavigator.currentMonth')}
         </Button>
       )}

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui';
 import { CategoryFormModal } from '../components/categories/CategoryFormModal';
@@ -18,10 +17,11 @@ import plannedExpenseService from '../services/plannedExpenseService';
 import { getCurrentMonth } from '../utils/month';
 import { sortCategoriesBySpent } from '../utils/categoryStatus';
 import { MonthNavigator } from '../components/shared/MonthNavigator';
+import { PageHeader } from '../components/shared/PageHeader';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
@@ -96,32 +96,10 @@ export function DashboardPage() {
   const sortedCategories = sortCategoriesBySpent(categories);
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">{t('dashboard.title')}</h1>
-        <div className="flex items-center gap-4">
-          <Link to="/transactions" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('nav.transactions')}
-          </Link>
-          <Link to="/imports" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('csvImport.title')}
-          </Link>
-          <Link to="/planned-expenses" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('plannedExpenses.title')}
-          </Link>
-          <Link to="/settings" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('calendar.title')}
-          </Link>
-          {user.role === 'admin' && (
-            <Link to="/admin" className="text-sm text-text-secondary hover:text-text-primary">
-              {t('nav.admin')}
-            </Link>
-          )}
-          <Button variant="outline" color="gray" size="md" onClick={logout}>
-            {t('nav.logout')}
-          </Button>
-        </div>
-      </div>
+    <>
+      <PageHeader />
+      <div className="p-8">
+      <h1 className="text-2xl font-semibold text-text-primary">{t('dashboard.title')}</h1>
       <div className="flex gap-3 mt-4">
         <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
           {t('dashboard.addCategory')}
@@ -137,6 +115,8 @@ export function DashboardPage() {
 
       {isLoading && <p className="text-text-secondary mt-6">{t('dashboard.loading')}</p>}
 
+      {/* Forecast panel is always a full-width block above the envelope
+          grid, stacked at every breakpoint — not a side column. */}
       {!isLoading && categories.length > 0 && (
         <div className="mt-6 flex flex-col gap-4">
           <ForecastBanner forecast={forecast} isLoading={isForecastLoading} isError={isForecastError} />
@@ -150,6 +130,20 @@ export function DashboardPage() {
             plannedExpenses={forecast?.missingAmountPlannedExpenses}
             onSubmit={(id, payload) => missingAmountMutation.mutateAsync({ id, payload })}
           />
+        </div>
+      )}
+
+      {!isLoading && categories.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          {sortedCategories.map((category) => (
+            <CategoryCard
+              key={category.id}
+              category={category}
+              onDelete={(id) => deleteMutation.mutateAsync(id)}
+              onEdit={(id, payload) => updateMutation.mutateAsync({ id, payload })}
+              atRiskEnvelopeIds={forecast?.atRiskEnvelopes ?? []}
+            />
+          ))}
         </div>
       )}
 
@@ -168,20 +162,6 @@ export function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && categories.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {sortedCategories.map((category) => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              onDelete={(id) => deleteMutation.mutateAsync(id)}
-              onEdit={(id, payload) => updateMutation.mutateAsync({ id, payload })}
-              atRiskEnvelopeIds={forecast?.atRiskEnvelopes ?? []}
-            />
-          ))}
-        </div>
-      )}
-
       <CategoryFormModal
         opened={isAddOpen}
         onClose={() => setIsAddOpen(false)}
@@ -193,6 +173,7 @@ export function DashboardPage() {
         onClose={() => setIsQuickEntryOpen(false)}
         onConfirm={(payload) => quickEntryMutation.mutateAsync(payload)}
       />
-    </div>
+      </div>
+    </>
   );
 }

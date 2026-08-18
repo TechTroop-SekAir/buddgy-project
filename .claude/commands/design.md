@@ -259,7 +259,7 @@ These are status indicators, not error/success feedback — keep them visually d
 ### Touch targets
 - Minimum 44×44px for all interactive elements
 - Money inputs (Quick Entry, envelope budget): ensure the tap area is large enough for fast, one-handed entry — use `size="md"` or larger, never the compact Mantine size
-- Buttons: default sizing already meets this — don't reduce it
+- Buttons: use `size="md"` or larger — measured against the installed Mantine version, an unset/default `Button` renders at 36px and even `size="md"` is 42px, both short of 44px; `size="lg"` (50px) is the first size that actually clears the bar. Table-row action buttons (`TransactionRow`, `PlannedExpenseRow`) and `MonthNavigator` were bumped from `size="xs"` to `size="md"` in the A-16 responsive pass as the worst (most-tapped) offenders; other default-sized buttons across the app (e.g. `CategoryCard`'s edit/delete, modal Cancel/Save rows) are a known follow-up — correcting the `Button` adapter's baseline size is a bigger design-system decision than a per-component fix.
 
 ### ARIA
 - Inputs must have associated labels (Mantine's `label` prop renders a real `<label htmlFor>`, not just proximity)
