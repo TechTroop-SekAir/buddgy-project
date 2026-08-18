@@ -16,3 +16,7 @@ export { Menu } from './Menu';
 export { ActionIcon } from './ActionIcon';
 export { Skeleton } from './Skeleton';
 export { Meter } from './Meter';
+export { Burger } from './Burger';
+export { Drawer } from './Drawer';
+export { Alert } from './Alert';
+export { EmptyState } from './EmptyState';

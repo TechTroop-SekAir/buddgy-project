@@ -1,35 +1,48 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui';
+import { Alert, Button, EmptyState, Skeleton } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { useMonth } from '../context/MonthContext';
 import transactionService from '../services/transactionService';
 import categoryService from '../services/categoryService';
 import { TransactionFilters, UNASSIGNED_VALUE } from '../components/transactions/TransactionFilters';
 import { TransactionRow } from '../components/transactions/TransactionRow';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
-import { getCurrentMonth } from '../utils/month';
-import { shiftMonth } from '../utils/date';
+import { TransactionEditModal } from '../components/transactions/TransactionEditModal';
 import { formatShekels } from '../utils/money';
-import { getCategoryLabel } from '../utils/categoryLabel';
 
 export function TransactionsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [month, setMonth] = useState(getCurrentMonth());
+  const { month } = useMonth();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
-  const { data: transactions = [], isLoading } = useQuery({
+  // The date-range filters are bounded to `month` (see TransactionFilters'
+  // min/max props) — MonthNavigator changes `month` from shared context, so
+  // this page can't intercept that click directly the way it could when
+  // month was local state; reset on the resulting `month` change instead.
+  useEffect(() => {
+    setDateFrom('');
+    setDateTo('');
+  }, [month]);
+
+  const {
+    data: transactions = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['transactions', user.id, month],
     queryFn: () => transactionService.list(user.id, month),
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isError: isCategoriesError } = useQuery({
     queryKey: ['categories', user.id, month],
     queryFn: () => categoryService.list(user.id, month),
   });
@@ -45,17 +58,32 @@ export function TransactionsPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }) => transactionService.update(id, payload),
+    onSuccess: () => {
+      // Reassigning envelope_id changes both the old and new envelope's
+      // spent totals, plus overall forecast — same invalidation set as create.
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => transactionService.remove(id),
+    onSuccess: () => {
+      // Removing a transaction changes the same three things creating one
+      // does — same invalidation set as create/update.
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+
   // Mantine's Select requires string option values (client/CLAUDE.md § Component
   // Boundary components pass through Mantine as-is) — category.id is a number
   // from the real API. Same conversion as QuickEntryModal.jsx / PlannedExpensesPage.jsx.
   const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
-  const categoryNameById = Object.fromEntries(categories.map((category) => [category.id, category.name]));
-
-  const handleMonthChange = (delta) => {
-    setMonth((current) => shiftMonth(current, delta));
-    setDateFrom('');
-    setDateTo('');
-  };
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -85,8 +113,6 @@ export function TransactionsPage() {
 
       <div className="mt-6">
         <TransactionFilters
-          month={month}
-          onMonthChange={handleMonthChange}
           search={search}
           onSearchChange={setSearch}
           categoryId={categoryId}
@@ -99,17 +125,27 @@ export function TransactionsPage() {
         />
       </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">{t('transactions.loading')}</p>}
+      {isCategoriesError && <Alert className="mt-4">{t('transactions.categoriesError')}</Alert>}
 
-      {!isLoading && transactions.length === 0 && (
-        <p className="text-text-secondary mt-16 text-center">{t('transactions.emptyMonth')}</p>
+      {isLoading && (
+        <div className="mt-6 flex flex-col gap-2" aria-label={t('transactions.loading')}>
+          <Skeleton height={40} radius="sm" />
+          <Skeleton height={40} radius="sm" />
+          <Skeleton height={40} radius="sm" />
+        </div>
       )}
 
-      {!isLoading && transactions.length > 0 && filteredTransactions.length === 0 && (
-        <p className="text-text-secondary mt-16 text-center">{t('transactions.emptyFiltered')}</p>
+      {!isLoading && isError && <Alert className="mt-6">{t('transactions.error')}</Alert>}
+
+      {!isLoading && !isError && transactions.length === 0 && (
+        <EmptyState className="mt-16" message={t('transactions.emptyMonth')} />
       )}
 
-      {!isLoading && filteredTransactions.length > 0 && (
+      {!isLoading && !isError && transactions.length > 0 && filteredTransactions.length === 0 && (
+        <EmptyState className="mt-16" message={t('transactions.emptyFiltered')} />
+      )}
+
+      {!isLoading && !isError && filteredTransactions.length > 0 && (
         <>
           <p className="text-sm text-text-secondary mt-6">
             {t('transactions.total', {
@@ -118,29 +154,33 @@ export function TransactionsPage() {
             })}
           </p>
 
-          <table className="w-full mt-3">
-            <thead>
-              <tr className="border-b border-border-card text-start text-xs uppercase text-text-secondary">
-                <th className="py-2 pe-4 font-medium">{t('transactions.dateHeader')}</th>
-                <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
-                <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
-                <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((transaction) => (
-                <TransactionRow
-                  key={transaction.id}
-                  transaction={transaction}
-                  categoryLabel={
-                    transaction.envelope_id && categoryNameById[transaction.envelope_id]
-                      ? getCategoryLabel(categoryNameById[transaction.envelope_id], t)
-                      : t('transactions.uncategorized')
-                  }
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border-card text-start text-xs uppercase text-text-secondary">
+                  <th className="py-2 pe-4 font-medium">{t('transactions.dateHeader')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
+                  <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
+                  <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
+                  <th className="py-2 ps-0 font-medium text-end">{t('transactions.actionsHeader')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactions.map((transaction) => (
+                  <TransactionRow
+                    key={transaction.id}
+                    transaction={transaction}
+                    categoryOptions={categoryOptions}
+                    onReassign={(id, envelopeId) =>
+                      updateMutation.mutateAsync({ id, payload: { envelope_id: envelopeId } })
+                    }
+                    onEdit={setEditingTransaction}
+                    onDelete={(id) => deleteMutation.mutateAsync(id)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
@@ -148,6 +188,14 @@ export function TransactionsPage() {
         opened={isQuickEntryOpen}
         onClose={() => setIsQuickEntryOpen(false)}
         onConfirm={(payload) => quickEntryMutation.mutateAsync(payload)}
+      />
+
+      <TransactionEditModal
+        opened={editingTransaction != null}
+        transaction={editingTransaction}
+        categoryOptions={categoryOptions}
+        onClose={() => setEditingTransaction(null)}
+        onSubmit={(payload) => updateMutation.mutateAsync({ id: editingTransaction.id, payload })}
       />
     </div>
   );

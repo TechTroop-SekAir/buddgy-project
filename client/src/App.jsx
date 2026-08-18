@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { theme } from './theme';
 import { AuthProvider } from './context/AuthContext';
 import { LocaleProvider, useLocale } from './context/LocaleContext';
+import { MonthProvider } from './context/MonthContext';
 import { AppRoutes } from './routes';
 
 const queryClient = new QueryClient();
@@ -33,7 +34,9 @@ export default function App() {
     <LocaleProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <AppShell />
+          <MonthProvider>
+            <AppShell />
+          </MonthProvider>
         </AuthProvider>
       </QueryClientProvider>
     </LocaleProvider>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Button, Icon, Skeleton } from '../components/ui';
+import { Alert, Button, EmptyState, Icon, Skeleton } from '../components/ui';
 import { CategoryFormModal } from '../components/categories/CategoryFormModal';
 import { CategoryCard } from '../components/categories/CategoryCard';
 import { ForecastBanner } from '../components/categories/ForecastBanner';
@@ -9,6 +9,7 @@ import { SummaryBar } from '../components/categories/SummaryBar';
 import { MissingAmountPrompt } from '../components/categories/MissingAmountPrompt';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
 import { useAuth } from '../context/AuthContext';
+import { useMonth } from '../context/MonthContext';
 import categoryService from '../services/categoryService';
 import transactionService from '../services/transactionService';
 import forecastService from '../services/forecastService';
@@ -23,12 +24,17 @@ export function DashboardPage() {
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
-  const month = getCurrentMonth();
+  const { month } = useMonth();
+  const isCurrentMonth = month === getCurrentMonth();
   const queryKey = ['categories', user.id, month];
 
   const forecastQueryKey = ['forecast', user.id, month];
 
-  const { data: categories = [], isLoading } = useQuery({
+  const {
+    data: categories = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey,
     queryFn: () => categoryService.list(user.id, month),
   });
@@ -109,7 +115,7 @@ export function DashboardPage() {
       </div>
 
       {isLoading && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4" aria-label={t('dashboard.loading')}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Skeleton height={76} radius="lg" />
             <Skeleton height={76} radius="lg" />
@@ -123,7 +129,11 @@ export function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && categories.length > 0 && (
+      {!isLoading && isError && <Alert className="mt-6">{t('dashboard.error')}</Alert>}
+
+      {/* Forecast panel is always a full-width block above the envelope
+          grid, stacked at every breakpoint — not a side column. */}
+      {!isLoading && !isError && categories.length > 0 && (
         <div className="flex flex-col gap-4">
           <ForecastBanner forecast={forecast} isLoading={isForecastLoading} isError={isForecastError} />
           <SummaryBar
@@ -140,16 +150,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && categories.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border-card p-10 text-center">
-          <p className="text-text-secondary">{t('dashboard.empty')}</p>
-          <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-            {t('dashboard.addFirstCategory')}
-          </Button>
-        </div>
-      )}
-
-      {!isLoading && categories.length > 0 && (
+      {!isLoading && !isError && categories.length > 0 && (
         <>
           <div className="mb-4 mt-7 flex items-center justify-between">
             <h2 className="text-base font-semibold text-text-strong">{t('categoryManagement.envelopesHeading')}</h2>
@@ -170,6 +171,22 @@ export function DashboardPage() {
             ))}
           </div>
         </>
+      )}
+
+      {!isLoading && !isError && categories.length === 0 && isCurrentMonth && (
+        <EmptyState
+          className="mt-16"
+          message={t('dashboard.empty')}
+          action={
+            <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
+              {t('dashboard.addFirstCategory')}
+            </Button>
+          }
+        />
+      )}
+
+      {!isLoading && !isError && categories.length === 0 && !isCurrentMonth && (
+        <EmptyState className="mt-16" message={t('dashboard.emptyMonth')} />
       )}
 
       <CategoryFormModal

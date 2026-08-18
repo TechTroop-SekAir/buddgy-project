@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, FileInput, Select, Table } from '../components/ui';
+import { Alert, Badge, Button, EmptyState, FileInput, Select, Skeleton, Table } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import importService from '../services/importService';
 import { getCurrentMonth } from '../utils/month';
 import { formatDate } from '../utils/date';
 import { formatShekels } from '../utils/money';
-
 const STEP = { SELECT: 'select', UPLOADING: 'uploading', MAPPING: 'mapping', DONE: 'done' };
 
 // Server error strings (docs/API.md § CSV Import, server/services/csvImportService.js)
@@ -73,7 +72,7 @@ export function ImportPage() {
       setResult(data);
       setStep(STEP.DONE);
     },
-    onError: (err) => setError(err.message),
+    onError: (err) => setError(t(resolveErrorKey(err.message))),
   });
 
   const readHeader = async (selectedFile) => {
@@ -131,11 +130,7 @@ export function ImportPage() {
             value={file}
             onChange={setFile}
           />
-          {error && (
-            <p className="text-sm text-form-error" role="alert">
-              {error}
-            </p>
-          )}
+          {error && <Alert>{error}</Alert>}
           <Button variant="filled" color="accent" disabled={!file} onClick={handleUpload}>
             {t('csvImport.select.submit')}
           </Button>
@@ -143,9 +138,10 @@ export function ImportPage() {
       )}
 
       {step === STEP.UPLOADING && (
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <div className="flex flex-col items-center gap-3 py-16 text-center" aria-label={t('csvImport.uploading.title')}>
           <p className="text-base font-medium text-text-primary">{t('csvImport.uploading.title')}</p>
           <p className="text-sm text-text-secondary">{t('csvImport.uploading.body')}</p>
+          <Skeleton height={12} width={220} radius="sm" className="mt-2" />
         </div>
       )}
 
@@ -190,6 +186,8 @@ export function ImportPage() {
             />
           </div>
 
+          {previewRows.length === 0 && !aiFailed && <EmptyState message={t('csvImport.mapping.noPreviewRows')} />}
+
           {previewRows.length > 0 && (
             <div className="mt-2 overflow-x-auto">
               <p className="text-sm font-medium text-text-primary mb-2">{t('csvImport.mapping.previewTitle')}</p>
@@ -218,11 +216,7 @@ export function ImportPage() {
             </div>
           )}
 
-          {error && (
-            <p className="text-sm text-form-error" role="alert">
-              {error}
-            </p>
-          )}
+          {error && <Alert>{error}</Alert>}
 
           <div className="flex justify-end gap-3 mt-2">
             <Button type="button" variant="outline" color="gray" onClick={reset}>

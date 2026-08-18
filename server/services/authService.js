@@ -73,7 +73,7 @@ async function login({ email, password }) {
   const normalizedEmail = typeof email === 'string' ? email.toLowerCase().trim() : email;
   const user = await User.findOne({
     where: { email: normalizedEmail },
-    attributes: ['id', 'email', 'password_hash', 'full_name', 'avatar_url', 'role', 'google_refresh_token'],
+    attributes: ['id', 'email', 'password_hash', 'full_name', 'avatar_url', 'role', 'google_refresh_token', 'disabled'],
   });
   if (!user || !user.password_hash) {
     throw new AppError('unauthorized', 401);
@@ -84,14 +84,20 @@ async function login({ email, password }) {
     throw new AppError('unauthorized', 401);
   }
 
+  // Same generic message as a bad password — don't leak account state
+  // (docs/SECURITY.md § Secrets) to an attacker probing an email address.
+  if (user.disabled) {
+    throw new AppError('unauthorized', 401);
+  }
+
   return { token: signToken(user), user: toPublicUser(user) };
 }
 
 async function findUserById(id) {
   const user = await User.findByPk(id, {
-    attributes: ['id', 'email', 'full_name', 'avatar_url', 'role', 'google_refresh_token'],
+    attributes: ['id', 'email', 'full_name', 'avatar_url', 'role', 'google_refresh_token', 'disabled'],
   });
-  if (!user) {
+  if (!user || user.disabled) {
     throw new AppError('unauthorized', 401);
   }
   return toPublicUser(user);

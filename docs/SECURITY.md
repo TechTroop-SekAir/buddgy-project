@@ -39,8 +39,8 @@ Admin routes are the only ones that legitimately read across users, and they exp
 ## JWT Lifecycle
 
 - Issued on register/login, signed with `JWT_SECRET`, contains `{ sub: userId, role }` — never anything sensitive (no password hash, no tokens)
-- Verified in `middleware/auth.js` on every protected route
-- Expiry: **7 days** (`expiresIn: '7d'` in `services/authService.js`) — acceptable blast radius for MVP; tighten before any production hardening pass
+- Verified in `middleware/auth.js` on every protected route. `requireAuth` also re-fetches the user by id on every request and rejects `disabled` accounts (ticket B-08) — `req.user.role` comes from this DB row, not the JWT's `role` claim, so a role change or an admin disabling a user takes effect on the user's very next request rather than waiting out the token's expiry below
+- Expiry: **7 days** (`expiresIn: '7d'` in `services/authService.js`) — acceptable blast radius for MVP; tighten before any production hardening pass. The `disabled` check above is what keeps a compromised or offboarded account's blast radius from actually reaching 7 days
 - No refresh-token flow for the app's own auth (JWT re-login on expiry is acceptable for an MVP) — **do not confuse this with `google_refresh_token`**, which is a separate, long-lived OAuth credential
 
 ## Secrets

@@ -15,6 +15,7 @@ const PUBLIC_ATTRIBUTES = [
   'due_date',
   'google_event_id',
   'is_confirmed',
+  'source',
 ];
 
 /** A caller may only ever point a planned expense at their own envelope, or none. */
@@ -22,6 +23,22 @@ async function assertEnvelopeOwnership(userId, envelopeId) {
   if (envelopeId === null || envelopeId === undefined) return;
   const envelope = await Envelope.findOne({ where: { id: envelopeId, user_id: userId }, attributes: ['id'] });
   if (!envelope) throw new AppError('validation failed: envelope_id', 400);
+}
+
+async function create(userId, { envelope_id = null, title, amount_agorot, due_date }) {
+  await assertEnvelopeOwnership(userId, envelope_id);
+
+  const plannedExpense = await PlannedExpense.create({
+    user_id: userId,
+    envelope_id,
+    title,
+    amount_agorot,
+    due_date,
+    google_event_id: null,
+    is_confirmed: false,
+    source: 'manual',
+  });
+  return plannedExpense.get({ plain: true });
 }
 
 async function list(userId, monthInput) {
@@ -60,4 +77,10 @@ async function update(userId, id, patch) {
   return plannedExpense.get({ plain: true });
 }
 
-module.exports = { list, update };
+async function remove(userId, id) {
+  const plannedExpense = await findOwned(userId, id);
+  await plannedExpense.destroy();
+  return { id: plannedExpense.id };
+}
+
+module.exports = { create, list, update, remove };

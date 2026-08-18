@@ -16,6 +16,14 @@ async function create(userId, payload) {
   return api.post('/transactions', payload);
 }
 
-const transactionService = { list, parse, create };
+async function update(id, payload) {
+  return api.patch(`/transactions/${id}`, payload);
+}
+
+async function remove(id) {
+  return api.delete(`/transactions/${id}`);
+}
+
+const transactionService = { list, parse, create, update, remove };
 
 export default transactionService;

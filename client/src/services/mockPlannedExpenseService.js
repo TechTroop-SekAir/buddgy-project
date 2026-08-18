@@ -38,3 +38,35 @@ export async function update(id, payload) {
 
   return plannedExpenses[index];
 }
+
+export async function create(userId, { envelope_id = null, title, amount_agorot, due_date }) {
+  await delay(200);
+  const plannedExpenses = loadPlannedExpenses();
+  const plannedExpense = {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    envelope_id,
+    title,
+    amount_agorot,
+    due_date,
+    google_event_id: null,
+    is_confirmed: false,
+    source: 'manual',
+  };
+  plannedExpenses.push(plannedExpense);
+  savePlannedExpenses(plannedExpenses);
+
+  return plannedExpense;
+}
+
+export async function remove(id) {
+  await delay(200);
+  const plannedExpenses = loadPlannedExpenses();
+  const index = plannedExpenses.findIndex((p) => p.id === id);
+  if (index === -1) throw new Error('not found');
+
+  const [removed] = plannedExpenses.splice(index, 1);
+  savePlannedExpenses(plannedExpenses);
+
+  return { id: removed.id };
+}

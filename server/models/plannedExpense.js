@@ -13,6 +13,8 @@ module.exports = (sequelize, DataTypes) => {
       // UNIQUE — re-syncs UPSERT on this column, never blind-insert.
       google_event_id: { type: DataTypes.STRING(128), unique: true },
       is_confirmed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      // 'calendar' | 'manual'
+      source: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'calendar' },
     },
     {
       tableName: 'planned_expenses',

@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink } from 'react-router-dom';
-import { ActionIcon, Icon, Menu } from '../ui';
+import { ActionIcon, Button, Icon, Menu } from '../ui';
 import { ProfileMenu } from './ProfileMenu';
 import { useAuth } from '../../context/AuthContext';
+import { useLocale } from '../../context/LocaleContext';
+import { useMonth } from '../../context/MonthContext';
 import { getCurrentMonth } from '../../utils/month';
 import { getMonthLabel } from '../../utils/date';
 
@@ -30,8 +32,15 @@ function navLinkClass({ isActive }) {
 export function AppHeader() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { direction } = useLocale();
+  const { month, goToPreviousMonth, goToNextMonth, goToCurrentMonth } = useMonth();
   const items = user.role === 'admin' ? [...NAV_ITEMS, { to: '/admin', labelKey: 'nav.admin', icon: 'barChart3' }] : NAV_ITEMS;
-  const monthLabel = getMonthLabel(getCurrentMonth());
+  const monthLabel = getMonthLabel(month);
+  const isCurrentMonth = month === getCurrentMonth();
+  // "previous" must point toward the start of reading order, which flips
+  // with RTL — same reasoning as MonthNavigator.jsx.
+  const prevIcon = direction === 'rtl' ? 'chevronRight' : 'chevronLeft';
+  const nextIcon = direction === 'rtl' ? 'chevronLeft' : 'chevronRight';
 
   return (
     <header className="sticky top-0 z-40 border-b border-border-nav bg-bg-surface">
@@ -54,9 +63,30 @@ export function AppHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5">
-          <span className="hidden items-center gap-1.5 rounded-sm border border-border-card px-3 py-1.5 text-sm text-text-secondary sm:flex">
+          <span className="hidden items-center gap-1 rounded-sm border border-border-card px-1.5 py-1 text-sm text-text-secondary sm:flex">
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              onClick={goToPreviousMonth}
+              aria-label={t('monthNavigator.prev')}
+            >
+              <Icon name={prevIcon} size="xs" />
+            </ActionIcon>
             <Icon name="calendarDays" size="xs" className="text-text-muted" />
             <span className="font-medium">{monthLabel}</span>
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              onClick={goToNextMonth}
+              aria-label={t('monthNavigator.next')}
+            >
+              <Icon name={nextIcon} size="xs" />
+            </ActionIcon>
+            {!isCurrentMonth && (
+              <Button variant="subtle" color="accent" size="xs" className="ms-1" onClick={goToCurrentMonth}>
+                {t('monthNavigator.currentMonth')}
+              </Button>
+            )}
           </span>
 
           <div className="md:hidden">

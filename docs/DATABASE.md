@@ -9,8 +9,9 @@
 | [users](#users) | Auth identity, role, Google token |
 | [envelopes](#envelopes) | Per-month budget buckets |
 | [transactions](#transactions) | Actual spend, from any of the 3 input channels |
-| [planned_expenses](#planned_expenses) | Future spend synced from Google Calendar |
+| [planned_expenses](#planned_expenses) | Future spend, from calendar sync or manual entry |
 | [csv_imports](#csv_imports) | Audit trail of bank-statement uploads |
+| [ai_calls](#ai_calls) | Usage log backing `GET /api/admin/stats`' `aiCallCount` |
 | [categories](#categories) | Global admin category catalog (feeds AI classification) |
 | [Indexes](#indexes) | What's indexed and why |
 | [Idempotency](#idempotency) | How duplicate imports/syncs are prevented |
@@ -36,6 +37,7 @@ erDiagram
     users ||--o{ transactions : owns
     users ||--o{ planned_expenses : owns
     users ||--o{ csv_imports : uploads
+    users ||--o{ ai_calls : "logged for (nullable)"
     envelopes ||--o{ transactions : "assigned to (nullable)"
     envelopes ||--o{ planned_expenses : "assigned to"
 ```
@@ -51,6 +53,7 @@ erDiagram
 | avatar_url | TEXT | Link to external storage (Cloudinary/S3) |
 | google_refresh_token | TEXT | **Encrypted at rest**, NULL until calendar is connected — see [`SECURITY.md`](./SECURITY.md) |
 | role | VARCHAR(20) | `'user'` \| `'admin'` |
+| disabled | BOOLEAN | DEFAULT false — set via `PATCH /api/admin/users/:id` (ticket B-08); checked on every request in `middleware/auth.js`, not just at login, so disabling takes effect immediately (see [`API.md`](./API.md) § Admin) |
 | created_at | TIMESTAMP | DEFAULT now() |
 
 ## envelopes
@@ -65,6 +68,8 @@ erDiagram
 | month | DATE | Month this envelope belongs to (first-of-month convention) |
 
 **Note:** an envelope is scoped to a single month — "Groceries" for August and "Groceries" for September are two rows. This is what makes month-over-month history (`GET /api/envelopes?month=`) and per-month budgets work without a separate versioning table.
+
+`spent_agorot` (returned by `GET /api/envelopes`, not a stored column) is computed by summing `transactions.amount_agorot` for the envelope, filtered to `transaction_date` within the envelope's own month — matching how the forecast endpoint scopes its per-envelope headroom, so the two numbers never disagree over a transaction dated outside the envelope's month.
 
 ## transactions
 
@@ -86,11 +91,12 @@ erDiagram
 | id | SERIAL PK | |
 | user_id | INT FK → users | `ON DELETE CASCADE` |
 | envelope_id | INT FK → envelopes | `ON DELETE SET NULL` — nullable until the user assigns it |
-| title | VARCHAR(160) | Calendar event title |
-| amount_agorot | INTEGER | Extracted from event title |
+| title | VARCHAR(160) | Calendar event title, or user-entered title for a manual row |
+| amount_agorot | INTEGER | Extracted from event title, or user-entered for a manual row |
 | due_date | DATE | |
-| google_event_id | VARCHAR(128) | UNIQUE — prevents duplicate sync |
+| google_event_id | VARCHAR(128) | UNIQUE — prevents duplicate sync; NULL for manual rows |
 | is_confirmed | BOOLEAN | DEFAULT false |
+| source | VARCHAR(20) | `'calendar'` \| `'manual'` — DEFAULT `'calendar'` |
 
 ## csv_imports
 
@@ -102,6 +108,18 @@ erDiagram
 | column_mapping | JSONB | Mapping confirmed by the user |
 | rows_imported | INTEGER | |
 | created_at | TIMESTAMP | DEFAULT now() |
+
+## ai_calls
+
+| Column | Type | Notes |
+|---|---|---|
+| id | SERIAL PK | |
+| user_id | INT FK → users | **`ON DELETE SET NULL`** — deliberately not `CASCADE` like every other user-owned table above: deleting a user must not erase historical AI usage from `/api/admin/stats`' `aiCallCount` |
+| kind | VARCHAR(20) | `'quick_entry'` \| `'csv_mapping'` |
+| succeeded | BOOLEAN | NOT NULL — failed calls (timeout, rate limit, malformed model output) still cost Anthropic spend and are still counted |
+| created_at | TIMESTAMP | DEFAULT now() |
+
+**Note:** logged from inside `server/services/claudeService.js` — the single boundary both AI call sites (`parseQuickEntry`, `detectColumnMapping`) go through — never from a controller. A logging failure is caught and never allowed to break the AI feature itself (`CLAUDE.md` § Error Handling).
 
 ## categories
 

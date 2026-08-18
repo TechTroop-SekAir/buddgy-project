@@ -26,6 +26,14 @@ env:
   GOOGLE_REDIRECT_URI: http://localhost:4000/api/calendar/callback
   CLIENT_URL: http://localhost:5173
   DATABASE_URL: postgres://postgres:postgres@localhost:5432/buddgy_ci
+  # A SEPARATE database on the same Postgres service — not buddgy_ci above.
+  # server/tests/helpers/db.js's resetDb() refuses to TRUNCATE any database
+  # whose name doesn't end in "_test", as a hard guard against ever wiping
+  # real data (ticket B-09); buddgy_ci fails that check by design, so it
+  # can't be reused here even though it's disposable in CI too. Created by
+  # the "Create dedicated integration test database" step below, mirroring
+  # local dev's buddgy_dev vs buddgy_test split (scripts/create-test-db.sh).
+  DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/buddgy_ci_test
 
 jobs:
   server:
@@ -60,9 +68,7 @@ jobs:
         working-directory: server
 
       # Postgres alignment: run the real migrations, and their down side,
-      # against a real Postgres instance — this is the only place the
-      # production dialect actually gets exercised (both Jest test files
-      # fully mock the DB), and the only check that would catch a
+      # against a real Postgres instance — the only check that would catch a
       # migration written against SQLite-only syntax before it reaches
       # Railway. docs/DATABASE.md § Migration Conventions requires every
       # migration to have a complete `down`; `db:migrate:undo:all` is what
@@ -81,6 +87,25 @@ jobs:
 
       - name: Run tests
         run: npm test
+        working-directory: server
+
+      # server/__tests__/ (above) mocks ../models entirely — real Postgres,
+      # real constraints, and real requireAuth DB lookups only get exercised
+      # here, against server/tests/ (ticket B-09), on its own database
+      # (buddgy_ci_test) — resetDb()'s TRUNCATE-between-tests refuses to run
+      # against anything not named *_test, so it can't share buddgy_ci above.
+      - name: Create dedicated integration test database
+        run: psql -h localhost -U postgres -c "CREATE DATABASE buddgy_ci_test;"
+        working-directory: server
+        env:
+          PGPASSWORD: postgres
+
+      - name: Migrate the integration test database
+        run: npm run db:migrate:test
+        working-directory: server
+
+      - name: Run integration tests
+        run: npm run test:integration
         working-directory: server
 
   client:

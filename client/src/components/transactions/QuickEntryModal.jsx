@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Modal, NumberInput, Select, Textarea, TextInput } from '../ui';
+import { Alert, Badge, Button, Modal, NumberInput, Select, Skeleton, Textarea, TextInput } from '../ui';
 import { useAuth } from '../../context/AuthContext';
 import categoryService from '../../services/categoryService';
 import transactionService from '../../services/transactionService';
@@ -31,6 +31,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
   const [text, setText] = useState('');
   const [parseError, setParseError] = useState('');
   const [review, setReview] = useState(null);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -70,6 +71,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
     setText('');
     setParseError('');
     setReview(null);
+    setAiUnavailable(false);
     setSubmitError('');
   };
 
@@ -80,6 +82,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
 
   const handleParse = async () => {
     setParseError('');
+    setAiUnavailable(false);
     setStep(STEP.PARSING);
     try {
       const result = await transactionService.parse(text.trim(), user.id);
@@ -98,12 +101,15 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
     } catch {
       // AI unreachable/failed/timed out — this flow has no hard AI
       // dependency, so fall back to local parsing rather than blocking.
+      // The user still needs to know the AI path didn't run, hence
+      // aiUnavailable below (rendered as a notice on the review step).
       const local = parseQuickEntryText(text.trim());
       if (!local) {
         setParseError(t('quickEntry.error.noAmount'));
         setStep(STEP.INPUT);
         return;
       }
+      setAiUnavailable(true);
       setReview({
         amountShekels: String(local.amountShekels),
         description: local.description,
@@ -155,11 +161,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
           <p className="text-xs text-text-secondary text-end">
             {t('quickEntry.input.charCount', { count: text.length, max: MAX_TEXT_LENGTH })}
           </p>
-          {parseError && (
-            <p className="text-sm text-form-error" role="alert">
-              {parseError}
-            </p>
-          )}
+          {parseError && <Alert>{parseError}</Alert>}
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" color="gray" onClick={handleClose}>
               {t('common.cancel')}
@@ -169,6 +171,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
               variant="filled"
               color="accent"
               disabled={!text.trim()}
+              loading={step === STEP.PARSING}
               onClick={handleParse}
             >
               {t('quickEntry.input.submit')}
@@ -178,9 +181,10 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
       )}
 
       {step === STEP.PARSING && (
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
+        <div className="flex flex-col items-center gap-3 py-8 text-center" aria-label={t('quickEntry.parsing.title')}>
           <p className="text-base font-medium text-text-primary">{t('quickEntry.parsing.title')}</p>
           <p className="text-sm text-text-secondary">{t('quickEntry.parsing.body')}</p>
+          <Skeleton height={12} width={220} radius="sm" className="mt-2" />
         </div>
       )}
 
@@ -190,6 +194,12 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
           <Badge color="gray" className="self-start">
             {t('quickEntry.review.categoryBadge', { category: selectedCategoryName })}
           </Badge>
+
+          {aiUnavailable && (
+            <p className="text-sm text-status-warning" role="alert">
+              {t('quickEntry.review.aiUnavailableNotice')}
+            </p>
+          )}
 
           {isLowConfidence && (
             <p className="text-sm text-status-warning" role="alert">
@@ -232,11 +242,7 @@ export function QuickEntryModal({ opened, onClose, onConfirm }) {
             </p>
           )}
 
-          {submitError && (
-            <p className="text-sm text-form-error" role="alert">
-              {submitError}
-            </p>
-          )}
+          {submitError && <Alert>{submitError}</Alert>}
 
           <div className="flex justify-end gap-3 mt-2">
             <Button type="button" variant="outline" color="gray" onClick={() => setStep(STEP.INPUT)}>

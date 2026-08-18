@@ -14,6 +14,10 @@ jest.mock('../services/claudeService', () => ({
 const mockEnvelopeFindAll = jest.fn();
 const mockTransactionFindAll = jest.fn();
 const mockPlannedExpenseFindAll = jest.fn();
+// requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
+// caller from a DB lookup, not just the JWT claim — every test here is a
+// single non-admin user, so echoing the signed id back is enough.
+const mockUserFindByPk = jest.fn((id) => Promise.resolve({ id, role: 'user', disabled: false }));
 
 // Mock at the models boundary, same shape as __tests__/plannedExpenses.test.js —
 // DB stays mocked; CI's real Postgres run covers the actual schema.
@@ -21,6 +25,7 @@ jest.mock('../models', () => ({
   Envelope: { findAll: (...args) => mockEnvelopeFindAll(...args) },
   Transaction: { findAll: (...args) => mockTransactionFindAll(...args) },
   PlannedExpense: { findAll: (...args) => mockPlannedExpenseFindAll(...args) },
+  User: { findByPk: (...args) => mockUserFindByPk(...args) },
 }));
 
 const jwt = require('jsonwebtoken');
@@ -47,6 +52,15 @@ function groupedSumRows(byEnvelopeId) {
   }));
 }
 
+// get() queries PlannedExpense.findAll 3 times when envelopes exist (2 when
+// it doesn't — the grouped-by-envelope call is skipped): overall confirmed
+// sum, the missing-amount list, then the grouped-by-envelope confirmed sum.
+// Tests that don't care about missing-amount rows queue an empty list here.
+function queuePlannedExpenseCalls({ overall, grouped }) {
+  mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(overall)).mockResolvedValueOnce([]);
+  if (grouped) mockPlannedExpenseFindAll.mockResolvedValueOnce(groupedSumRows(grouped));
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -60,9 +74,7 @@ describe('GET /api/forecast', () => {
     mockTransactionFindAll
       .mockResolvedValueOnce(overallSumRow(90000)) // overall actual
       .mockResolvedValueOnce(groupedSumRows({ 1: 60000, 2: 30000 })); // per-envelope spent
-    mockPlannedExpenseFindAll
-      .mockResolvedValueOnce(overallSumRow(70000)) // overall confirmed planned
-      .mockResolvedValueOnce(groupedSumRows({ 2: 70000 })); // per-envelope confirmed planned
+    queuePlannedExpenseCalls({ overall: 70000, grouped: { 2: 70000 } });
 
     const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
@@ -75,6 +87,10 @@ describe('GET /api/forecast', () => {
         atRiskEnvelopes: [2],
         // envelope 1 has the most headroom (100000 - 60000 = 40000); cut is capped at the shortfall
         recommendation: { envelopeId: 1, envelopeName: 'Food', cutAgorot: 10000 },
+        totalActualSpentAgorot: 90000,
+        totalPlannedExpensesAgorot: 70000,
+        totalEndOfMonthSpendAgorot: 160000,
+        missingAmountPlannedExpenses: [],
       },
       error: null,
     });
@@ -83,18 +99,44 @@ describe('GET /api/forecast', () => {
   it('degrades gracefully to the zero contract when the user has no envelopes', async () => {
     mockEnvelopeFindAll.mockResolvedValueOnce([]);
     mockTransactionFindAll.mockResolvedValueOnce(overallSumRow(0));
-    mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0));
+    queuePlannedExpenseCalls({ overall: 0 });
 
     const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      data: { projectedBalanceAgorot: 0, atRiskEnvelopes: [], recommendation: null },
+      data: {
+        projectedBalanceAgorot: 0,
+        atRiskEnvelopes: [],
+        recommendation: null,
+        totalActualSpentAgorot: 0,
+        totalPlannedExpensesAgorot: 0,
+        totalEndOfMonthSpendAgorot: 0,
+        missingAmountPlannedExpenses: [],
+      },
       error: null,
     });
-    // Zero envelopes short-circuits before the per-envelope grouped queries.
+    // Zero envelopes short-circuits before the per-envelope grouped queries —
+    // but the overall sum and missing-amount list still run either way.
     expect(mockTransactionFindAll).toHaveBeenCalledTimes(1);
-    expect(mockPlannedExpenseFindAll).toHaveBeenCalledTimes(1);
+    expect(mockPlannedExpenseFindAll).toHaveBeenCalledTimes(2);
+  });
+
+  it('surfaces missing-amount planned expenses even with no envelopes and no confirmed spend', async () => {
+    mockEnvelopeFindAll.mockResolvedValueOnce([]);
+    mockTransactionFindAll.mockResolvedValueOnce(overallSumRow(0));
+    mockPlannedExpenseFindAll
+      .mockResolvedValueOnce(overallSumRow(0))
+      .mockResolvedValueOnce([{ id: 9, envelope_id: null, title: 'Water bill', amount_agorot: null, due_date: '2026-08-15', google_event_id: 'evt_9', is_confirmed: false, source: 'calendar' }]);
+
+    const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.missingAmountPlannedExpenses).toEqual([
+      expect.objectContaining({ id: 9, title: 'Water bill', amount_agorot: null }),
+    ]);
+    // Not the literal EMPTY_FORECAST shortcut, since there IS something to surface.
+    expect(res.body.data.projectedBalanceAgorot).toBe(0);
   });
 
   it('handles zero planned expenses for the month without throwing', async () => {
@@ -102,9 +144,7 @@ describe('GET /api/forecast', () => {
     mockTransactionFindAll
       .mockResolvedValueOnce(overallSumRow(40000))
       .mockResolvedValueOnce(groupedSumRows({ 1: 40000 }));
-    mockPlannedExpenseFindAll
-      .mockResolvedValueOnce(overallSumRow(0))
-      .mockResolvedValueOnce(groupedSumRows({}));
+    queuePlannedExpenseCalls({ overall: 0, grouped: {} });
 
     const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
@@ -113,6 +153,10 @@ describe('GET /api/forecast', () => {
       projectedBalanceAgorot: 60000, // 100000 - 40000 - 0
       atRiskEnvelopes: [],
       recommendation: null,
+      totalActualSpentAgorot: 40000,
+      totalPlannedExpensesAgorot: 0,
+      totalEndOfMonthSpendAgorot: 40000,
+      missingAmountPlannedExpenses: [],
     });
   });
 
@@ -122,7 +166,7 @@ describe('GET /api/forecast', () => {
     mockTransactionFindAll
       .mockResolvedValueOnce(overallSumRow(50000))
       .mockResolvedValueOnce(groupedSumRows({ 1: 20000 })); // grouped query excludes envelope_id IS NULL
-    mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0)).mockResolvedValueOnce(groupedSumRows({}));
+    queuePlannedExpenseCalls({ overall: 0, grouped: {} });
 
     const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
@@ -132,17 +176,21 @@ describe('GET /api/forecast', () => {
     expect(res.body.data.atRiskEnvelopes).toEqual([]);
   });
 
-  it('only counts confirmed planned expenses', async () => {
+  it('only counts confirmed planned expenses toward totalPlannedExpensesAgorot', async () => {
     mockEnvelopeFindAll.mockResolvedValueOnce([{ id: 1, name: 'Food', monthly_budget_agorot: 100000 }]);
     mockTransactionFindAll.mockResolvedValueOnce(overallSumRow(0)).mockResolvedValueOnce(groupedSumRows({}));
-    mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0)).mockResolvedValueOnce(groupedSumRows({}));
+    queuePlannedExpenseCalls({ overall: 0, grouped: {} });
 
     await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
     const [overallWhere] = mockPlannedExpenseFindAll.mock.calls[0];
-    const [groupedWhere] = mockPlannedExpenseFindAll.mock.calls[1];
+    const [groupedWhere] = mockPlannedExpenseFindAll.mock.calls[2];
     expect(overallWhere.where.is_confirmed).toBe(true);
     expect(groupedWhere.where.is_confirmed).toBe(true);
+    // The missing-amount list (call index 1) is intentionally NOT filtered by
+    // is_confirmed — an unconfirmed row can still need its amount filled in.
+    const [missingAmountWhere] = mockPlannedExpenseFindAll.mock.calls[1];
+    expect(missingAmountWhere.where.is_confirmed).toBeUndefined();
   });
 
   it('returns a null recommendation when the projection is positive', async () => {
@@ -150,7 +198,7 @@ describe('GET /api/forecast', () => {
     mockTransactionFindAll
       .mockResolvedValueOnce(overallSumRow(10000))
       .mockResolvedValueOnce(groupedSumRows({ 1: 10000 }));
-    mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0)).mockResolvedValueOnce(groupedSumRows({}));
+    queuePlannedExpenseCalls({ overall: 0, grouped: {} });
 
     const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
@@ -165,7 +213,7 @@ describe('GET /api/forecast', () => {
     mockTransactionFindAll
       .mockResolvedValueOnce(overallSumRow(120000))
       .mockResolvedValueOnce(groupedSumRows({ 1: 60000, 2: 60000 }));
-    mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0)).mockResolvedValueOnce(groupedSumRows({}));
+    queuePlannedExpenseCalls({ overall: 0, grouped: {} });
 
     const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
@@ -195,7 +243,7 @@ describe('GET /api/forecast', () => {
     mockTransactionFindAll
       .mockResolvedValueOnce(overallSumRow(0))
       .mockResolvedValueOnce(groupedSumRows({}));
-    mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0)).mockResolvedValueOnce(groupedSumRows({}));
+    queuePlannedExpenseCalls({ overall: 0, grouped: {} });
 
     await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader(AUTHED_USER_ID));
 
@@ -213,11 +261,14 @@ describe('GET /api/forecast', () => {
     mockTransactionFindAll
       .mockResolvedValueOnce(overallSumRow(11111))
       .mockResolvedValueOnce(groupedSumRows({ 1: 11111 }));
-    mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0)).mockResolvedValueOnce(groupedSumRows({}));
+    queuePlannedExpenseCalls({ overall: 0, grouped: {} });
 
     const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader());
 
     expect(Number.isInteger(res.body.data.projectedBalanceAgorot)).toBe(true);
+    expect(Number.isInteger(res.body.data.totalActualSpentAgorot)).toBe(true);
+    expect(Number.isInteger(res.body.data.totalPlannedExpensesAgorot)).toBe(true);
+    expect(Number.isInteger(res.body.data.totalEndOfMonthSpendAgorot)).toBe(true);
     for (const id of res.body.data.atRiskEnvelopes) {
       expect(Number.isInteger(id)).toBe(true);
     }
@@ -227,11 +278,19 @@ describe('GET /api/forecast', () => {
     for (const month of ['2026-08', '2026-08-01']) {
       mockEnvelopeFindAll.mockResolvedValueOnce([]);
       mockTransactionFindAll.mockResolvedValueOnce(overallSumRow(0));
-      mockPlannedExpenseFindAll.mockResolvedValueOnce(overallSumRow(0));
+      queuePlannedExpenseCalls({ overall: 0 });
 
       const res = await request(app).get(`/api/forecast?month=${month}`).set('Authorization', authHeader());
       expect(res.status).toBe(200);
-      expect(res.body.data).toEqual({ projectedBalanceAgorot: 0, atRiskEnvelopes: [], recommendation: null });
+      expect(res.body.data).toEqual({
+        projectedBalanceAgorot: 0,
+        atRiskEnvelopes: [],
+        recommendation: null,
+        totalActualSpentAgorot: 0,
+        totalPlannedExpensesAgorot: 0,
+        totalEndOfMonthSpendAgorot: 0,
+        missingAmountPlannedExpenses: [],
+      });
     }
   });
 });

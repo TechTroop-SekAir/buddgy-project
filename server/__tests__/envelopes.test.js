@@ -16,6 +16,10 @@ const mockEnvelopeFindAll = jest.fn();
 const mockEnvelopeFindOne = jest.fn();
 const mockEnvelopeCreate = jest.fn();
 const mockTransactionFindAll = jest.fn();
+// requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
+// caller from a DB lookup, not just the JWT claim — every test here is a
+// single non-admin user, so echoing the signed id back is enough.
+const mockUserFindByPk = jest.fn((id) => Promise.resolve({ id, role: 'user', disabled: false }));
 
 // Mock at the models boundary, same shape as __tests__/csvImport.test.js and
 // __tests__/quickEntry.test.js — the DB stays fully mocked here; CI's real
@@ -28,6 +32,9 @@ jest.mock('../models', () => ({
   },
   Transaction: {
     findAll: (...args) => mockTransactionFindAll(...args),
+  },
+  User: {
+    findByPk: (...args) => mockUserFindByPk(...args),
   },
 }));
 
@@ -92,6 +99,23 @@ describe('GET /api/envelopes', () => {
     expect(longForm.status).toBe(200);
     expect(mockEnvelopeFindAll).toHaveBeenNthCalledWith(1, expect.objectContaining({ where: expect.objectContaining({ month: '2026-08-01' }) }));
     expect(mockEnvelopeFindAll).toHaveBeenNthCalledWith(2, expect.objectContaining({ where: expect.objectContaining({ month: '2026-08-01' }) }));
+  });
+
+  it('scopes the spent_agorot sum to the queried month, excluding transactions dated outside it', async () => {
+    mockEnvelopeFindAll.mockResolvedValue([
+      makeEnvelopeInstance({ id: 1, user_id: AUTHED_USER_ID, name: 'Groceries', monthly_budget_agorot: 200000, color: null, month: '2026-08-01' }),
+    ]);
+    mockTransactionFindAll.mockResolvedValue([]);
+
+    await request(app).get('/api/envelopes?month=2026-08').set('Authorization', authHeader());
+
+    expect(mockTransactionFindAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          transaction_date: { [require('sequelize').Op.between]: ['2026-08-01', '2026-08-31'] },
+        }),
+      })
+    );
   });
 
   it('returns [] without querying transactions when the caller has no envelopes', async () => {

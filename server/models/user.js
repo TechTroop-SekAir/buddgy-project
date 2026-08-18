@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       // Encrypted at rest — see docs/SECURITY.md
       google_refresh_token: { type: DataTypes.TEXT },
       role: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'user' },
+      disabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     },
     {
       tableName: 'users',

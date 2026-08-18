@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Badge, Table } from '../ui';
+import { Alert, Badge, EmptyState, Skeleton, Table } from '../ui';
+import { getErrorMessage } from '../../utils/errorMessages';
 import adminService from '../../services/adminService';
 
 const QUERY_KEY = ['admin-users'];
@@ -10,6 +12,8 @@ const QUERY_KEY = ['admin-users'];
 export function AdminUsersTable() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [togglingId, setTogglingId] = useState(null);
+  const [toggleError, setToggleError] = useState('');
 
   const {
     data: users = [],
@@ -25,18 +29,35 @@ export function AdminUsersTable() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 
+  const toggleDisabled = async (targetUser) => {
+    if (togglingId) return;
+    setToggleError('');
+    setTogglingId(targetUser.id);
+    try {
+      await setDisabledMutation.mutateAsync({ id: targetUser.id, disabled: !targetUser.disabled });
+    } catch (err) {
+      setToggleError(getErrorMessage(err.message, t));
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   return (
     <div>
-      {isLoading && <p className="text-text-secondary mt-6">{t('admin.users.loading')}</p>}
-
-      {!isLoading && isError && (
-        <p className="text-sm text-form-error mt-6" role="alert">
-          {t('admin.users.error')}
-        </p>
+      {isLoading && (
+        <div className="mt-6 flex flex-col gap-2" aria-label={t('admin.users.loading')}>
+          <Skeleton height={36} radius="sm" />
+          <Skeleton height={36} radius="sm" />
+          <Skeleton height={36} radius="sm" />
+        </div>
       )}
 
+      {!isLoading && isError && <Alert className="mt-6">{t('admin.users.error')}</Alert>}
+
+      {!isLoading && !isError && toggleError && <Alert className="mt-6">{toggleError}</Alert>}
+
       {!isLoading && !isError && users.length === 0 && (
-        <p className="text-text-secondary text-center mt-16">{t('admin.users.empty')}</p>
+        <EmptyState className="mt-16" message={t('admin.users.empty')} />
       )}
 
       {!isLoading && !isError && users.length > 0 && (
@@ -61,8 +82,8 @@ export function AdminUsersTable() {
                   <Table.Td className="text-start">
                     <Badge
                       color={user.disabled ? 'status-danger' : 'status-ok'}
-                      className="cursor-pointer"
-                      onClick={() => setDisabledMutation.mutate({ id: user.id, disabled: !user.disabled })}
+                      className={`cursor-pointer ${togglingId === user.id ? 'opacity-50' : ''}`}
+                      onClick={() => toggleDisabled(user)}
                     >
                       {t(user.disabled ? 'admin.users.disabledBadge' : 'admin.users.activeBadge')}
                     </Badge>

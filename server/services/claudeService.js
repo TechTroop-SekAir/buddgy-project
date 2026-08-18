@@ -3,6 +3,7 @@
 const { generateObject } = require('ai');
 const { createAnthropic } = require('@ai-sdk/anthropic');
 const { z } = require('zod');
+const { AiCall } = require('../models');
 const AppError = require('../utils/AppError');
 const { shekelsToAgorot } = require('../utils/money');
 
@@ -26,6 +27,20 @@ function loadApiKey() {
 // Read once at module load — fail fast rather than discovering a missing
 // key only on the first request (server/utils/crypto.js does the same).
 const anthropic = createAnthropic({ apiKey: loadApiKey() });
+
+// Records usage for GET /api/admin/stats' aiCallCount (ticket B-08) — every
+// real Anthropic call, including ones the user later abandons or that fail,
+// since those still cost API spend. A logging failure must never break the
+// AI feature itself (CLAUDE.md § Error Handling forbids silent swallowing,
+// but this is the one place where the *caller's* request must still
+// succeed/fail on its own merits regardless of whether the log write did).
+async function logAiCall(userId, kind, succeeded) {
+  try {
+    await AiCall.create({ user_id: userId, kind, succeeded });
+  } catch (err) {
+    console.error('[claudeService] failed to record ai_calls row', err);
+  }
+}
 
 // The model is asked for a decimal shekel amount, not agorot directly —
 // models are unreliable at unit arithmetic, and all money must be stored
@@ -64,11 +79,12 @@ function buildPrompt(text, envelopes, today) {
  * Parses a free-text quick-entry string into a structured transaction
  * suggestion. Never persists anything — docs/API.md § AI Quick Entry.
  *
+ * @param {number} userId - for GET /api/admin/stats' aiCallCount (ticket B-08)
  * @param {string} text
  * @param {{ id: number, name: string }[]} envelopes - the caller's envelopes, for scoping the suggestion
  * @returns {Promise<{ amount_agorot: number, category: string, suggested_envelope_id: number|null, description: string, transaction_date: string, confidence: number }>}
  */
-async function parseQuickEntry(text, envelopes) {
+async function parseQuickEntry(userId, text, envelopes) {
   const today = new Date().toISOString().slice(0, 10);
   const validEnvelopeIds = new Set(envelopes.map((e) => e.id));
 
@@ -85,8 +101,10 @@ async function parseQuickEntry(text, envelopes) {
     // Timeout, rate limit, or the model's output didn't satisfy the schema
     // (generateObject throws NoObjectGeneratedError in that case) —
     // docs/INTEGRATIONS.md § Failure Handling. Never leak the raw SDK error.
+    await logAiCall(userId, 'quick_entry', false);
     throw new AppError('unprocessable: ai parse failed', 422);
   }
+  await logAiCall(userId, 'quick_entry', true);
 
   const suggestedEnvelopeId = validEnvelopeIds.has(object.suggested_envelope_id)
     ? object.suggested_envelope_id
@@ -127,11 +145,12 @@ function buildMappingPrompt(headerRow, sampleRows) {
  * row and a few sample rows only. Never reads or persists the full file —
  * docs/API.md § CSV Import.
  *
+ * @param {number} userId - for GET /api/admin/stats' aiCallCount (ticket B-08)
  * @param {string[]} headerRow
  * @param {string[][]} sampleRows
  * @returns {Promise<{ date: string|null, amount: string|null, description: string|null }>}
  */
-async function detectColumnMapping(headerRow, sampleRows) {
+async function detectColumnMapping(userId, headerRow, sampleRows) {
   const validHeaders = new Set(headerRow);
 
   let object;
@@ -146,8 +165,10 @@ async function detectColumnMapping(headerRow, sampleRows) {
   } catch {
     // Timeout, rate limit, or malformed output — same failure contract as
     // parseQuickEntry. Never leak the raw SDK error.
+    await logAiCall(userId, 'csv_mapping', false);
     throw new AppError('unprocessable: ai parse failed', 422);
   }
+  await logAiCall(userId, 'csv_mapping', true);
 
   return {
     date: validHeaders.has(object.date) ? object.date : null,

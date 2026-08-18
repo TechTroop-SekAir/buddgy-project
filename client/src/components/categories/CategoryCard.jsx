@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionIcon, Badge, Button, Card, Icon, Menu, Meter, Modal } from '../ui';
 import { CategoryFormModal } from './CategoryFormModal';
+import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { getCategoryStatus, isCategoryAtRisk } from '../../utils/categoryStatus';
 import { getCategoryAccentIndex, getCategoryIconName } from '../../utils/categoryIcon';
 import { formatShekels, formatShekelsRounded } from '../../utils/money';
@@ -37,9 +38,10 @@ export function CategoryCard({ category, onDelete, onEdit, atRiskEnvelopeIds = [
 
   const { color, status, percentUsed } = getCategoryStatus(category);
   // Forward-looking forecast signal, independent of the percent-used status
-  // above — distinct from the "overBudget" badge (already-happened) so the
-  // two don't collapse into the same red for the user.
-  const atRisk = isCategoryAtRisk(category.id, atRiskEnvelopeIds);
+  // above — distinct from the "overBudget" badge (already-happened). Suppressed
+  // once the category has actually exceeded its budget: "at risk" means
+  // "projected to exceed," which is meaningless (and redundant) once it already has.
+  const atRisk = status !== 'overBudget' && isCategoryAtRisk(category.id, atRiskEnvelopeIds);
   const remaining = category.monthly_budget_agorot - category.spent_agorot;
   const overspent = remaining < 0;
   const accent = ACCENT_CLASSES[getCategoryAccentIndex(category.name)];
@@ -151,24 +153,15 @@ export function CategoryCard({ category, onDelete, onEdit, atRiskEnvelopeIds = [
         onSubmit={(payload) => onEdit(category.id, payload)}
       />
 
-      <Modal opened={confirmOpen} onClose={handleCancelDelete} title={t('categoryManagement.deleteConfirmTitle')}>
-        <p className="text-sm text-text-secondary mb-6">
-          {t('categoryManagement.deleteConfirmBody', { name: category.name })}
-        </p>
-        {deleteError && (
-          <p className="text-sm text-form-error mb-4" role="alert">
-            {deleteError}
-          </p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" color="gray" onClick={handleCancelDelete} disabled={isDeleting}>
-            {t('common.cancel')}
-          </Button>
-          <Button color="status-danger" onClick={handleConfirmDelete} loading={isDeleting}>
-            {t('common.delete')}
-          </Button>
-        </div>
-      </Modal>
+      <ConfirmDeleteModal
+        opened={confirmOpen}
+        title={t('categoryManagement.deleteConfirmTitle')}
+        body={t('categoryManagement.deleteConfirmBody', { name: category.name })}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        loading={isDeleting}
+        error={deleteError}
+      />
     </Card>
   );
 }

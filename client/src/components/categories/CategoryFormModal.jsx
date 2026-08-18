@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
-import { Button, Modal, NumberInput, TextInput } from '../ui';
+import { Alert, Button, Modal, NumberInput, TextInput } from '../ui';
 import { agorotToShekels, shekelsToAgorot } from '../../utils/money';
 import { getErrorMessage } from '../../utils/errorMessages';
 
@@ -96,11 +96,7 @@ export function CategoryFormModal({ opened, category = null, onClose, onSubmit }
           required
           {...form.getInputProps('budgetShekels')}
         />
-        {submitError && (
-          <p className="text-sm text-form-error" role="alert">
-            {submitError}
-          </p>
-        )}
+        {submitError && <Alert>{submitError}</Alert>}
         <div className="flex justify-end gap-3 mt-2">
           <Button type="button" variant="outline" color="gray" onClick={handleClose} disabled={isSubmitting}>
             {t('common.cancel')}

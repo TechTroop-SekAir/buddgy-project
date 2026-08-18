@@ -11,5 +11,7 @@ router.use(requireAuth);
 router.use(requireAdmin);
 
 router.use('/categories', require('./adminCategories'));
+router.use('/users', require('./adminUsers'));
+router.use('/stats', require('./adminStats'));
 
 module.exports = router;

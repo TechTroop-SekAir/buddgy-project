@@ -10,6 +10,9 @@
   "nav": {
     "dashboard": "לוח בקרה",
     "transactions": "תנועות",
+    "plannedExpenses": "הוצאות מתוכננות",
+    "imports": "ייבוא CSV",
+    "settings": "הגדרות",
     "logout": "התנתקות",
     "backToDashboard": "→ לוח בקרה",
     "admin": "ניהול",
@@ -58,7 +61,9 @@
     "addFirstCategory": "הוספת הקטגוריה הראשונה שלך",
     "addTransaction": "הוספת תנועה",
     "loading": "טוען קטגוריות…",
+    "error": "לא הצלחנו לטעון את הקטגוריות שלך. יש לנסות שוב.",
     "empty": "אין לך עדיין קטגוריות החודש.",
+    "emptyMonth": "אין קטגוריות לחודש זה.",
     "monthMeta_one": "{{month}} · נותר יום אחד",
     "monthMeta_two": "{{month}} · נותרו יומיים",
     "monthMeta_other": "{{month}} · נותרו {{count}} ימים"
@@ -114,6 +119,8 @@
   "transactions": {
     "title": "תנועות",
     "loading": "טוען תנועות…",
+    "error": "לא הצלחנו לטעון את התנועות שלך. יש לנסות שוב.",
+    "categoriesError": "לא הצלחנו לטעון את הקטגוריות — אפשרויות הקטגוריה עשויות להיות חסרות.",
     "emptyMonth": "אין לך עדיין תנועות החודש.",
     "emptyFiltered": "לא נמצאו תנועות התואמות את הסינון.",
     "total_one": "סה\"כ: {{amount}} בסך {{count}} תנועה",
@@ -125,13 +132,30 @@
     "uncategorized": "ללא שיוך",
     "fromLabel": "מתאריך",
     "toLabel": "עד תאריך",
-    "prevMonth": "החודש הקודם",
-    "nextMonth": "החודש הבא",
     "dateHeader": "תאריך",
     "descriptionHeader": "תיאור",
     "categoryHeader": "קטגוריה",
     "amountHeader": "סכום",
-    "addTransaction": "הוספת תנועה"
+    "actionsHeader": "פעולות",
+    "addTransaction": "הוספת תנועה",
+    "deleteConfirmTitle": "למחוק את התנועה?",
+    "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{description}}\". לא ניתן לבטל פעולה זו."
+  },
+  "monthNavigator": {
+    "prev": "החודש הקודם",
+    "next": "החודש הבא",
+    "currentMonth": "החודש הנוכחי"
+  },
+  "transactionEditModal": {
+    "title": "עריכת תנועה",
+    "amountLabel": "סכום",
+    "descriptionLabel": "תיאור",
+    "dateLabel": "תאריך",
+    "envelopeLabel": "קטגוריה",
+    "submit": "שמירת שינויים",
+    "amountInvalid": "הסכום חייב להיות גדול מ-0",
+    "descriptionRequired": "יש להזין תיאור",
+    "dateRequired": "יש לבחור תאריך"
   },
   "quickEntry": {
     "openButton": "רישום מהיר",
@@ -156,6 +180,7 @@
       "categoryBadge": "קטגוריה: {{category}}",
       "lowConfidenceWarning": "רמת ביטחון נמוכה — כדאי לבדוק את הפרטים.",
       "noEnvelopeWarning": "לא הוצעה קטגוריה. יש לבחור אחת לפני השמירה.",
+      "aiUnavailableNotice": "לא הצלחנו להתחבר לעוזר ה-AI, אז הרישום נותח באמצעות זיהוי בסיסי בלבד. כדאי לבדוק את הפרטים.",
       "confirm": "שמירת תנועה",
       "back": "עריכת הטקסט"
     },
@@ -215,6 +240,7 @@
       "descriptionNone": "ללא",
       "notDetected": "לא זוהה — יש לבחור ידנית",
       "previewTitle": "תצוגה מקדימה",
+      "noPreviewRows": "אין שורות לתצוגה מקדימה — הייבוא עשוי עדיין לעבוד, אך כדאי לבדוק את בחירת העמודות.",
       "dateHeader": "תאריך",
       "amountHeader": "סכום",
       "descriptionHeader": "תיאור",
@@ -280,18 +306,39 @@
   "plannedExpenses": {
     "title": "הוצאות מתוכננות",
     "loading": "טוען הוצאות מתוכננות…",
+    "error": "לא הצלחנו לטעון את ההוצאות המתוכננות שלך. יש לנסות שוב.",
+    "categoriesError": "לא הצלחנו לטעון את הקטגוריות — אפשרויות הקטגוריה עשויות להיות חסרות.",
     "empty": "אין עדיין הוצאות מתוכננות — יש לחבר ולסנכרן את היומן מהגדרות.",
+    "emptyMonth": "אין הוצאות מתוכננות לחודש זה.",
     "goToSettings": "מעבר להגדרות",
     "dateHeader": "תאריך יעד",
     "titleHeader": "כותרת",
     "amountHeader": "סכום",
     "envelopeHeader": "קטגוריה",
     "confirmedHeader": "אושר",
+    "actionsHeader": "פעולות",
     "envelopeNone": "ללא שיוך",
     "confirm": "אישור",
+    "addButton": "הוספת הוצאה מתוכננת",
+    "deleteConfirmTitle": "למחוק את ההוצאה המתוכננת?",
+    "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{title}}\". לא ניתן לבטל פעולה זו.",
+    "deleteConfirmCalendarWarning": "ההוצאה הזו סונכרנה מיומן Google — ייתכן שתופיע שוב בסנכרון הבא.",
     "missingAmount": {
       "badge": "סכום חסר"
     }
+  },
+  "addPlannedExpenseModal": {
+    "title": "הוספת הוצאה מתוכננת",
+    "titleLabel": "כותרת",
+    "titlePlaceholder": "לדוגמה: שכר דירה",
+    "amountLabel": "סכום",
+    "dueDateLabel": "תאריך יעד",
+    "envelopeLabel": "קטגוריה",
+    "submit": "הוספה",
+    "titleRequired": "יש להזין כותרת",
+    "amountInvalid": "הסכום חייב להיות גדול מ-0",
+    "dueDateRequired": "יש לבחור תאריך יעד",
+    "noCategoriesHint": "עדיין אין לך קטגוריות — אפשר לשמור גם בלי לבחור אחת."
   },
   "admin": {
     "title": "פאנל ניהול",

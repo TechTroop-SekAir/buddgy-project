@@ -37,9 +37,9 @@ function savePlannedExpenses(plannedExpenses) {
 // google_event_id → 0 newEvents), matching syncPlannedExpenses's real
 // findOrCreate-by-google_event_id behavior.
 const SAMPLE_EVENTS = [
-  { google_event_id: 'mock-event-rent', title: 'Rent ₪4500', amount_agorot: 450000, daysFromNow: 3 },
-  { google_event_id: 'mock-event-car', title: 'Car insurance 620 ILS', amount_agorot: 62000, daysFromNow: 10 },
-  { google_event_id: 'mock-event-gym', title: 'Gym membership ₪160', amount_agorot: 16000, daysFromNow: 18 },
+  { google_event_id: 'mock-event-rent', title: 'שכר דירה ₪4500', amount_agorot: 450000, daysFromNow: 3 },
+  { google_event_id: 'mock-event-car', title: 'ביטוח רכב ₪620', amount_agorot: 62000, daysFromNow: 10 },
+  { google_event_id: 'mock-event-gym', title: 'מנוי חדר כושר ₪160', amount_agorot: 16000, daysFromNow: 18 },
 ];
 
 function addDays(days) {

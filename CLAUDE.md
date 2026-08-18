@@ -102,6 +102,7 @@ Always document new vars in `.env.example` with a placeholder value.
 
 ```
 DATABASE_URL=
+DATABASE_URL_TEST=
 JWT_SECRET=
 CLIENT_URL=
 PORT=

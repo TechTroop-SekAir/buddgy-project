@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Card, Modal } from '../components/ui';
+import { Alert, Badge, Button, Card, Modal } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import calendarService from '../services/calendarService';
 
@@ -34,7 +34,9 @@ export function SettingsPage() {
   const [callbackNotice, setCallbackNotice] = useState(null);
   const [syncResult, setSyncResult] = useState(null);
   const [syncError, setSyncError] = useState('');
+  const [connectError, setConnectError] = useState('');
   const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [disconnectError, setDisconnectError] = useState('');
 
   const isMock = import.meta.env.VITE_USE_MOCK_CALENDAR === 'true';
   const isCalendarConnected = Boolean(
@@ -63,8 +65,10 @@ export function SettingsPage() {
   const connectMutation = useMutation({
     mutationFn: () => calendarService.getConnectUrl(user?.id),
     onSuccess: ({ url }) => {
+      setConnectError('');
       window.location.href = url;
     },
+    onError: (err) => setConnectError(t(resolveErrorKey(err.message))),
   });
 
   const syncMutation = useMutation({
@@ -82,10 +86,12 @@ export function SettingsPage() {
   const disconnectMutation = useMutation({
     mutationFn: () => calendarService.disconnect(user?.id),
     onSuccess: () => {
+      setDisconnectError('');
       setDisconnectOpen(false);
       setSyncResult(null);
       refreshUser();
     },
+    onError: (err) => setDisconnectError(t(resolveErrorKey(err.message))),
   });
 
   return (
@@ -97,11 +103,7 @@ export function SettingsPage() {
           {t('calendar.callbackSuccess')}
         </p>
       )}
-      {callbackNotice === 'error' && (
-        <p className="text-sm text-form-error mt-4" role="alert">
-          {t('calendar.callbackError')}
-        </p>
-      )}
+      {callbackNotice === 'error' && <Alert className="mt-4">{t('calendar.callbackError')}</Alert>}
 
       <Card className="bg-bg-surface border border-border-card rounded-lg mt-6 max-w-lg">
         <div className="p-6 flex flex-col gap-4">
@@ -122,6 +124,7 @@ export function SettingsPage() {
               >
                 {t('calendar.connect')}
               </Button>
+              {connectError && <Alert>{connectError}</Alert>}
             </>
           )}
 
@@ -139,11 +142,7 @@ export function SettingsPage() {
                     {t('calendar.syncResultZero')}
                   </p>
                 ))}
-              {syncError && (
-                <p className="text-sm text-form-error" role="alert">
-                  {syncError}
-                </p>
-              )}
+              {syncError && <Alert>{syncError}</Alert>}
 
               <div className="flex gap-3">
                 <Button
@@ -158,7 +157,10 @@ export function SettingsPage() {
                   variant="outline"
                   color="status-danger"
                   disabled={syncMutation.isPending}
-                  onClick={() => setDisconnectOpen(true)}
+                  onClick={() => {
+                    setDisconnectError('');
+                    setDisconnectOpen(true);
+                  }}
                 >
                   {t('calendar.disconnect')}
                 </Button>
@@ -174,6 +176,7 @@ export function SettingsPage() {
         title={t('calendar.disconnectConfirmTitle')}
       >
         <p className="text-sm text-text-secondary mb-6">{t('calendar.disconnectConfirmBody')}</p>
+        {disconnectError && <Alert className="mb-4">{disconnectError}</Alert>}
         <div className="flex justify-end gap-3">
           <Button
             variant="outline"
