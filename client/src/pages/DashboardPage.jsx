@@ -10,12 +10,14 @@ import { SummaryBar } from '../components/categories/SummaryBar';
 import { MissingAmountPrompt } from '../components/categories/MissingAmountPrompt';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
 import { useAuth } from '../context/AuthContext';
+import { useMonth } from '../context/MonthContext';
 import categoryService from '../services/categoryService';
 import transactionService from '../services/transactionService';
 import forecastService from '../services/forecastService';
 import plannedExpenseService from '../services/plannedExpenseService';
 import { getCurrentMonth } from '../utils/month';
 import { sortCategoriesBySpent } from '../utils/categoryStatus';
+import { MonthNavigator } from '../components/shared/MonthNavigator';
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -23,7 +25,8 @@ export function DashboardPage() {
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
-  const month = getCurrentMonth();
+  const { month } = useMonth();
+  const isCurrentMonth = month === getCurrentMonth();
   const queryKey = ['categories', user.id, month];
 
   const forecastQueryKey = ['forecast', user.id, month];
@@ -128,6 +131,10 @@ export function DashboardPage() {
         </Button>
       </div>
 
+      <div className="mt-6">
+        <MonthNavigator />
+      </div>
+
       {isLoading && <p className="text-text-secondary mt-6">{t('dashboard.loading')}</p>}
 
       {!isLoading && categories.length > 0 && (
@@ -146,12 +153,18 @@ export function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && categories.length === 0 && (
+      {!isLoading && categories.length === 0 && isCurrentMonth && (
         <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
           <p className="text-text-secondary">{t('dashboard.empty')}</p>
           <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
             {t('dashboard.addFirstCategory')}
           </Button>
+        </div>
+      )}
+
+      {!isLoading && categories.length === 0 && !isCurrentMonth && (
+        <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
+          <p className="text-text-secondary">{t('dashboard.emptyMonth')}</p>
         </div>
       )}
 

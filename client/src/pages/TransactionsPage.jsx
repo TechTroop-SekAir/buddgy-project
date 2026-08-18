@@ -1,30 +1,38 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { useMonth } from '../context/MonthContext';
 import transactionService from '../services/transactionService';
 import categoryService from '../services/categoryService';
 import { TransactionFilters, UNASSIGNED_VALUE } from '../components/transactions/TransactionFilters';
 import { TransactionRow } from '../components/transactions/TransactionRow';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
 import { TransactionEditModal } from '../components/transactions/TransactionEditModal';
-import { getCurrentMonth } from '../utils/month';
-import { shiftMonth } from '../utils/date';
 import { formatShekels } from '../utils/money';
 
 export function TransactionsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [month, setMonth] = useState(getCurrentMonth());
+  const { month } = useMonth();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+
+  // The date-range filters are bounded to `month` (see TransactionFilters'
+  // min/max props) — MonthNavigator changes `month` from shared context, so
+  // this page can't intercept that click directly the way it could when
+  // month was local state; reset on the resulting `month` change instead.
+  useEffect(() => {
+    setDateFrom('');
+    setDateTo('');
+  }, [month]);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', user.id, month],
@@ -58,16 +66,21 @@ export function TransactionsPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => transactionService.remove(id),
+    onSuccess: () => {
+      // Removing a transaction changes the same three things creating one
+      // does — same invalidation set as create/update.
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+
   // Mantine's Select requires string option values (client/CLAUDE.md § Component
   // Boundary components pass through Mantine as-is) — category.id is a number
   // from the real API. Same conversion as QuickEntryModal.jsx / PlannedExpensesPage.jsx.
   const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
-
-  const handleMonthChange = (delta) => {
-    setMonth((current) => shiftMonth(current, delta));
-    setDateFrom('');
-    setDateTo('');
-  };
 
   const filteredTransactions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -102,8 +115,6 @@ export function TransactionsPage() {
 
       <div className="mt-6">
         <TransactionFilters
-          month={month}
-          onMonthChange={handleMonthChange}
           search={search}
           onSearchChange={setSearch}
           categoryId={categoryId}
@@ -142,7 +153,7 @@ export function TransactionsPage() {
                 <th className="py-2 pe-4 font-medium">{t('transactions.descriptionHeader')}</th>
                 <th className="py-2 pe-4 font-medium">{t('transactions.categoryHeader')}</th>
                 <th className="py-2 pe-4 font-medium text-end">{t('transactions.amountHeader')}</th>
-                <th className="py-2 ps-0 font-medium text-end">{t('common.edit')}</th>
+                <th className="py-2 ps-0 font-medium text-end">{t('transactions.actionsHeader')}</th>
               </tr>
             </thead>
             <tbody>
@@ -153,6 +164,7 @@ export function TransactionsPage() {
                   categoryOptions={categoryOptions}
                   onReassign={(id, envelopeId) => updateMutation.mutate({ id, payload: { envelope_id: envelopeId } })}
                   onEdit={setEditingTransaction}
+                  onDelete={(id) => deleteMutation.mutateAsync(id)}
                 />
               ))}
             </tbody>

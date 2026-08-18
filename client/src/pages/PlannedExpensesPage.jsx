@@ -6,15 +6,18 @@ import { Button, Table } from '../components/ui';
 import { PlannedExpenseFormModal } from '../components/plannedExpenses/PlannedExpenseFormModal';
 import { PlannedExpenseRow } from '../components/plannedExpenses/PlannedExpenseRow';
 import { useAuth } from '../context/AuthContext';
+import { useMonth } from '../context/MonthContext';
 import plannedExpenseService from '../services/plannedExpenseService';
 import categoryService from '../services/categoryService';
 import { getCurrentMonth } from '../utils/month';
+import { MonthNavigator } from '../components/shared/MonthNavigator';
 
 export function PlannedExpensesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const month = getCurrentMonth();
+  const { month } = useMonth();
+  const isCurrentMonth = month === getCurrentMonth();
   const queryKey = ['planned-expenses', user.id, month];
   const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -48,6 +51,14 @@ export function PlannedExpensesPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => plannedExpenseService.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between">
@@ -69,14 +80,24 @@ export function PlannedExpensesPage() {
         onSubmit={(payload) => createMutation.mutateAsync(payload)}
       />
 
+      <div className="mt-6">
+        <MonthNavigator />
+      </div>
+
       {isLoading && <p className="text-text-secondary mt-6">{t('plannedExpenses.loading')}</p>}
 
-      {!isLoading && plannedExpenses.length === 0 && (
+      {!isLoading && plannedExpenses.length === 0 && isCurrentMonth && (
         <div className="flex flex-col items-center text-center mt-16 gap-3">
           <p className="text-text-secondary">{t('plannedExpenses.empty')}</p>
           <Link to="/settings" className="text-sm text-accent hover:underline">
             {t('plannedExpenses.goToSettings')}
           </Link>
+        </div>
+      )}
+
+      {!isLoading && plannedExpenses.length === 0 && !isCurrentMonth && (
+        <div className="flex flex-col items-center text-center mt-16 gap-3">
+          <p className="text-text-secondary">{t('plannedExpenses.emptyMonth')}</p>
         </div>
       )}
 
@@ -90,6 +111,7 @@ export function PlannedExpensesPage() {
                 <Table.Th className="text-end">{t('plannedExpenses.amountHeader')}</Table.Th>
                 <Table.Th className="text-start">{t('plannedExpenses.envelopeHeader')}</Table.Th>
                 <Table.Th className="text-start">{t('plannedExpenses.confirmedHeader')}</Table.Th>
+                <Table.Th className="text-end">{t('plannedExpenses.actionsHeader')}</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -102,6 +124,7 @@ export function PlannedExpensesPage() {
                     updateMutation.mutateAsync({ id, payload: { envelope_id: envelopeId } })
                   }
                   onConfirm={(id) => updateMutation.mutateAsync({ id, payload: { is_confirmed: true } })}
+                  onDelete={(id) => deleteMutation.mutateAsync(id)}
                 />
               ))}
             </Table.Tbody>

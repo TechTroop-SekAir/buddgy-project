@@ -58,3 +58,15 @@ export async function create(userId, { envelope_id = null, title, amount_agorot,
 
   return plannedExpense;
 }
+
+export async function remove(id) {
+  await delay(200);
+  const plannedExpenses = loadPlannedExpenses();
+  const index = plannedExpenses.findIndex((p) => p.id === id);
+  if (index === -1) throw new Error('not found');
+
+  const [removed] = plannedExpenses.splice(index, 1);
+  savePlannedExpenses(plannedExpenses);
+
+  return { id: removed.id };
+}

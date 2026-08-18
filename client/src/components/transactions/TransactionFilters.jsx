@@ -1,13 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { Button, DateInput, Select, TextInput } from '../ui';
-import { getMonthBounds, getMonthLabel } from '../../utils/date';
-import { useLocale } from '../../context/LocaleContext';
+import { DateInput, Select, TextInput } from '../ui';
+import { getMonthBounds } from '../../utils/date';
+import { useMonth } from '../../context/MonthContext';
+import { MonthNavigator } from '../shared/MonthNavigator';
 
 export const UNASSIGNED_VALUE = 'unassigned';
 
 export function TransactionFilters({
-  month,
-  onMonthChange,
   search,
   onSearchChange,
   categoryId,
@@ -19,12 +18,7 @@ export function TransactionFilters({
   onDateToChange,
 }) {
   const { t } = useTranslation();
-  const { direction } = useLocale();
-  // Chevrons are directional glyphs, not text — "previous" must point toward
-  // the start of reading order, which flips with RTL, so pick the glyph
-  // rather than translate it.
-  const prevGlyph = direction === 'rtl' ? '→' : '←';
-  const nextGlyph = direction === 'rtl' ? '←' : '→';
+  const { month } = useMonth();
   const { start, end } = getMonthBounds(month);
   const filterOptions = [
     { value: '', label: t('transactions.allCategories') },
@@ -34,33 +28,7 @@ export function TransactionFilters({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="subtle"
-          color="gray"
-          size="xs"
-          className="px-2 py-1 text-text-secondary hover:text-text-primary"
-          onClick={() => onMonthChange(-1)}
-          aria-label={t('transactions.prevMonth')}
-        >
-          {prevGlyph}
-        </Button>
-        <p className="text-lg font-semibold text-text-primary min-w-[10rem] text-center">
-          {getMonthLabel(month)}
-        </p>
-        <Button
-          type="button"
-          variant="subtle"
-          color="gray"
-          size="xs"
-          className="px-2 py-1 text-text-secondary hover:text-text-primary"
-          onClick={() => onMonthChange(1)}
-          aria-label={t('transactions.nextMonth')}
-        >
-          {nextGlyph}
-        </Button>
-      </div>
+      <MonthNavigator />
 
       <div className="flex flex-wrap items-end gap-4">
         <TextInput

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Select, Table } from '../ui';
+import { Badge, Button, Modal, Select, Table } from '../ui';
 import { formatDate } from '../../utils/date';
 import { formatShekels } from '../../utils/money';
 import { hasMissingAmount } from '../../utils/plannedExpenseStatus';
@@ -11,10 +11,13 @@ import { getErrorMessage } from '../../utils/errorMessages';
 // mutation object can't tell the caller which row's click is in flight, so a
 // Badge-as-button with no loading/error affordance looked "broken" (no
 // visible feedback) even when the request itself succeeded or failed.
-export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign, onConfirm }) {
+export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign, onConfirm, onDelete }) {
   const { t } = useTranslation();
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const handleConfirm = async () => {
     setConfirmError('');
@@ -25,6 +28,29 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
       setConfirmError(getErrorMessage(err.message, t));
     } finally {
       setIsConfirming(false);
+    }
+  };
+
+  const openDeleteConfirm = () => {
+    setDeleteError('');
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteError('');
+    setDeleteConfirmOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    setDeleteError('');
+    setIsDeleting(true);
+    try {
+      await onDelete(plannedExpense.id);
+      setDeleteConfirmOpen(false);
+    } catch (err) {
+      setDeleteError(getErrorMessage(err.message, t));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -64,6 +90,33 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
           </div>
         )}
       </Table.Td>
+      <Table.Td className="text-end">
+        <Button variant="subtle" color="status-danger" size="xs" onClick={openDeleteConfirm}>
+          {t('common.delete')}
+        </Button>
+      </Table.Td>
+
+      <Modal opened={deleteConfirmOpen} onClose={handleCancelDelete} title={t('plannedExpenses.deleteConfirmTitle')}>
+        <p className="text-sm text-text-secondary mb-2">
+          {t('plannedExpenses.deleteConfirmBody', { title: plannedExpense.title })}
+        </p>
+        {plannedExpense.source === 'calendar' && (
+          <p className="text-sm text-status-warning mb-4">{t('plannedExpenses.deleteConfirmCalendarWarning')}</p>
+        )}
+        {deleteError && (
+          <p className="text-sm text-form-error mb-4" role="alert">
+            {deleteError}
+          </p>
+        )}
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" color="gray" onClick={handleCancelDelete} disabled={isDeleting}>
+            {t('common.cancel')}
+          </Button>
+          <Button color="status-danger" onClick={handleConfirmDelete} loading={isDeleting}>
+            {t('common.delete')}
+          </Button>
+        </div>
+      </Modal>
     </Table.Tr>
   );
 }

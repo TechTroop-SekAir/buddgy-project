@@ -42,6 +42,7 @@ router.post('/', validate(createBodySchema), asyncHandler(plannedExpensesControl
 router
   .route('/:id')
   .all(validate(idParamsSchema, 'params'))
-  .patch(validate(updateBodySchema), asyncHandler(plannedExpensesController.update));
+  .patch(validate(updateBodySchema), asyncHandler(plannedExpensesController.update))
+  .delete(asyncHandler(plannedExpensesController.remove));
 
 module.exports = router;

@@ -77,4 +77,10 @@ async function update(userId, id, patch) {
   return plannedExpense.get({ plain: true });
 }
 
-module.exports = { create, list, update };
+async function remove(userId, id) {
+  const plannedExpense = await findOwned(userId, id);
+  await plannedExpense.destroy();
+  return { id: plannedExpense.id };
+}
+
+module.exports = { create, list, update, remove };
