@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Badge, Button, Card, Modal } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import calendarService from '../services/calendarService';
+import { PageHeader } from '../components/shared/PageHeader';
 
 const ERROR_KEY_BY_MESSAGE = {
   'Google Calendar is not connected.': 'calendar.error.notConnected',
@@ -89,13 +90,10 @@ export function SettingsPage() {
   });
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-primary">{t('calendar.title')}</h1>
-        <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-          {t('nav.backToDashboard')}
-        </Link>
-      </div>
+    <>
+      <PageHeader />
+      <div className="p-8">
+      <h1 className="text-2xl font-semibold text-text-primary">{t('calendar.title')}</h1>
 
       {callbackNotice === 'success' && (
         <p className="text-sm text-status-ok mt-4" role="status">
@@ -197,6 +195,7 @@ export function SettingsPage() {
           </Button>
         </div>
       </Modal>
-    </div>
+      </div>
+    </>
   );
 }

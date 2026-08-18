@@ -10,9 +10,12 @@
   "nav": {
     "dashboard": "לוח בקרה",
     "transactions": "תנועות",
+    "plannedExpenses": "הוצאות מתוכננות",
+    "imports": "ייבוא CSV",
+    "settings": "הגדרות",
     "logout": "התנתקות",
-    "backToDashboard": "→ לוח בקרה",
-    "admin": "ניהול"
+    "admin": "ניהול",
+    "menu": "תפריט"
   },
   "landing": {
     "title": "באדג'י",

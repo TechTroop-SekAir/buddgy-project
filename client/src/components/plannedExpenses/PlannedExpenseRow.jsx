@@ -57,7 +57,7 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
   return (
     <Table.Tr>
       <Table.Td className="text-start">{formatDate(plannedExpense.due_date)}</Table.Td>
-      <Table.Td className="text-start">{plannedExpense.title}</Table.Td>
+      <Table.Td className="text-start min-w-[140px]">{plannedExpense.title}</Table.Td>
       <Table.Td className="text-end">
         {hasMissingAmount(plannedExpense) ? (
           <Badge color="status-warning">{t('plannedExpenses.missingAmount.badge')}</Badge>
@@ -65,7 +65,7 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
           formatShekels(plannedExpense.amount_agorot)
         )}
       </Table.Td>
-      <Table.Td className="text-start">
+      <Table.Td className="text-start min-w-[140px]">
         <Select
           placeholder={t('plannedExpenses.envelopeNone')}
           data={categoryOptions}
@@ -79,7 +79,7 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
           <Badge color="status-ok">{t('plannedExpenses.confirm')}</Badge>
         ) : (
           <div className="flex flex-col gap-1 items-start">
-            <Button variant="outline" color="accent" size="xs" loading={isConfirming} onClick={handleConfirm}>
+            <Button variant="outline" color="accent" size="md" loading={isConfirming} onClick={handleConfirm}>
               {t('plannedExpenses.confirm')}
             </Button>
             {confirmError && (
@@ -91,7 +91,7 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
         )}
       </Table.Td>
       <Table.Td className="text-end">
-        <Button variant="subtle" color="status-danger" size="xs" onClick={openDeleteConfirm}>
+        <Button variant="subtle" color="status-danger" size="md" onClick={openDeleteConfirm}>
           {t('common.delete')}
         </Button>
       </Table.Td>

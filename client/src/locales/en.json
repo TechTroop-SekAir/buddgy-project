@@ -10,9 +10,12 @@
   "nav": {
     "dashboard": "Dashboard",
     "transactions": "Transactions",
+    "plannedExpenses": "Planned Expenses",
+    "imports": "Import CSV",
+    "settings": "Settings",
     "logout": "Log out",
-    "backToDashboard": "← Dashboard",
-    "admin": "Admin"
+    "admin": "Admin",
+    "menu": "Menu"
   },
   "landing": {
     "title": "Buddgy",

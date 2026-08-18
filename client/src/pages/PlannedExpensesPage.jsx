@@ -11,6 +11,7 @@ import plannedExpenseService from '../services/plannedExpenseService';
 import categoryService from '../services/categoryService';
 import { getCurrentMonth } from '../utils/month';
 import { MonthNavigator } from '../components/shared/MonthNavigator';
+import { PageHeader } from '../components/shared/PageHeader';
 
 export function PlannedExpensesPage() {
   const { t } = useTranslation();
@@ -60,17 +61,14 @@ export function PlannedExpensesPage() {
   });
 
   return (
-    <div className="p-8">
+    <>
+      <PageHeader />
+      <div className="p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-text-primary">{t('plannedExpenses.title')}</h1>
-        <div className="flex items-center gap-4">
-          <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-            {t('plannedExpenses.addButton')}
-          </Button>
-          <Link to="/dashboard" className="text-sm text-text-secondary hover:text-text-primary">
-            {t('nav.backToDashboard')}
-          </Link>
-        </div>
+        <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
+          {t('plannedExpenses.addButton')}
+        </Button>
       </div>
 
       <PlannedExpenseFormModal
@@ -131,6 +129,7 @@ export function PlannedExpensesPage() {
           </Table>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
