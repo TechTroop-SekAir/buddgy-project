@@ -52,6 +52,12 @@ describe('syncPlannedExpenses', () => {
 
     expect(result).toEqual({ newEvents: 1 });
     expect(mockFindOrCreate).toHaveBeenCalledTimes(1);
+    // Scoped by user_id — google_event_id alone is not unique across users
+    // (Google reuses one event id for every attendee of a shared event).
+    expect(mockFindOrCreate.mock.calls[0][0].where).toEqual({
+      user_id: AUTHED_USER_ID,
+      google_event_id: 'evt-1',
+    });
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
@@ -65,6 +71,12 @@ describe('syncPlannedExpenses', () => {
 
     expect(result).toEqual({ newEvents: 0 });
     expect(mockUpdate).toHaveBeenCalledTimes(1);
+    // Scoped by user_id so one user's re-sync can never update another
+    // user's row for the same shared event id.
+    expect(mockUpdate.mock.calls[0][1].where).toEqual({
+      user_id: AUTHED_USER_ID,
+      google_event_id: 'evt-1',
+    });
   });
 
   it('maps a 401 from events.list to a client-safe reconnect error', async () => {

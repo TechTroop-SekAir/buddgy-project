@@ -94,7 +94,7 @@ erDiagram
 | title | VARCHAR(160) | Calendar event title, or user-entered title for a manual row |
 | amount_agorot | INTEGER | Extracted from event title, or user-entered for a manual row |
 | due_date | DATE | |
-| google_event_id | VARCHAR(128) | UNIQUE — prevents duplicate sync; NULL for manual rows |
+| google_event_id | VARCHAR(128) | UNIQUE per user (`user_id`, `google_event_id`) — prevents duplicate sync without colliding across users invited to the same Google event; NULL for manual rows |
 | is_confirmed | BOOLEAN | DEFAULT false |
 | source | VARCHAR(20) | `'calendar'` \| `'manual'` — DEFAULT `'calendar'` |
 
@@ -152,7 +152,7 @@ Add these as part of the initial migration, not as an afterthought — the forec
 Two UNIQUE constraints exist specifically to make retryable operations safe:
 
 - **`transactions.dedup_hash`** — computed from `(user_id, amount_agorot, transaction_date, description)` at import time. Re-uploading the same CSV must skip rows whose hash already exists, and report the skip count (`duplicatesSkipped` in `POST /api/imports/:id/confirm`).
-- **`planned_expenses.google_event_id`** — re-running `POST /api/calendar/sync` must `UPSERT` (insert-or-update) on this column, never blind-insert.
+- **`planned_expenses.google_event_id`** — re-running `POST /api/calendar/sync` must `UPSERT` (insert-or-update) on the `(user_id, google_event_id)` pair, never blind-insert. Scoped to `user_id` because Google assigns the same event id to every attendee of a shared event — a global unique would let one user's sync overwrite another's row.
 
 Both are enforced at the DB level (`UNIQUE`), but the service layer must also handle the constraint violation gracefully — see `CLAUDE.md` § Database Rules and `.claude/commands/qa.md` § Buddgy Critical Test Cases.
 

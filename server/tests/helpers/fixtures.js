@@ -8,7 +8,7 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User, Envelope, Transaction, PlannedExpense, Category } = require('../../models');
+const { User, Envelope, Transaction, PlannedExpense, Category, CsvImport } = require('../../models');
 
 const FIXTURE_PASSWORD = 'password123';
 const BCRYPT_ROUNDS = 12; // matches server/services/authService.js
@@ -87,6 +87,15 @@ async function createCategory(overrides = {}) {
   });
 }
 
+async function createCsvImport(overrides = {}) {
+  return CsvImport.create({
+    user_id: overrides.user_id,
+    file_url: overrides.file_url ?? `https://storage.test.buddgy.com/${unique('csv')}.csv`,
+    column_mapping: overrides.column_mapping ?? { date: 'Date', amount: 'Amount', description: 'Description' },
+    rows_imported: 'rows_imported' in overrides ? overrides.rows_imported : null,
+  });
+}
+
 /** Signs a real JWT for the given user — mirrors server/services/authService.js's signToken, and the pattern every server/__tests__/*.test.js file already uses. */
 function authHeader(user) {
   const token = jwt.sign({ sub: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -100,5 +109,6 @@ module.exports = {
   createTransaction,
   createPlannedExpense,
   createCategory,
+  createCsvImport,
   authHeader,
 };
