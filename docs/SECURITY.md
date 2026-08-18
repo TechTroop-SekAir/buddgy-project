@@ -32,7 +32,7 @@ Enforced by `middleware/auth.js` (authenticated?) composed with a `requireRole('
 
 ## Row-Level Access
 
-Being authenticated is necessary but not sufficient — a valid token for User A must never be able to read/edit/delete User B's data. Every query for envelopes, transactions, planned expenses, and CSV imports **must filter by `user_id = req.user.id`**, not just by the resource's own `id`. This is the single most important thing to test — see `.claude/commands/qa.md` § Buddgy Critical Test Cases ("Cross-user data isolation").
+Being authenticated is necessary but not sufficient — a valid token for User A must never be able to read/edit/delete User B's data. Every query for envelopes, transactions, planned expenses, and CSV imports **must filter by `user_id = req.user.id`**, not just by the resource's own `id`. This is the single most important thing to test — see `.claude/commands/qa.md` § Buddgy Critical Test Cases ("Cross-user data isolation") and `server/tests/isolation.integration.test.js`, which enforces the contract end-to-end (including calendar sync and CSV import, where `google_event_id`/`dedup_hash` uniqueness is scoped per-user for the same reason).
 
 Admin routes are the only ones that legitimately read across users, and they expose aggregate/list views, never another user's raw envelope/transaction data.
 
