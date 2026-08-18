@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
-import { Button, DateInput, Modal, NumberInput, Select, TextInput } from '../ui';
+import { Alert, Button, DateInput, Modal, NumberInput, Select, TextInput } from '../ui';
 import { shekelsToAgorot } from '../../utils/money';
 import { getErrorMessage } from '../../utils/errorMessages';
 
@@ -92,11 +92,10 @@ export function PlannedExpenseFormModal({ opened, categoryOptions, onClose, onSu
           clearable
           {...form.getInputProps('envelopeId')}
         />
-        {submitError && (
-          <p className="text-sm text-form-error" role="alert">
-            {submitError}
-          </p>
+        {categoryOptions.length === 0 && (
+          <p className="text-xs text-text-secondary">{t('addPlannedExpenseModal.noCategoriesHint')}</p>
         )}
+        {submitError && <Alert>{submitError}</Alert>}
         <div className="flex justify-end gap-3 mt-2">
           <Button type="button" variant="outline" color="gray" onClick={handleClose} disabled={isSubmitting}>
             {t('common.cancel')}

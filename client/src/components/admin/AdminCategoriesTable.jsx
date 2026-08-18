@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Modal, Table } from '../ui';
+import { Alert, Badge, Button, EmptyState, Skeleton, Table } from '../ui';
 import { AdminCategoryFormModal } from './AdminCategoryFormModal';
+import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { getErrorMessage } from '../../utils/errorMessages';
 import adminService from '../../services/adminService';
 
@@ -16,6 +17,8 @@ export function AdminCategoriesTable() {
   const [deletingCategory, setDeletingCategory] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [togglingId, setTogglingId] = useState(null);
+  const [toggleError, setToggleError] = useState('');
 
   const {
     data: categories = [],
@@ -65,8 +68,17 @@ export function AdminCategoriesTable() {
     return createMutation.mutateAsync(payload);
   };
 
-  const toggleActive = (category) => {
-    updateMutation.mutate({ id: category.id, payload: { is_active: !category.is_active } });
+  const toggleActive = async (category) => {
+    if (togglingId) return;
+    setToggleError('');
+    setTogglingId(category.id);
+    try {
+      await updateMutation.mutateAsync({ id: category.id, payload: { is_active: !category.is_active } });
+    } catch (err) {
+      setToggleError(getErrorMessage(err.message, t));
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const openDeleteConfirm = (category) => {
@@ -100,16 +112,20 @@ export function AdminCategoriesTable() {
         </Button>
       </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">{t('admin.categories.loading')}</p>}
-
-      {!isLoading && isError && (
-        <p className="text-sm text-form-error mt-6" role="alert">
-          {t('admin.categories.error')}
-        </p>
+      {isLoading && (
+        <div className="mt-6 flex flex-col gap-2" aria-label={t('admin.categories.loading')}>
+          <Skeleton height={36} radius="sm" />
+          <Skeleton height={36} radius="sm" />
+          <Skeleton height={36} radius="sm" />
+        </div>
       )}
 
+      {!isLoading && isError && <Alert className="mt-6">{t('admin.categories.error')}</Alert>}
+
+      {!isLoading && !isError && toggleError && <Alert className="mt-6">{toggleError}</Alert>}
+
       {!isLoading && !isError && categories.length === 0 && (
-        <p className="text-text-secondary text-center mt-16">{t('admin.categories.empty')}</p>
+        <EmptyState className="mt-16" message={t('admin.categories.empty')} />
       )}
 
       {!isLoading && !isError && categories.length > 0 && (
@@ -141,7 +157,7 @@ export function AdminCategoriesTable() {
                   <Table.Td className="text-start">
                     <Badge
                       color={category.is_active ? 'status-ok' : 'gray'}
-                      className="cursor-pointer"
+                      className={`cursor-pointer ${togglingId === category.id ? 'opacity-50' : ''}`}
                       onClick={() => toggleActive(category)}
                     >
                       {t(category.is_active ? 'admin.categories.activeBadge' : 'admin.categories.inactiveBadge')}
@@ -176,28 +192,15 @@ export function AdminCategoriesTable() {
         onSubmit={handleFormSubmit}
       />
 
-      <Modal
+      <ConfirmDeleteModal
         opened={deletingCategory != null}
-        onClose={cancelDelete}
         title={t('admin.categories.deleteConfirmTitle')}
-      >
-        <p className="text-sm text-text-secondary mb-6">
-          {t('admin.categories.deleteConfirmBody', { name: deletingCategory?.name_en })}
-        </p>
-        {deleteError && (
-          <p className="text-sm text-form-error mb-4" role="alert">
-            {deleteError}
-          </p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" color="gray" onClick={cancelDelete} disabled={isDeleting}>
-            {t('common.cancel')}
-          </Button>
-          <Button color="status-danger" onClick={confirmDelete} loading={isDeleting}>
-            {t('common.delete')}
-          </Button>
-        </div>
-      </Modal>
+        body={t('admin.categories.deleteConfirmBody', { name: deletingCategory?.name_en })}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        loading={isDeleting}
+        error={deleteError}
+      />
     </div>
   );
 }

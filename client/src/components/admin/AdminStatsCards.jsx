@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../ui';
+import { Alert, Card, Skeleton } from '../ui';
 import adminService from '../../services/adminService';
 
 const STAT_KEYS = ['userCount', 'transactionCount', 'aiCallCount'];
@@ -16,15 +16,17 @@ export function AdminStatsCards() {
   });
 
   if (isLoading) {
-    return <p className="text-text-secondary mt-6">{t('admin.stats.loading')}</p>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6" aria-label={t('admin.stats.loading')}>
+        <Skeleton height={84} radius="md" />
+        <Skeleton height={84} radius="md" />
+        <Skeleton height={84} radius="md" />
+      </div>
+    );
   }
 
   if (isError) {
-    return (
-      <p className="text-sm text-form-error mt-6" role="alert">
-        {t('admin.stats.error')}
-      </p>
-    );
+    return <Alert className="mt-6">{t('admin.stats.error')}</Alert>;
   }
 
   return (

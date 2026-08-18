@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Card, Modal, Progress } from '../ui';
+import { Badge, Button, Card, Progress } from '../ui';
 import { CategoryFormModal } from './CategoryFormModal';
+import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { getCategoryStatus, isCategoryAtRisk } from '../../utils/categoryStatus';
 import { formatShekels } from '../../utils/money';
 import { getErrorMessage } from '../../utils/errorMessages';
@@ -80,24 +81,15 @@ export function CategoryCard({ category, onDelete, onEdit, atRiskEnvelopeIds = [
         onSubmit={(payload) => onEdit(category.id, payload)}
       />
 
-      <Modal opened={confirmOpen} onClose={handleCancelDelete} title={t('categoryManagement.deleteConfirmTitle')}>
-        <p className="text-sm text-text-secondary mb-6">
-          {t('categoryManagement.deleteConfirmBody', { name: category.name })}
-        </p>
-        {deleteError && (
-          <p className="text-sm text-form-error mb-4" role="alert">
-            {deleteError}
-          </p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" color="gray" onClick={handleCancelDelete} disabled={isDeleting}>
-            {t('common.cancel')}
-          </Button>
-          <Button color="status-danger" onClick={handleConfirmDelete} loading={isDeleting}>
-            {t('common.delete')}
-          </Button>
-        </div>
-      </Modal>
+      <ConfirmDeleteModal
+        opened={confirmOpen}
+        title={t('categoryManagement.deleteConfirmTitle')}
+        body={t('categoryManagement.deleteConfirmBody', { name: category.name })}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        loading={isDeleting}
+        error={deleteError}
+      />
     </Card>
   );
 }

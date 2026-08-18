@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Badge, Card } from '../ui';
+import { Alert, Badge, Card, Skeleton } from '../ui';
 import { getForecastBannerState } from '../../utils/forecastStatus';
 import { formatShekels } from '../../utils/money';
 
@@ -11,11 +11,11 @@ export function ForecastBanner({ forecast, isLoading, isError }) {
   const { t } = useTranslation();
 
   if (isLoading) {
-    return <p className="text-text-secondary">{t('forecast.loading')}</p>;
+    return <Skeleton height={72} radius="md" aria-label={t('forecast.loading')} />;
   }
 
   if (isError) {
-    return <p className="text-form-error">{t('forecast.error')}</p>;
+    return <Alert>{t('forecast.error')}</Alert>;
   }
 
   const { visible, color, projectedBalanceAgorot, recommendation } = getForecastBannerState(forecast);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui';
+import { Alert, Button, EmptyState, Skeleton } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
 import transactionService from '../services/transactionService';
@@ -34,12 +34,16 @@ export function TransactionsPage() {
     setDateTo('');
   }, [month]);
 
-  const { data: transactions = [], isLoading } = useQuery({
+  const {
+    data: transactions = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['transactions', user.id, month],
     queryFn: () => transactionService.list(user.id, month),
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isError: isCategoriesError } = useQuery({
     queryKey: ['categories', user.id, month],
     queryFn: () => categoryService.list(user.id, month),
   });
@@ -124,17 +128,27 @@ export function TransactionsPage() {
         />
       </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">{t('transactions.loading')}</p>}
+      {isCategoriesError && <Alert className="mt-4">{t('transactions.categoriesError')}</Alert>}
 
-      {!isLoading && transactions.length === 0 && (
-        <p className="text-text-secondary mt-16 text-center">{t('transactions.emptyMonth')}</p>
+      {isLoading && (
+        <div className="mt-6 flex flex-col gap-2" aria-label={t('transactions.loading')}>
+          <Skeleton height={40} radius="sm" />
+          <Skeleton height={40} radius="sm" />
+          <Skeleton height={40} radius="sm" />
+        </div>
       )}
 
-      {!isLoading && transactions.length > 0 && filteredTransactions.length === 0 && (
-        <p className="text-text-secondary mt-16 text-center">{t('transactions.emptyFiltered')}</p>
+      {!isLoading && isError && <Alert className="mt-6">{t('transactions.error')}</Alert>}
+
+      {!isLoading && !isError && transactions.length === 0 && (
+        <EmptyState className="mt-16" message={t('transactions.emptyMonth')} />
       )}
 
-      {!isLoading && filteredTransactions.length > 0 && (
+      {!isLoading && !isError && transactions.length > 0 && filteredTransactions.length === 0 && (
+        <EmptyState className="mt-16" message={t('transactions.emptyFiltered')} />
+      )}
+
+      {!isLoading && !isError && filteredTransactions.length > 0 && (
         <>
           <p className="text-sm text-text-secondary mt-6">
             {t('transactions.total', {
@@ -160,7 +174,9 @@ export function TransactionsPage() {
                     key={transaction.id}
                     transaction={transaction}
                     categoryOptions={categoryOptions}
-                    onReassign={(id, envelopeId) => updateMutation.mutate({ id, payload: { envelope_id: envelopeId } })}
+                    onReassign={(id, envelopeId) =>
+                      updateMutation.mutateAsync({ id, payload: { envelope_id: envelopeId } })
+                    }
                     onEdit={setEditingTransaction}
                     onDelete={(id) => deleteMutation.mutateAsync(id)}
                   />
