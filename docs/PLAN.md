@@ -59,7 +59,7 @@ Ticket IDs keep their letter regardless of who's assigned — the letter is the 
 - [x] **A-14** Admin panel — *Day 9, needs Matan's B-08*
 - [x] **A-15** Month history navigation — *Day 10*
 - [x] **A-16** Responsive pass across all pages — *Day 10*
-- [ ] **A-17** Empty/loading/error states audit — *Day 10*
+- [x] **A-17** Empty/loading/error states audit — *Day 10*
 - [ ] **A-18** Client E2E tests (Playwright) — *Day 11, feature freeze day*
 - [x] **A-20** Server: `GET /api/planned-expenses?month=` + `PATCH /api/planned-expenses/:id` — *implemented (`server/routes/plannedExpenses.js`, `server/controllers/plannedExpensesController.js`, `server/services/plannedExpenseService.js`), tests in `server/__tests__/plannedExpenses.test.js`. A-12's client (`client/src/services/plannedExpenseService.js`) now hits the real endpoint when `VITE_USE_MOCK_API=false` — no UI rework needed.*
 

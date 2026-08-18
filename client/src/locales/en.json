@@ -56,6 +56,7 @@
     "addFirstCategory": "Add your first category",
     "addTransaction": "Add Transaction",
     "loading": "Loading categories…",
+    "error": "Couldn't load your categories. Please try again.",
     "empty": "You don't have any categories yet this month.",
     "emptyMonth": "No categories for this month."
   },
@@ -98,6 +99,8 @@
   "transactions": {
     "title": "Transactions",
     "loading": "Loading transactions…",
+    "error": "Couldn't load your transactions. Please try again.",
+    "categoriesError": "Couldn't load categories — category options may be incomplete.",
     "emptyMonth": "You don't have any transactions yet this month.",
     "emptyFiltered": "No transactions match your filters.",
     "total_one": "Total: {{amount}} across {{count}} transaction",
@@ -157,6 +160,7 @@
       "categoryBadge": "Category: {{category}}",
       "lowConfidenceWarning": "Low confidence — double-check these details.",
       "noEnvelopeWarning": "No category was suggested. Choose one before saving.",
+      "aiUnavailableNotice": "We couldn't reach the AI assistant, so this was parsed with basic pattern-matching instead. Please double-check the details.",
       "confirm": "Save transaction",
       "back": "Edit text"
     },
@@ -216,6 +220,7 @@
       "descriptionNone": "None",
       "notDetected": "Not detected — choose manually",
       "previewTitle": "Preview",
+      "noPreviewRows": "No preview rows to show — your import may still work, but double-check your column choices.",
       "dateHeader": "Date",
       "amountHeader": "Amount",
       "descriptionHeader": "Description",
@@ -281,6 +286,8 @@
   "plannedExpenses": {
     "title": "Planned Expenses",
     "loading": "Loading planned expenses…",
+    "error": "Couldn't load your planned expenses. Please try again.",
+    "categoriesError": "Couldn't load categories — category options may be incomplete.",
     "empty": "No planned expenses yet — connect and sync your calendar from Settings.",
     "emptyMonth": "No planned expenses for this month.",
     "goToSettings": "Go to Settings",
@@ -310,7 +317,8 @@
     "submit": "Add",
     "titleRequired": "Title is required",
     "amountInvalid": "Amount must be greater than 0",
-    "dueDateRequired": "Due date is required"
+    "dueDateRequired": "Due date is required",
+    "noCategoriesHint": "You don't have any categories yet — you can still save this without one."
   },
   "admin": {
     "title": "Admin Panel",

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button, Table } from '../components/ui';
+import { Alert, Button, EmptyState, Skeleton, Table } from '../components/ui';
 import { PlannedExpenseFormModal } from '../components/plannedExpenses/PlannedExpenseFormModal';
 import { PlannedExpenseRow } from '../components/plannedExpenses/PlannedExpenseRow';
 import { useAuth } from '../context/AuthContext';
@@ -22,12 +22,16 @@ export function PlannedExpensesPage() {
   const queryKey = ['planned-expenses', user.id, month];
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const { data: plannedExpenses = [], isLoading } = useQuery({
+  const {
+    data: plannedExpenses = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey,
     queryFn: () => plannedExpenseService.list(user.id, month),
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isError: isCategoriesError } = useQuery({
     queryKey: ['categories', user.id, month],
     queryFn: () => categoryService.list(user.id, month),
   });
@@ -82,24 +86,35 @@ export function PlannedExpensesPage() {
         <MonthNavigator />
       </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">{t('plannedExpenses.loading')}</p>}
+      {isCategoriesError && <Alert className="mt-4">{t('plannedExpenses.categoriesError')}</Alert>}
 
-      {!isLoading && plannedExpenses.length === 0 && isCurrentMonth && (
-        <div className="flex flex-col items-center text-center mt-16 gap-3">
-          <p className="text-text-secondary">{t('plannedExpenses.empty')}</p>
-          <Link to="/settings" className="text-sm text-accent hover:underline">
-            {t('plannedExpenses.goToSettings')}
-          </Link>
+      {isLoading && (
+        <div className="mt-6 flex flex-col gap-2" aria-label={t('plannedExpenses.loading')}>
+          <Skeleton height={40} radius="sm" />
+          <Skeleton height={40} radius="sm" />
+          <Skeleton height={40} radius="sm" />
         </div>
       )}
 
-      {!isLoading && plannedExpenses.length === 0 && !isCurrentMonth && (
-        <div className="flex flex-col items-center text-center mt-16 gap-3">
-          <p className="text-text-secondary">{t('plannedExpenses.emptyMonth')}</p>
-        </div>
+      {!isLoading && isError && <Alert className="mt-6">{t('plannedExpenses.error')}</Alert>}
+
+      {!isLoading && !isError && plannedExpenses.length === 0 && isCurrentMonth && (
+        <EmptyState
+          className="mt-16"
+          message={t('plannedExpenses.empty')}
+          action={
+            <Link to="/settings" className="text-sm text-accent hover:underline">
+              {t('plannedExpenses.goToSettings')}
+            </Link>
+          }
+        />
       )}
 
-      {!isLoading && plannedExpenses.length > 0 && (
+      {!isLoading && !isError && plannedExpenses.length === 0 && !isCurrentMonth && (
+        <EmptyState className="mt-16" message={t('plannedExpenses.emptyMonth')} />
+      )}
+
+      {!isLoading && !isError && plannedExpenses.length > 0 && (
         <div className="mt-6 overflow-x-auto">
           <Table>
             <Table.Thead>

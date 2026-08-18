@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Modal, Select } from '../ui';
+import { Alert, Button, Select } from '../ui';
+import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { formatShekels } from '../../utils/money';
 import { formatDate } from '../../utils/date';
 import { getErrorMessage } from '../../utils/errorMessages';
@@ -10,6 +11,20 @@ export function TransactionRow({ transaction, categoryOptions, onReassign, onEdi
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [reassignError, setReassignError] = useState('');
+
+  const handleReassign = async (value) => {
+    setReassignError('');
+    setIsReassigning(true);
+    try {
+      await onReassign(transaction.id, value ? Number(value) : null);
+    } catch (err) {
+      setReassignError(getErrorMessage(err.message, t));
+    } finally {
+      setIsReassigning(false);
+    }
+  };
 
   const openConfirm = () => {
     setDeleteError('');
@@ -46,9 +61,15 @@ export function TransactionRow({ transaction, categoryOptions, onReassign, onEdi
           placeholder={t('transactions.uncategorized')}
           data={categoryOptions}
           value={transaction.envelope_id != null ? String(transaction.envelope_id) : null}
-          onChange={(value) => onReassign(transaction.id, value ? Number(value) : null)}
+          onChange={handleReassign}
+          disabled={isReassigning}
           clearable
         />
+        {reassignError && (
+          <Alert size="xs" className="mt-1">
+            {reassignError}
+          </Alert>
+        )}
       </td>
       <td className="py-3 pe-4 text-sm font-medium text-text-primary text-end whitespace-nowrap">
         {formatShekels(transaction.amount_agorot)}
@@ -64,24 +85,15 @@ export function TransactionRow({ transaction, categoryOptions, onReassign, onEdi
         </div>
       </td>
 
-      <Modal opened={confirmOpen} onClose={handleCancelDelete} title={t('transactions.deleteConfirmTitle')}>
-        <p className="text-sm text-text-secondary mb-6">
-          {t('transactions.deleteConfirmBody', { description: transaction.description })}
-        </p>
-        {deleteError && (
-          <p className="text-sm text-form-error mb-4" role="alert">
-            {deleteError}
-          </p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" color="gray" onClick={handleCancelDelete} disabled={isDeleting}>
-            {t('common.cancel')}
-          </Button>
-          <Button color="status-danger" onClick={handleConfirmDelete} loading={isDeleting}>
-            {t('common.delete')}
-          </Button>
-        </div>
-      </Modal>
+      <ConfirmDeleteModal
+        opened={confirmOpen}
+        title={t('transactions.deleteConfirmTitle')}
+        body={t('transactions.deleteConfirmBody', { description: transaction.description })}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        loading={isDeleting}
+        error={deleteError}
+      />
     </tr>
   );
 }

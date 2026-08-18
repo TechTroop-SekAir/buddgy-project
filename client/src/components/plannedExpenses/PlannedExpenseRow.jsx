@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Modal, Select, Table } from '../ui';
+import { Alert, Badge, Button, Select, Table } from '../ui';
+import { ConfirmDeleteModal } from '../shared/ConfirmDeleteModal';
 import { formatDate } from '../../utils/date';
 import { formatShekels } from '../../utils/money';
 import { hasMissingAmount } from '../../utils/plannedExpenseStatus';
@@ -18,6 +19,20 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [reassignError, setReassignError] = useState('');
+
+  const handleReassign = async (value) => {
+    setReassignError('');
+    setIsReassigning(true);
+    try {
+      await onReassign(plannedExpense.id, value ? Number(value) : null);
+    } catch (err) {
+      setReassignError(getErrorMessage(err.message, t));
+    } finally {
+      setIsReassigning(false);
+    }
+  };
 
   const handleConfirm = async () => {
     setConfirmError('');
@@ -70,9 +85,15 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
           placeholder={t('plannedExpenses.envelopeNone')}
           data={categoryOptions}
           value={plannedExpense.envelope_id != null ? String(plannedExpense.envelope_id) : null}
-          onChange={(value) => onReassign(plannedExpense.id, value ? Number(value) : null)}
+          onChange={handleReassign}
+          disabled={isReassigning}
           clearable
         />
+        {reassignError && (
+          <Alert size="xs" className="mt-1">
+            {reassignError}
+          </Alert>
+        )}
       </Table.Td>
       <Table.Td className="text-start">
         {plannedExpense.is_confirmed ? (
@@ -82,11 +103,7 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
             <Button variant="outline" color="accent" size="md" loading={isConfirming} onClick={handleConfirm}>
               {t('plannedExpenses.confirm')}
             </Button>
-            {confirmError && (
-              <p className="text-xs text-form-error" role="alert">
-                {confirmError}
-              </p>
-            )}
+            {confirmError && <Alert size="xs">{confirmError}</Alert>}
           </div>
         )}
       </Table.Td>
@@ -96,27 +113,16 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
         </Button>
       </Table.Td>
 
-      <Modal opened={deleteConfirmOpen} onClose={handleCancelDelete} title={t('plannedExpenses.deleteConfirmTitle')}>
-        <p className="text-sm text-text-secondary mb-2">
-          {t('plannedExpenses.deleteConfirmBody', { title: plannedExpense.title })}
-        </p>
-        {plannedExpense.source === 'calendar' && (
-          <p className="text-sm text-status-warning mb-4">{t('plannedExpenses.deleteConfirmCalendarWarning')}</p>
-        )}
-        {deleteError && (
-          <p className="text-sm text-form-error mb-4" role="alert">
-            {deleteError}
-          </p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" color="gray" onClick={handleCancelDelete} disabled={isDeleting}>
-            {t('common.cancel')}
-          </Button>
-          <Button color="status-danger" onClick={handleConfirmDelete} loading={isDeleting}>
-            {t('common.delete')}
-          </Button>
-        </div>
-      </Modal>
+      <ConfirmDeleteModal
+        opened={deleteConfirmOpen}
+        title={t('plannedExpenses.deleteConfirmTitle')}
+        body={t('plannedExpenses.deleteConfirmBody', { title: plannedExpense.title })}
+        warning={plannedExpense.source === 'calendar' ? t('plannedExpenses.deleteConfirmCalendarWarning') : null}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        loading={isDeleting}
+        error={deleteError}
+      />
     </Table.Tr>
   );
 }

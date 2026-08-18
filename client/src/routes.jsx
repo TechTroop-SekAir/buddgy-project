@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { Skeleton } from './components/ui';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TransactionsPage } from './pages/TransactionsPage';
@@ -14,17 +15,28 @@ import { RegisterPage } from './pages/RegisterPage';
 // transactions, quick entry, calendar, admin) get their own
 // routes as their tickets land — this is the skeleton, not the full map.
 //
+// Session rehydration from the stored token — brief, but a bare blank screen
+// during it reads as broken rather than loading (client/CLAUDE.md's Async UX
+// Contract: content-shaped wait -> Skeleton).
+function RouteLoading() {
+  return (
+    <div className="p-8">
+      <Skeleton height={32} width={200} radius="sm" />
+    </div>
+  );
+}
+
 // Both gates wait on isLoading so a refreshed session isn't bounced before
 // AuthContext finishes rehydrating the user from the stored token.
 function ProtectedRoute({ children }) {
   const { user, isLoading } = useAuth();
-  if (isLoading) return null;
+  if (isLoading) return <RouteLoading />;
   return user ? children : <Navigate to="/login" replace />;
 }
 
 function PublicOnlyRoute({ children }) {
   const { user, isLoading } = useAuth();
-  if (isLoading) return null;
+  if (isLoading) return <RouteLoading />;
   return user ? <Navigate to="/dashboard" replace /> : children;
 }
 
@@ -34,7 +46,7 @@ function PublicOnlyRoute({ children }) {
 // authorized, not unauthenticated.
 function AdminRoute({ children }) {
   const { user, isLoading } = useAuth();
-  if (isLoading) return null;
+  if (isLoading) return <RouteLoading />;
   return user?.role === 'admin' ? children : <Navigate to="/dashboard" replace />;
 }
 

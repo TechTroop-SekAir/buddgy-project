@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Card } from '../ui';
+import { Alert, Card, Skeleton } from '../ui';
 import { formatShekels } from '../../utils/money';
 
 // Budget/Spent come straight from `categories` (available as soon as the
@@ -30,12 +30,10 @@ export function SummaryBar({ categories = [], forecast, isForecastLoading, isFor
           <p className="text-xl font-semibold text-text-primary">{formatShekels(totals.spent)}</p>
         </div>
 
-        {isForecastLoading && <p className="text-sm text-text-secondary self-center">{t('forecast.loading')}</p>}
-        {isForecastError && (
-          <p className="text-sm text-form-error self-center" role="alert">
-            {t('forecast.error')}
-          </p>
+        {isForecastLoading && (
+          <Skeleton height={40} width={160} radius="sm" className="self-center" aria-label={t('forecast.loading')} />
         )}
+        {isForecastError && <Alert className="self-center">{t('forecast.error')}</Alert>}
         {!isForecastLoading && !isForecastError && forecast && (
           <>
             <div>

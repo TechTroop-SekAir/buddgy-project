@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
-import { Button, Modal, TextInput } from '../ui';
+import { Alert, Button, Modal, TextInput } from '../ui';
 import { getErrorMessage } from '../../utils/errorMessages';
 
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
@@ -92,11 +92,7 @@ export function AdminCategoryFormModal({ opened, category = null, onClose, onSub
           placeholder={t('adminCategoryModal.colorPlaceholder')}
           {...form.getInputProps('color')}
         />
-        {submitError && (
-          <p className="text-sm text-form-error" role="alert">
-            {submitError}
-          </p>
-        )}
+        {submitError && <Alert>{submitError}</Alert>}
         <div className="flex justify-end gap-3 mt-2">
           <Button type="button" variant="outline" color="gray" onClick={handleClose} disabled={isSubmitting}>
             {t('common.cancel')}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui';
+import { Alert, Button, EmptyState, Skeleton } from '../components/ui';
 import { CategoryFormModal } from '../components/categories/CategoryFormModal';
 import { CategoryCard } from '../components/categories/CategoryCard';
 import { ForecastBanner } from '../components/categories/ForecastBanner';
@@ -31,7 +31,11 @@ export function DashboardPage() {
 
   const forecastQueryKey = ['forecast', user.id, month];
 
-  const { data: categories = [], isLoading } = useQuery({
+  const {
+    data: categories = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey,
     queryFn: () => categoryService.list(user.id, month),
   });
@@ -113,11 +117,18 @@ export function DashboardPage() {
         <MonthNavigator />
       </div>
 
-      {isLoading && <p className="text-text-secondary mt-6">{t('dashboard.loading')}</p>}
+      {isLoading && (
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4" aria-label={t('dashboard.loading')}>
+          <Skeleton height={140} radius="md" />
+          <Skeleton height={140} radius="md" />
+        </div>
+      )}
+
+      {!isLoading && isError && <Alert className="mt-6">{t('dashboard.error')}</Alert>}
 
       {/* Forecast panel is always a full-width block above the envelope
           grid, stacked at every breakpoint — not a side column. */}
-      {!isLoading && categories.length > 0 && (
+      {!isLoading && !isError && categories.length > 0 && (
         <div className="mt-6 flex flex-col gap-4">
           <ForecastBanner forecast={forecast} isLoading={isForecastLoading} isError={isForecastError} />
           <SummaryBar
@@ -133,7 +144,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && categories.length > 0 && (
+      {!isLoading && !isError && categories.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           {sortedCategories.map((category) => (
             <CategoryCard
@@ -147,19 +158,20 @@ export function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && categories.length === 0 && isCurrentMonth && (
-        <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
-          <p className="text-text-secondary">{t('dashboard.empty')}</p>
-          <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
-            {t('dashboard.addFirstCategory')}
-          </Button>
-        </div>
+      {!isLoading && !isError && categories.length === 0 && isCurrentMonth && (
+        <EmptyState
+          className="mt-16"
+          message={t('dashboard.empty')}
+          action={
+            <Button variant="filled" color="accent" onClick={() => setIsAddOpen(true)}>
+              {t('dashboard.addFirstCategory')}
+            </Button>
+          }
+        />
       )}
 
-      {!isLoading && categories.length === 0 && !isCurrentMonth && (
-        <div className="flex flex-col items-center justify-center text-center mt-16 gap-4">
-          <p className="text-text-secondary">{t('dashboard.emptyMonth')}</p>
-        </div>
+      {!isLoading && !isError && categories.length === 0 && !isCurrentMonth && (
+        <EmptyState className="mt-16" message={t('dashboard.emptyMonth')} />
       )}
 
       <CategoryFormModal
