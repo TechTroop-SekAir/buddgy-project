@@ -86,3 +86,4 @@ To be implemented only after all use cases above are complete:
 - Savings goals (sinking funds) across multiple months
 - PWA with push notifications when an envelope nears depletion
 - Export data to CSV and to Google Sheets
+- AI agents: a Budget Advisor that answers free-text spending questions against real budget data, and a Calendar Sync Conflict agent that flags duplicate/ambiguous planned expenses after a sync — see [`features/AGENTS.md`](./features/AGENTS.md)
