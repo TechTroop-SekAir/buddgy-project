@@ -50,6 +50,7 @@ describe('POST /api/auth/register', () => {
       full_name: 'New User',
       role: 'user', // never trusts a client-supplied role — server/services/authService.js hardcodes 'user'
       connected: false,
+      onboarding_completed_at: null,
     });
 
     // The token must actually authenticate against the real DB row just created.
@@ -160,5 +161,38 @@ describe('GET /api/auth/me', () => {
     const after = await request(app).get('/api/auth/me').set('Authorization', header);
     expect(after.status).toBe(401);
     expect(after.body).toEqual({ data: null, error: 'unauthorized' });
+  });
+});
+
+describe('PATCH /api/auth/onboarding', () => {
+  it('sets onboarding_completed_at, visible on a subsequent /me call', async () => {
+    const user = await createUser({ email: 'onboarding@test.buddgy.com' });
+    const header = authHeader(user);
+
+    const before = await request(app).get('/api/auth/me').set('Authorization', header);
+    expect(before.body.data.user.onboarding_completed_at).toBeNull();
+
+    const res = await request(app).patch('/api/auth/onboarding').set('Authorization', header);
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.onboarding_completed_at).toEqual(expect.any(String));
+
+    const after = await request(app).get('/api/auth/me').set('Authorization', header);
+    expect(after.body.data.user.onboarding_completed_at).toEqual(res.body.data.user.onboarding_completed_at);
+  });
+
+  it('is idempotent — a second call does not move an already-recorded timestamp', async () => {
+    const user = await createUser({ email: 'idempotent-onboarding@test.buddgy.com' });
+    const header = authHeader(user);
+
+    const first = await request(app).patch('/api/auth/onboarding').set('Authorization', header);
+    const second = await request(app).patch('/api/auth/onboarding').set('Authorization', header);
+
+    expect(second.status).toBe(200);
+    expect(second.body.data.user.onboarding_completed_at).toBe(first.body.data.user.onboarding_completed_at);
+  });
+
+  it('rejects with 401 when unauthenticated', async () => {
+    const res = await request(app).patch('/api/auth/onboarding');
+    expect(res.status).toBe(401);
   });
 });

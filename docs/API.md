@@ -6,7 +6,8 @@
 |---|---|
 | [Conventions](#conventions) | Envelope format, auth, status codes |
 | [Error Catalog](#error-catalog) | Standard error codes/messages |
-| [Auth](#auth) | Register, login, me |
+| [Auth](#auth) | Register, login, me, onboarding completion |
+| [Income Sources](#income-sources) | Onboarding wizard's income step — full-month replace |
 | [Envelopes](#envelopes) | CRUD |
 | [Transactions](#transactions) | CRUD + AI parse |
 | [CSV Import](#csv-import) | Preview + confirm |
@@ -49,9 +50,25 @@ Related specs: [`DATABASE.md`](./DATABASE.md) (backing tables) · [`SECURITY.md`
 POST   /api/auth/register     { email, password, full_name? }  → { token, user }
 POST   /api/auth/login        { email, password }               → { token, user }
 GET    /api/auth/me       🔒                                    → { user }
+PATCH  /api/auth/onboarding 🔒                                  → { user }
 ```
 
-`full_name` is optional (nullable column) — the client doesn't collect it yet. `user` also carries a derived `connected` boolean (`Boolean(google_refresh_token)`) — never the token itself — so the client can show Connect vs Sync now (ticket A-12).
+`full_name` is optional (nullable column) — the client doesn't collect it yet. `user` also carries a derived `connected` boolean (`Boolean(google_refresh_token)`) — never the token itself — so the client can show Connect vs Sync now (ticket A-12), and `onboarding_completed_at` (`DATE`, nullable) — `null` until `PATCH /api/auth/onboarding` is called.
+
+`PATCH /api/auth/onboarding` takes no body and sets `onboarding_completed_at` to the current time — **idempotent**: a second call is a no-op that returns the original timestamp unchanged (mirrors `client/src/services/mockAuthService.js`'s completion logic). The client (`DashboardPage.jsx`) shows a non-dismissible onboarding wizard whenever `user.onboarding_completed_at` is `null`; this route is what closes it for good, so the same account never sees the wizard again on any browser/device.
+
+## Income Sources
+
+```
+GET  /api/income-sources?month=2026-08  🔒  → { rows: [ income_source ], total_agorot }
+PUT  /api/income-sources                🔒  → { rows: [ income_source ], total_agorot }
+```
+
+`income_source` shape: `{ id, user_id, month, label, amount_agorot, sort_order }`. `month` follows the same convention as envelopes — accepts `2026-08` or `2026-08-01`, both normalize to the first-of-month `DATEONLY` value.
+
+`PUT` is a **full-month replace**, not a partial update: body is `{ month, rows: [{ label, amount_agorot }] }`, and every existing row for that month is discarded and replaced with exactly the rows sent, in the given order (`sort_order` is server-assigned from array position — never client-writable). An empty `rows` array clears the month. Backs the onboarding wizard's income step (`client/src/components/onboarding/IncomeStep.jsx`) and the Dashboard's income figure (`SummaryBar.jsx`) — both call through `client/src/services/incomeService.js`.
+
+All scoped to the caller's `user_id` — see [`SECURITY.md`](./SECURITY.md) § Row-Level Access.
 
 ## Envelopes
 
@@ -84,6 +101,10 @@ DELETE /api/transactions/:id                          🔒  → { id }
 
 `envelope_id` (create and update) must belong to the caller or be `null` — a foreign or
 nonexistent id is `400 "validation failed: envelope_id"`, not silently accepted.
+
+`DELETE` on a transaction that a planned-expense confirm created reverts that planned expense to
+unconfirmed rather than leaving it stuck — see [Calendar & Forecast](#calendar--forecast)'s
+`transaction_id` link section.
 
 ### AI Quick Entry
 
@@ -160,9 +181,12 @@ GET    /api/forecast?month=2026-08   🔒  → forecast
 `planned_expense` shape (ticket A-20):
 ```json
 { "id": 3, "user_id": 1, "envelope_id": 10, "title": "Car service", "amount_agorot": 45000,
-  "due_date": "2026-08-20", "google_event_id": "evt_3", "is_confirmed": true, "source": "calendar" }
+  "due_date": "2026-08-20", "google_event_id": "evt_3", "is_confirmed": true, "source": "calendar",
+  "transaction_id": 501 }
 ```
-`GET` filters by `due_date` falling within the given month. `POST` accepts `envelope_id` (nullable, must belong to the caller), `title`, `amount_agorot`, `due_date` — `google_event_id`, `source`, and `user_id` are server-assigned (`google_event_id: null`, `source: 'manual'`), never client-writable. `PATCH` accepts a partial body with any of `envelope_id` (nullable — must belong to the caller), `title`, `amount_agorot`, `due_date`, `is_confirmed`; `google_event_id` and `source` are never client-writable via either route. `DELETE` permanently removes the row — but deleting a `source: 'calendar'` row does not stop it from coming back: `POST /api/calendar/sync` UPSERTs on `google_event_id` (`server/services/calendarSyncService.js`'s `findOrCreate`) with no concept of "user intentionally deleted this," so the next sync silently recreates it if the underlying Google Calendar event is still live. Only `source: 'manual'` deletions are permanent. `amount_agorot` **can** be `null` or `0` ("missing amount") at rest — the DB column has no `NOT NULL` constraint — but neither current write path actually produces that today: calendar sync skips any event it can't parse an amount from rather than inserting one with a missing amount (`server/services/calendarSyncService.js`), and `PATCH`'s validation (`server/routes/plannedExpenses.js`) requires `amount_agorot` to be a positive integer whenever it's included, so a client can fill in a missing amount but can't currently clear one back to null via this route. In practice a missing amount is only reachable today through the client's mock calendar path (`VITE_USE_MOCK_CALENDAR=true`, the committed local-dev default), which writes directly to a local mock store with no such validation — worth a follow-up once the real endpoint is the default, if the product still wants a genuine "unknown amount" state representable server-side. The client (ticket A-13) treats it as a real case regardless of source, surfacing an actionable prompt rather than silently formatting a missing amount as ₪0.00.
+`GET` filters by `due_date` falling within the given month. `POST` accepts `envelope_id` (nullable, must belong to the caller), `title`, `amount_agorot`, `due_date` — `google_event_id`, `source`, `transaction_id`, and `user_id` are server-assigned (`google_event_id: null`, `source: 'manual'`, `transaction_id: null`), never client-writable. `PATCH` accepts a partial body with any of `envelope_id` (nullable — must belong to the caller), `title`, `amount_agorot`, `due_date`, `is_confirmed`; `google_event_id`, `source`, and `transaction_id` are never client-writable via either route. `DELETE` permanently removes the row — but deleting a `source: 'calendar'` row does not stop it from coming back: `POST /api/calendar/sync` UPSERTs on `google_event_id` (`server/services/calendarSyncService.js`'s `findOrCreate`) with no concept of "user intentionally deleted this," so the next sync silently recreates it if the underlying Google Calendar event is still live. Only `source: 'manual'` deletions are permanent. `amount_agorot` **can** be `null` or `0` ("missing amount") at rest — the DB column has no `NOT NULL` constraint — but neither current write path actually produces that today: calendar sync skips any event it can't parse an amount from rather than inserting one with a missing amount (`server/services/calendarSyncService.js`), and `PATCH`'s validation (`server/routes/plannedExpenses.js`) requires `amount_agorot` to be a positive integer whenever it's included, so a client can fill in a missing amount but can't currently clear one back to null via this route. In practice a missing amount is only reachable today through the client's mock calendar path (`VITE_USE_MOCK_CALENDAR=true`, the committed local-dev default), which writes directly to a local mock store with no such validation — worth a follow-up once the real endpoint is the default, if the product still wants a genuine "unknown amount" state representable server-side. The client (ticket A-13) treats it as a real case regardless of source, surfacing an actionable prompt rather than silently formatting a missing amount as ₪0.00.
+
+**The `transaction_id` link** (`server/services/plannedExpenseService.js`, see `docs/DATABASE.md` § Idempotency for the full detail): confirming (`is_confirmed` `false → true`) atomically creates a `transactions` row and sets `transaction_id`; unconfirming (`true → false`) deletes it and clears the link. `PATCH`ing `envelope_id`/`amount_agorot`/`title`/`due_date` on an **already-confirmed** row (without touching `is_confirmed`) writes the same change through to the linked transaction, so the two never drift apart — e.g. reassigning a confirmed row's envelope moves its spend with it. `DELETE` on a confirmed row also deletes its linked transaction. Symmetrically, `DELETE /api/transactions/:id` on a transaction linked to a planned expense reverts that row to `is_confirmed: false, transaction_id: null` rather than leaving it stuck confirmed with a dangling link — it becomes re-confirmable.
 
 Forecast response `data` (ticket B-07):
 ```json

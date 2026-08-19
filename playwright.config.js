@@ -7,9 +7,10 @@ const path = require('path');
 // to — a developer's regular `npm run dev` session or its buddgy_dev
 // database. See e2e/README.md-equivalent notes in this file's comments and
 // the plan at .claude/plans (A-18) for the full rationale.
-const SERVER_PORT = 4010;
-const CLIENT_PORT = 5183;
-const BASE_URL = `http://localhost:${CLIENT_PORT}`;
+// SERVER_PORT/CLIENT_PORT/BASE_URL live in e2e/helpers/env.js — auth.setup.js
+// needs SERVER_PORT too (to call the API directly for completeOnboarding),
+// so it's a shared constant rather than redeclared in both files.
+const { SERVER_PORT, CLIENT_PORT, BASE_URL } = require('./e2e/helpers/env');
 
 // Dummy values only, same pattern as .github/workflows/ci.yml, EXCEPT
 // CLOUDINARY_URL (see its own comment below) — Claude and Google Calendar

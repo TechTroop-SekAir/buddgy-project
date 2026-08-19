@@ -13,6 +13,8 @@ module.exports = (sequelize, DataTypes) => {
       google_refresh_token: { type: DataTypes.TEXT },
       role: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'user' },
       disabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      // Null until PATCH /api/auth/onboarding — see docs/API.md § Auth.
+      onboarding_completed_at: { type: DataTypes.DATE },
     },
     {
       tableName: 'users',

@@ -56,6 +56,30 @@ describe('DELETE /api/planned-expenses/:id', () => {
     const res = await request(app).delete(`/api/planned-expenses/${plannedExpense.id}`);
     expect(res.status).toBe(401);
   });
+
+  it('deleting a confirmed planned expense also deletes its linked transaction', async () => {
+    const user = await createUser();
+    const plannedExpense = await createPlannedExpense({
+      user_id: user.id,
+      amount_agorot: 5000,
+      due_date: '2026-08-18',
+      is_confirmed: false,
+    });
+    const confirmed = await request(app)
+      .patch(`/api/planned-expenses/${plannedExpense.id}`)
+      .set('Authorization', authHeader(user))
+      .send({ is_confirmed: true });
+    const transactionId = confirmed.body.data.transaction_id;
+    expect(transactionId).not.toBeNull();
+
+    const res = await request(app)
+      .delete(`/api/planned-expenses/${plannedExpense.id}`)
+      .set('Authorization', authHeader(user));
+    expect(res.status).toBe(200);
+
+    const transactions = await request(app).get('/api/transactions?month=2026-08').set('Authorization', authHeader(user));
+    expect(transactions.body.data.find((t) => t.id === transactionId)).toBeUndefined();
+  });
 });
 
 // Real-Postgres coverage for the atomic confirm/unconfirm behavior — proves
@@ -156,6 +180,36 @@ describe('PATCH /api/planned-expenses/:id — confirm creates a transaction', ()
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('validation failed: amount_agorot');
+  });
+
+  it('reassigning an already-confirmed row moves its linked transaction\'s envelope spend, not just the row', async () => {
+    const user = await createUser();
+    const fromEnvelope = await createEnvelope({ user_id: user.id, name: 'From', monthly_budget_agorot: 50000, month: '2026-08-01' });
+    const toEnvelope = await createEnvelope({ user_id: user.id, name: 'To', monthly_budget_agorot: 50000, month: '2026-08-01' });
+    const plannedExpense = await createPlannedExpense({
+      user_id: user.id,
+      envelope_id: fromEnvelope.id,
+      amount_agorot: 7000,
+      due_date: '2026-08-18',
+      is_confirmed: false,
+    });
+    await request(app)
+      .patch(`/api/planned-expenses/${plannedExpense.id}`)
+      .set('Authorization', authHeader(user))
+      .send({ is_confirmed: true });
+
+    const res = await request(app)
+      .patch(`/api/planned-expenses/${plannedExpense.id}`)
+      .set('Authorization', authHeader(user))
+      .send({ envelope_id: toEnvelope.id });
+    expect(res.status).toBe(200);
+    expect(res.body.data.envelope_id).toBe(toEnvelope.id);
+
+    const envelopes = await request(app).get('/api/envelopes?month=2026-08').set('Authorization', authHeader(user));
+    const from = envelopes.body.data.find((e) => e.id === fromEnvelope.id);
+    const to = envelopes.body.data.find((e) => e.id === toEnvelope.id);
+    expect(from.spent_agorot).toBe(0);
+    expect(to.spent_agorot).toBe(7000);
   });
 
   it('a failed confirm (foreign envelope) leaves neither the row nor a transaction changed', async () => {

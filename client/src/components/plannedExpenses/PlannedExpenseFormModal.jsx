@@ -4,25 +4,41 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Button, DateInput, Modal, NumberInput, Select, TextInput } from '../ui';
 import { shekelsToAgorot } from '../../utils/money';
 import { getErrorMessage } from '../../utils/errorMessages';
+import { addMonthsToDate } from '../../utils/date';
 
-// Manual one-off planned expenses (source: 'manual') — the calendar-synced
-// half of planned_expenses is still read-only here, this only adds new rows.
+// Every manual planned expense recurs monthly — envelope budgeting is a
+// monthly cycle by definition, so there's no one-off case to opt out of.
+// A recurring row isn't a single DB concept — it's N independent
+// planned_expenses rows, one per month from today through the end date
+// entered, same as how a recurring Google Calendar event already syncs into
+// N independent rows (one per occurrence, server/services/
+// calendarSyncService.js). No shared "series" id, so each occurrence can be
+// edited/deleted individually afterward, same as a synced one.
+const MAX_RECURRING_OCCURRENCES = 120; // 10 years of monthly rows — a safety cap, not a user-facing limit
+
+// Manual planned expenses (source: 'manual') — the calendar-synced half of
+// planned_expenses is still read-only here, this only adds new rows.
 export function PlannedExpenseFormModal({ opened, categoryOptions, onClose, onSubmit }) {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const today = new Date().toISOString().slice(0, 10);
 
   const form = useForm({
     initialValues: {
       title: '',
       amountShekels: '',
-      dueDate: '',
+      endDate: '',
       envelopeId: '',
     },
     validate: {
       title: (value) => (value.trim().length > 0 ? null : t('addPlannedExpenseModal.titleRequired')),
       amountShekels: (value) => (Number(value) > 0 ? null : t('addPlannedExpenseModal.amountInvalid')),
-      dueDate: (value) => (value ? null : t('addPlannedExpenseModal.dueDateRequired')),
+      endDate: (value) => {
+        if (!value) return t('addPlannedExpenseModal.endDateRequired');
+        if (value < today) return t('addPlannedExpenseModal.endDateBeforeToday');
+        return null;
+      },
     },
   });
 
@@ -36,12 +52,22 @@ export function PlannedExpenseFormModal({ opened, categoryOptions, onClose, onSu
     setSubmitError('');
     setIsSubmitting(true);
     try {
-      await onSubmit({
+      const basePayload = {
         title: values.title.trim(),
         amount_agorot: shekelsToAgorot(Number(values.amountShekels)),
-        due_date: values.dueDate,
         envelope_id: values.envelopeId ? Number(values.envelopeId) : null,
-      });
+      };
+      // Monthly occurrences from today through endDate, inclusive.
+      // 'YYYY-MM-DD' strings compare lexicographically the same as
+      // chronologically, so a plain <= works without parsing to Date objects.
+      const payloads = [];
+      for (let i = 0; i < MAX_RECURRING_OCCURRENCES; i += 1) {
+        const occurrenceDate = addMonthsToDate(today, i);
+        if (occurrenceDate > values.endDate) break;
+        payloads.push({ ...basePayload, due_date: occurrenceDate });
+      }
+
+      await onSubmit(payloads);
       form.reset();
       onClose();
     } catch (err) {
@@ -75,14 +101,16 @@ export function PlannedExpenseFormModal({ opened, categoryOptions, onClose, onSu
           {...form.getInputProps('amountShekels')}
         />
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-text-primary">{t('addPlannedExpenseModal.dueDateLabel')}</span>
+          <span className="text-sm font-medium text-text-primary">{t('addPlannedExpenseModal.endDateLabel')}</span>
           <DateInput
-            id="planned-expense-due-date"
-            name="dueDate"
+            id="planned-expense-end-date"
+            name="endDate"
             className="rounded-md border border-border-card bg-bg-surface px-3 py-2 text-sm text-text-primary"
+            min={today}
             required
-            {...form.getInputProps('dueDate')}
+            {...form.getInputProps('endDate')}
           />
+          <span className="text-xs text-text-secondary">{t('addPlannedExpenseModal.endDateHint')}</span>
         </label>
         <Select
           id="planned-expense-envelope"

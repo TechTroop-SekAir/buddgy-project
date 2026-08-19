@@ -32,6 +32,20 @@ export function getMonthBounds(month) {
   return { start, end };
 }
 
+// Clamps to the target month's last day rather than overflowing into the
+// month after (native `Date` would turn Jan 31 + 1 month into Mar 3) — used
+// to generate one due_date per occurrence of a recurring planned expense.
+/** @param {string} dateString 'YYYY-MM-DD'; @param {number} months >= 0 to add */
+export function addMonthsToDate(dateString, months) {
+  const [year, month, day] = dateString.split('-').map(Number);
+  const targetMonthIndex = month - 1 + months;
+  const lastDayOfTargetMonth = new Date(year, targetMonthIndex + 1, 0).getDate();
+  const date = new Date(year, targetMonthIndex, Math.min(day, lastDayOfTargetMonth));
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${mm}-${dd}`;
+}
+
 // Only meaningful for the current month — a "days remaining" count for a
 // past or future month has no real interpretation, so this returns null
 // rather than a misleading number. See docs/DASHBOARD-REDESIGN.md Step 3.
