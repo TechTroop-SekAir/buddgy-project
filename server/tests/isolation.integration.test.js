@@ -311,7 +311,7 @@ describe('calendar sync scopes google_event_id per user, not globally', () => {
 
     expect(res.status).toBe(200);
     // Intruder gets their own row for the event, not a no-op against owner's.
-    expect(res.body.data).toEqual({ newEvents: 1 });
+    expect(res.body.data).toEqual({ newEvents: 1, likelyCostly: 1 });
 
     const ownerCheck = await request(app).get('/api/planned-expenses?month=2026-09').set('Authorization', authHeader(owner));
     expect(ownerCheck.body.data).toEqual([expect.objectContaining({ id: ownedRow.id, title: 'Rent ₪4500' })]);

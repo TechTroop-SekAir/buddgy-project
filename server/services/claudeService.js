@@ -177,4 +177,70 @@ async function detectColumnMapping(userId, headerRow, sampleRows) {
   };
 }
 
-module.exports = { parseQuickEntry, detectColumnMapping };
+// One event per line, tagged with google_event_id so the model's answers can
+// be matched back up without trusting it to echo ids verbatim — matches the
+// "never trust a model-returned id" posture the other two functions take.
+const eventCostLikelihoodSchema = z.object({
+  events: z.array(
+    z.object({
+      google_event_id: z.string(),
+      likely_costly: z
+        .boolean()
+        .describe('true if this calendar event likely involves spending money (e.g. a wedding, birthday, flight, hotel), false for a routine free event (e.g. a meeting, gym session).'),
+    })
+  ),
+});
+
+function buildEventCostLikelihoodPrompt(events) {
+  const eventLines = events.map((e) => `- google_event_id ${e.google_event_id}: "${e.title}"`).join('\n');
+  return [
+    'The following are upcoming Google Calendar event titles for a Hebrew-first budgeting app user.',
+    'For each event, decide whether it likely involves spending money — a social/travel/purchase',
+    'obligation such as a wedding, bar mitzva, birthday, flight, or hotel (חתונה, בר מצווה, יום הולדת,',
+    'טיסה, מלון, קניות) counts as likely_costly: true. A routine free event such as a meeting, gym',
+    'session, or standup (פגישה, חדר כושר) counts as likely_costly: false.',
+    'Return one entry per event, using the exact google_event_id given — never invent one.',
+    eventLines,
+  ].join('\n');
+}
+
+/**
+ * Classifies a batch of calendar events by whether they likely cost money,
+ * for events whose title carries no parseable amount — one call per sync,
+ * not one per event. Failure here must not fail the whole sync — see
+ * docs/features/UPCOMING-EVENTS.md § Failure Handling; callers should catch
+ * and treat the batch as unclassified rather than letting this throw block
+ * calendarSyncService.
+ *
+ * @param {number} userId - for GET /api/admin/stats' aiCallCount (ticket B-08)
+ * @param {{ google_event_id: string, title: string }[]} events
+ * @returns {Promise<{ google_event_id: string, likely_costly: boolean }[]>}
+ */
+async function classifyEventCostLikelihood(userId, events) {
+  if (events.length === 0) return [];
+
+  const validEventIds = new Set(events.map((e) => e.google_event_id));
+
+  let object;
+  try {
+    ({ object } = await generateObject({
+      model: anthropic(MODEL_ID),
+      maxOutputTokens: MAX_TOKENS,
+      schema: eventCostLikelihoodSchema,
+      prompt: buildEventCostLikelihoodPrompt(events),
+      abortSignal: AbortSignal.timeout(CLAUDE_TIMEOUT_MS),
+    }));
+  } catch {
+    // Timeout, rate limit, or malformed output — same failure contract as
+    // the other two functions, but the caller (calendarSyncService) treats
+    // this as non-fatal rather than surfacing a 422.
+    await logAiCall(userId, 'event_cost', false);
+    throw new AppError('unprocessable: ai parse failed', 422);
+  }
+  await logAiCall(userId, 'event_cost', true);
+
+  // Drop any result for an id we didn't send — never trust a model-returned id.
+  return object.events.filter((e) => validEventIds.has(e.google_event_id));
+}
+
+module.exports = { parseQuickEntry, detectColumnMapping, classifyEventCostLikelihood };

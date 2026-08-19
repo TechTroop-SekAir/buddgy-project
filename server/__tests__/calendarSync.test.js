@@ -2,7 +2,7 @@
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
-// Mock every external boundary — Google, and the DB — docs/INTEGRATIONS.md §
+// Mock every external boundary — Google, Claude, and the DB — docs/INTEGRATIONS.md §
 // Failure Handling / docs/TESTING.md § Mocking Policy requires mocked externals in CI.
 const mockEventsList = jest.fn();
 jest.mock('googleapis', () => ({
@@ -12,6 +12,11 @@ jest.mock('googleapis', () => ({
 const mockGetAuthedClient = jest.fn();
 jest.mock('../services/googleCalendarService', () => ({
   getAuthedClient: (...args) => mockGetAuthedClient(...args),
+}));
+
+const mockClassifyEventCostLikelihood = jest.fn();
+jest.mock('../services/claudeService', () => ({
+  classifyEventCostLikelihood: (...args) => mockClassifyEventCostLikelihood(...args),
 }));
 
 const mockFindOrCreate = jest.fn();
@@ -34,24 +39,23 @@ const AUTHED_USER_ID = 1;
 beforeEach(() => {
   jest.clearAllMocks();
   mockGetAuthedClient.mockResolvedValue({ fake: 'client' });
+  mockClassifyEventCostLikelihood.mockResolvedValue([]);
 });
 
 describe('syncPlannedExpenses', () => {
-  it('upserts events with a parseable amount and counts only the new ones', async () => {
+  it('upserts an amount-bearing event as likely without calling the classifier', async () => {
     mockEventsList.mockResolvedValue({
       data: {
-        items: [
-          { id: 'evt-1', summary: 'Rent ₪4500', start: { date: '2026-09-01' } },
-          { id: 'evt-2', summary: 'Lunch with no amount', start: { date: '2026-09-02' } },
-        ],
+        items: [{ id: 'evt-1', summary: 'Rent ₪4500', start: { date: '2026-09-01' } }],
       },
     });
     mockFindOrCreate.mockResolvedValue([{}, true]);
 
     const result = await syncPlannedExpenses(AUTHED_USER_ID);
 
-    expect(result).toEqual({ newEvents: 1 });
-    expect(mockFindOrCreate).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ newEvents: 1, likelyCostly: 1 });
+    expect(mockClassifyEventCostLikelihood).not.toHaveBeenCalled();
+    expect(mockFindOrCreate.mock.calls[0][0].defaults).toMatchObject({ cost_likelihood: 'likely' });
     // Scoped by user_id — google_event_id alone is not unique across users
     // (Google reuses one event id for every attendee of a shared event).
     expect(mockFindOrCreate.mock.calls[0][0].where).toEqual({
@@ -61,15 +65,55 @@ describe('syncPlannedExpenses', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  it('keeps an amount-less event and classifies it via a single batched Claude call', async () => {
+    mockEventsList.mockResolvedValue({
+      data: {
+        items: [
+          { id: 'evt-1', summary: 'חתונה של דנה', start: { date: '2026-09-01' } },
+          { id: 'evt-2', summary: 'Standup', start: { date: '2026-09-02' } },
+        ],
+      },
+    });
+    mockClassifyEventCostLikelihood.mockResolvedValue([
+      { google_event_id: 'evt-1', likely_costly: true },
+      { google_event_id: 'evt-2', likely_costly: false },
+    ]);
+    mockFindOrCreate.mockResolvedValue([{}, true]);
+
+    const result = await syncPlannedExpenses(AUTHED_USER_ID);
+
+    expect(result).toEqual({ newEvents: 2, likelyCostly: 1 });
+    expect(mockClassifyEventCostLikelihood).toHaveBeenCalledTimes(1);
+    expect(mockClassifyEventCostLikelihood).toHaveBeenCalledWith(AUTHED_USER_ID, [
+      { google_event_id: 'evt-1', title: 'חתונה של דנה' },
+      { google_event_id: 'evt-2', title: 'Standup' },
+    ]);
+    expect(mockFindOrCreate.mock.calls[0][0].defaults).toMatchObject({ cost_likelihood: 'likely' });
+    expect(mockFindOrCreate.mock.calls[1][0].defaults).toMatchObject({ cost_likelihood: 'unlikely' });
+  });
+
+  it('leaves events unknown when the classifier fails, without failing the sync', async () => {
+    mockEventsList.mockResolvedValue({
+      data: { items: [{ id: 'evt-1', summary: 'חתונה של דנה', start: { date: '2026-09-01' } }] },
+    });
+    mockClassifyEventCostLikelihood.mockRejectedValue(new AppError('unprocessable: ai parse failed', 422));
+    mockFindOrCreate.mockResolvedValue([{}, true]);
+
+    const result = await syncPlannedExpenses(AUTHED_USER_ID);
+
+    expect(result).toEqual({ newEvents: 1, likelyCostly: 0 });
+    expect(mockFindOrCreate.mock.calls[0][0].defaults).toMatchObject({ cost_likelihood: 'unknown' });
+  });
+
   it('refreshes an already-known event without incrementing newEvents', async () => {
     mockEventsList.mockResolvedValue({
       data: { items: [{ id: 'evt-1', summary: 'Rent ₪4500', start: { date: '2026-09-01' } }] },
     });
-    mockFindOrCreate.mockResolvedValue([{}, false]);
+    mockFindOrCreate.mockResolvedValue([{ is_dismissed: false, is_confirmed: false }, false]);
 
     const result = await syncPlannedExpenses(AUTHED_USER_ID);
 
-    expect(result).toEqual({ newEvents: 0 });
+    expect(result).toEqual({ newEvents: 0, likelyCostly: 1 });
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     // Scoped by user_id so one user's re-sync can never update another
     // user's row for the same shared event id.
@@ -77,6 +121,30 @@ describe('syncPlannedExpenses', () => {
       user_id: AUTHED_USER_ID,
       google_event_id: 'evt-1',
     });
+  });
+
+  it('does not overwrite cost_likelihood on a dismissed row when re-syncing', async () => {
+    mockEventsList.mockResolvedValue({
+      data: { items: [{ id: 'evt-1', summary: 'Standup', start: { date: '2026-09-02' } }] },
+    });
+    mockClassifyEventCostLikelihood.mockResolvedValue([{ google_event_id: 'evt-1', likely_costly: true }]);
+    mockFindOrCreate.mockResolvedValue([{ is_dismissed: true, is_confirmed: false }, false]);
+
+    await syncPlannedExpenses(AUTHED_USER_ID);
+
+    expect(mockUpdate.mock.calls[0][0]).not.toHaveProperty('cost_likelihood');
+  });
+
+  it('does not overwrite cost_likelihood on a confirmed row when re-syncing', async () => {
+    mockEventsList.mockResolvedValue({
+      data: { items: [{ id: 'evt-1', summary: 'Standup', start: { date: '2026-09-02' } }] },
+    });
+    mockClassifyEventCostLikelihood.mockResolvedValue([{ google_event_id: 'evt-1', likely_costly: true }]);
+    mockFindOrCreate.mockResolvedValue([{ is_dismissed: false, is_confirmed: true }, false]);
+
+    await syncPlannedExpenses(AUTHED_USER_ID);
+
+    expect(mockUpdate.mock.calls[0][0]).not.toHaveProperty('cost_likelihood');
   });
 
   it('maps a 401 from events.list to a client-safe reconnect error', async () => {

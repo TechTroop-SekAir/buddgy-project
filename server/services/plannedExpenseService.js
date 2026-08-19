@@ -16,6 +16,8 @@ const PUBLIC_ATTRIBUTES = [
   'google_event_id',
   'is_confirmed',
   'source',
+  'cost_likelihood',
+  'is_dismissed',
 ];
 
 /** A caller may only ever point a planned expense at their own envelope, or none. */

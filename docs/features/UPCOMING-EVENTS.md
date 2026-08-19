@@ -1,9 +1,9 @@
 # Buddgy — Upcoming Events (calendar cost-likelihood + spend prompt)
 
-> **Status: spec ready, not yet built.** No new feature merges after the Aug 19 EOD freeze
-> ([`PLAN.md`](../PLAN.md) § Dates) — this ships in the post-freeze bug-fix/demo-prep window at the
-> earliest, or after the demo. This file is the implementation-ready spec for when that work is
-> picked up.
+> **Status: C-13 (server classification) landed on `feature/upcoming-events`.** C-14/A-23/A-24 —
+> dismiss/undo API, the Planned Expenses card, and the Dashboard card — are not yet built. No new
+> feature merges to `main` after the Aug 19 EOD freeze ([`PLAN.md`](../PLAN.md) § Dates); this
+> branch lands in the post-freeze bug-fix/demo-prep window at the earliest, or after the demo.
 
 ## Contents
 
