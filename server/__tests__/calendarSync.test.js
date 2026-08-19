@@ -97,6 +97,34 @@ describe('syncPlannedExpenses', () => {
     expect(mockFindOrCreate.mock.calls[1][0].defaults).toMatchObject({ cost_likelihood: 'unlikely' });
   });
 
+  it('chunks a large classification batch into multiple calls, one bad chunk not blocking the rest', async () => {
+    // 22 amount-less events — over CLASSIFY_CHUNK_SIZE (15), so this must
+    // split into 2 calls. Real-world trigger: a contacts-synced calendar
+    // with many recurring birthdays can easily exceed 15 in one sync.
+    const items = Array.from({ length: 22 }, (_, i) => ({
+      id: `evt-${i}`,
+      summary: `Event ${i}`,
+      start: { date: '2026-09-01' },
+    }));
+    mockEventsList.mockResolvedValue({ data: { items } });
+    mockClassifyEventCostLikelihood
+      .mockResolvedValueOnce(
+        items.slice(0, 15).map((e) => ({ google_event_id: e.id, likely_costly: true }))
+      )
+      .mockRejectedValueOnce(new AppError('unprocessable: ai parse failed', 422));
+    mockFindOrCreate.mockResolvedValue([{}, true]);
+
+    const result = await syncPlannedExpenses(AUTHED_USER_ID);
+
+    expect(mockClassifyEventCostLikelihood).toHaveBeenCalledTimes(2);
+    expect(mockClassifyEventCostLikelihood.mock.calls[0][1]).toHaveLength(15);
+    expect(mockClassifyEventCostLikelihood.mock.calls[1][1]).toHaveLength(7);
+    // First chunk succeeded (15 likely), second chunk failed (7 stay unknown).
+    expect(result).toEqual({ newEvents: 22, likelyCostly: 15 });
+    expect(mockFindOrCreate.mock.calls[0][0].defaults).toMatchObject({ cost_likelihood: 'likely' });
+    expect(mockFindOrCreate.mock.calls[20][0].defaults).toMatchObject({ cost_likelihood: 'unknown' });
+  });
+
   it('leaves a new event unknown when the classifier fails, without failing the sync', async () => {
     mockEventsList.mockResolvedValue({
       data: { items: [{ id: 'evt-1', summary: 'חתונה של דנה', start: { date: '2026-09-01' } }] },

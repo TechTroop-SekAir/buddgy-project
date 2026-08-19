@@ -91,23 +91,31 @@ async function syncPlannedExpenses(userId) {
 
     // An event whose title already carries an amount is 'likely' without
     // needing a model call. Everything else — that's still undecided — is
-    // batched into one Claude call per sync (not one per event). A
-    // classifier failure must not fail the sync (docs/INTEGRATIONS.md §
-    // Failure Handling), so it's caught here; those events just stay
-    // 'unknown' and are retried on the next sync.
+    // classified in chunked Claude calls (not one per event, and not one
+    // giant call for the whole sync either): a single generateObject call's
+    // output scales with how many events are in it, and a busy calendar
+    // (e.g. contacts-synced recurring birthdays) can easily put 50+ events
+    // in one sync, which overflows the output token budget and fails the
+    // whole batch at once. Chunking bounds each call's output size and
+    // means one bad chunk degrades only its own events to 'unknown'
+    // (retried next sync) instead of blocking every event in the sync.
+    const CLASSIFY_CHUNK_SIZE = 15;
     const toClassify = events.filter(
       (e) => e.amountAgorot === null && (priorLikelihoodByEventId.get(e.event.id) ?? 'unknown') === 'unknown'
     );
-    let likelihoodByEventId = new Map();
-    if (toClassify.length > 0) {
+    const likelihoodByEventId = new Map();
+    for (let i = 0; i < toClassify.length; i += CLASSIFY_CHUNK_SIZE) {
+      const chunk = toClassify.slice(i, i + CLASSIFY_CHUNK_SIZE);
       try {
         const results = await classifyEventCostLikelihood(
           userId,
-          toClassify.map((e) => ({ google_event_id: e.event.id, title: e.event.summary || '' }))
+          chunk.map((e) => ({ google_event_id: e.event.id, title: e.event.summary || '' }))
         );
-        likelihoodByEventId = new Map(results.map((r) => [r.google_event_id, r.likely_costly]));
+        for (const r of results) likelihoodByEventId.set(r.google_event_id, r.likely_costly);
       } catch {
-        // Leave likelihoodByEventId empty — those events stay 'unknown' below.
+        // This chunk's events stay 'unknown' below and are retried next
+        // sync — docs/INTEGRATIONS.md § Failure Handling. Other chunks are
+        // unaffected since each has its own try/catch.
       }
     }
 

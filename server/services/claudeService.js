@@ -16,6 +16,18 @@ const { shekelsToAgorot } = require('../utils/money');
 // shares one model id, so this repairs Quick Entry and CSV mapping too.
 const MODEL_ID = 'claude-sonnet-5';
 const MAX_TOKENS = 512;
+// classifyEventCostLikelihood's output scales with input size (one object
+// per event, unlike the other two functions' fixed single-object output) —
+// a real calendar's classification batch can be dozens of events (e.g.
+// contacts-synced recurring birthdays), which overflows MAX_TOKENS and fails
+// the whole call. calendarSyncService.js also chunks its batches so this
+// never has to cover an unbounded event count on its own. Verified against
+// real Google Calendar event ids (which run ~35-50 chars, longer for
+// recurring-instance ids like "…_20260823"): a 15-event chunk measured
+// ~1080 output tokens total — this model also spends output tokens on
+// extended thinking before the JSON text (~470 of that 1080 was
+// reasoning, not the answer itself), so the budget must cover both.
+const EVENT_COST_MAX_TOKENS = 4000;
 // A stalled connection must fail fast, not hang the request indefinitely —
 // docs/INTEGRATIONS.md § Failure Handling.
 const CLAUDE_TIMEOUT_MS = 15000;
@@ -210,11 +222,12 @@ function buildEventCostLikelihoodPrompt(events) {
 
 /**
  * Classifies a batch of calendar events by whether they likely cost money,
- * for events whose title carries no parseable amount — one call per sync,
- * not one per event. Failure here must not fail the whole sync — see
- * docs/features/UPCOMING-EVENTS.md § Failure Handling; callers should catch
- * and treat the batch as unclassified rather than letting this throw block
- * calendarSyncService.
+ * for events whose title carries no parseable amount — one call per chunk
+ * (calendarSyncService.js caps chunk size so this stays well under
+ * EVENT_COST_MAX_TOKENS), not one call per event. Failure here must not fail
+ * the whole sync — see docs/features/UPCOMING-EVENTS.md § Failure Handling;
+ * callers should catch and treat the batch as unclassified rather than
+ * letting this throw block calendarSyncService.
  *
  * @param {number} userId - for GET /api/admin/stats' aiCallCount (ticket B-08)
  * @param {{ google_event_id: string, title: string }[]} events
@@ -229,7 +242,7 @@ async function classifyEventCostLikelihood(userId, events) {
   try {
     ({ object } = await generateObject({
       model: anthropic(MODEL_ID),
-      maxOutputTokens: MAX_TOKENS,
+      maxOutputTokens: EVENT_COST_MAX_TOKENS,
       schema: eventCostLikelihoodSchema,
       prompt: buildEventCostLikelihoodPrompt(events),
       abortSignal: AbortSignal.timeout(CLAUDE_TIMEOUT_MS),

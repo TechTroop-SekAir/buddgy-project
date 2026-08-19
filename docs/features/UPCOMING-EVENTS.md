@@ -88,9 +88,14 @@ endpoint moving a row into `is_confirmed: true`, which the forecast already know
    `findAll` keyed on `google_event_id`). Only events still `'unknown'` (brand new, or left
    unresolved by a prior failed classification) go to Claude — an event already `'likely'`/`'unlikely'`
    is never re-sent.
-4. Batch those still-`'unknown'` events' titles into **one** Claude call —
-   `classifyEventCostLikelihood(userId, events)` in `server/services/claudeService.js` — not one call
-   per event, to keep sync latency and `ai_calls` volume bounded.
+4. Batch those still-`'unknown'` events' titles into **chunks of `CLASSIFY_CHUNK_SIZE = 15`**, one
+   `classifyEventCostLikelihood(userId, events)` call per chunk — not one call per event, and not one
+   call for the whole sync either. A real calendar (e.g. contacts-synced recurring birthdays, which
+   `singleEvents: true` expands into individual instances) can put 50+ events in a single sync, and
+   one `generateObject` call's output scales with how many events are in it — an unchunked call for
+   that many events overflows the output token budget and fails outright. Each chunk has its own
+   try/catch, so one bad chunk only degrades its own events to `'unknown'` (retried next sync), not
+   the whole batch.
 5. Upsert **every** event (not only amount-bearing ones, as today) via the existing `findOrCreate`
    keyed on `{ user_id, google_event_id }` inside the existing `sequelize.transaction`.
 6. Re-sync semantics, extending the existing "don't clobber user decisions" rule that already
@@ -115,11 +120,18 @@ const MAX_TOKENS = 512;
 const CLAUDE_TIMEOUT_MS = 15000;
 ```
 
-> **Post-launch fix:** this constant was originally `claude-3-5-sonnet-20241022`, which Anthropic has
-> since retired — every call 404'd (`not_found_error`), so every classified event silently stuck at
-> `cost_likelihood: 'unknown'` and never appeared in Upcoming Events. Diagnosed via `ai_calls` (100%
-> `event_cost` failures) and reproducing the raw `generateObject` call directly. Fixing the shared
-> constant also repairs Quick Entry and CSV mapping, which were failing the same way.
+> **Post-launch fix 1:** this constant was originally `claude-3-5-sonnet-20241022`, which Anthropic
+> has since retired — every call 404'd (`not_found_error`), so every classified event silently stuck
+> at `cost_likelihood: 'unknown'` and never appeared in Upcoming Events. Diagnosed via `ai_calls`
+> (100% `event_cost` failures) and reproducing the raw `generateObject` call directly. Fixing the
+> shared constant also repairs Quick Entry and CSV mapping, which were failing the same way.
+>
+> **Post-launch fix 2:** `classifyEventCostLikelihood` has its own `EVENT_COST_MAX_TOKENS = 4000`
+> (not the shared `MAX_TOKENS = 512`) — this is the only one of the three functions whose output
+> scales with input size. Verified against real Google Calendar event ids (~35-50 chars, longer still
+> for recurring-instance ids like `…_20260823`): a 15-event chunk measured ~1080 output tokens, of
+> which ~470 was Sonnet 5's extended-thinking output spent *before* the JSON text — the budget has to
+> cover both, not just the answer.
 
 - Vercel AI SDK `generateObject` + a zod schema — no manual JSON parsing.
 - Schema: `{ events: [{ google_event_id: string, likely_costly: boolean }] }`.
