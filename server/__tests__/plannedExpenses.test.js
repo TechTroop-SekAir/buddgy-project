@@ -99,6 +99,28 @@ describe('GET /api/planned-expenses', () => {
     );
   });
 
+  it('defaults to hiding dismissed rows', async () => {
+    mockPlannedExpenseFindAll.mockResolvedValue([]);
+
+    await request(app).get('/api/planned-expenses?month=2026-08').set('Authorization', authHeader());
+
+    expect(mockPlannedExpenseFindAll).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ is_dismissed: false }) })
+    );
+  });
+
+  it('include_dismissed=true returns dismissed rows too', async () => {
+    mockPlannedExpenseFindAll.mockResolvedValue([]);
+
+    await request(app)
+      .get('/api/planned-expenses?month=2026-08&include_dismissed=true')
+      .set('Authorization', authHeader());
+
+    expect(mockPlannedExpenseFindAll).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.not.objectContaining({ is_dismissed: expect.anything() }) })
+    );
+  });
+
   it('rejects an unparseable month', async () => {
     const res = await request(app).get('/api/planned-expenses?month=not-a-month').set('Authorization', authHeader());
     expect(res.status).toBe(400);
@@ -204,6 +226,54 @@ describe('PATCH /api/planned-expenses/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.envelope_id).toBe(OWNED_ENVELOPE_ID);
     expect(res.body.data.is_confirmed).toBe(true);
+  });
+
+  it('dismisses a planned expense', async () => {
+    mockPlannedExpenseFindOne.mockResolvedValue(
+      makePlannedExpenseInstance({
+        id: 3,
+        user_id: AUTHED_USER_ID,
+        envelope_id: null,
+        title: 'חתונה של דנה',
+        amount_agorot: null,
+        due_date: '2026-08-20',
+        google_event_id: 'evt_3',
+        is_confirmed: false,
+        is_dismissed: false,
+      })
+    );
+
+    const res = await request(app)
+      .patch('/api/planned-expenses/3')
+      .set('Authorization', authHeader())
+      .send({ is_dismissed: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.is_dismissed).toBe(true);
+  });
+
+  it('undoes a dismissal', async () => {
+    mockPlannedExpenseFindOne.mockResolvedValue(
+      makePlannedExpenseInstance({
+        id: 3,
+        user_id: AUTHED_USER_ID,
+        envelope_id: null,
+        title: 'חתונה של דנה',
+        amount_agorot: null,
+        due_date: '2026-08-20',
+        google_event_id: 'evt_3',
+        is_confirmed: false,
+        is_dismissed: true,
+      })
+    );
+
+    const res = await request(app)
+      .patch('/api/planned-expenses/3')
+      .set('Authorization', authHeader())
+      .send({ is_dismissed: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.is_dismissed).toBe(false);
   });
 
   it('rejects assigning to an envelope the caller does not own', async () => {

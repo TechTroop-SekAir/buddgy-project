@@ -43,12 +43,18 @@ async function create(userId, { envelope_id = null, title, amount_agorot, due_da
   return plannedExpense.get({ plain: true });
 }
 
-async function list(userId, monthInput) {
+// By default, a dismissed row ("this won't cost money") is hidden from the
+// month's list — the client's "show dismissed" toggle passes includeDismissed
+// to see everything, e.g. to offer undo. See docs/features/UPCOMING-EVENTS.md.
+async function list(userId, monthInput, { includeDismissed = false } = {}) {
   const month = normalizeMonth(monthInput);
   const { from, to } = monthRange(month);
 
+  const where = { user_id: userId, due_date: { [Op.between]: [from, to] } };
+  if (!includeDismissed) where.is_dismissed = false;
+
   const plannedExpenses = await PlannedExpense.findAll({
-    where: { user_id: userId, due_date: { [Op.between]: [from, to] } },
+    where,
     attributes: PUBLIC_ATTRIBUTES,
     order: [['due_date', 'ASC'], ['id', 'ASC']],
   });
@@ -64,7 +70,7 @@ async function findOwned(userId, id) {
 
 async function update(userId, id, patch) {
   const plannedExpense = await findOwned(userId, id);
-  const { envelope_id, title, amount_agorot, due_date, is_confirmed } = patch;
+  const { envelope_id, title, amount_agorot, due_date, is_confirmed, is_dismissed } = patch;
 
   if (envelope_id !== undefined) await assertEnvelopeOwnership(userId, envelope_id);
 
@@ -74,6 +80,7 @@ async function update(userId, id, patch) {
   if (amount_agorot !== undefined) fields.amount_agorot = amount_agorot;
   if (due_date !== undefined) fields.due_date = due_date;
   if (is_confirmed !== undefined) fields.is_confirmed = is_confirmed;
+  if (is_dismissed !== undefined) fields.is_dismissed = is_dismissed;
 
   await plannedExpense.update(fields);
   return plannedExpense.get({ plain: true });

@@ -24,6 +24,7 @@ const MISSING_AMOUNT_ATTRIBUTES = [
   'google_event_id',
   'is_confirmed',
   'source',
+  'cost_likelihood',
 ];
 
 /** COALESCE'd SUM as a plain number — Postgres returns SUM as a string, and COALESCE keeps an empty aggregate at 0 rather than null. */
@@ -84,13 +85,19 @@ async function get(userId, monthInput) {
   // Step 8 of docs/ARCHITECTURE.md § Forecast Computation — surfaced as an
   // actionable prompt (MissingAmountPrompt.jsx) regardless of confirmation
   // state, since an unconfirmed row can still need its amount filled in
-  // before the user ever gets to confirm it.
+  // before the user ever gets to confirm it. Scoped to cost_likelihood:
+  // 'likely' and not dismissed — since calendarSyncService now keeps every
+  // event (not only amount-bearing ones), an unscoped query here would flood
+  // this prompt with every gym session and standup on the calendar. See
+  // docs/features/UPCOMING-EVENTS.md § Forecast Impact.
   const missingAmountPlannedExpenses = (
     await PlannedExpense.findAll({
       where: {
         user_id: userId,
         due_date: { [Op.between]: [from, to] },
         [Op.or]: [{ amount_agorot: null }, { amount_agorot: 0 }],
+        cost_likelihood: 'likely',
+        is_dismissed: false,
       },
       attributes: MISSING_AMOUNT_ATTRIBUTES,
       order: [['due_date', 'ASC'], ['id', 'ASC']],

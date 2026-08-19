@@ -9,7 +9,9 @@ async function create(req, res) {
 }
 
 async function list(req, res) {
-  const plannedExpenses = await plannedExpenseService.list(req.user.id, req.query.month);
+  const plannedExpenses = await plannedExpenseService.list(req.user.id, req.query.month, {
+    includeDismissed: req.query.include_dismissed,
+  });
   return ok(res, plannedExpenses);
 }
 

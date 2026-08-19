@@ -191,6 +191,12 @@ describe('GET /api/forecast', () => {
     // is_confirmed — an unconfirmed row can still need its amount filled in.
     const [missingAmountWhere] = mockPlannedExpenseFindAll.mock.calls[1];
     expect(missingAmountWhere.where.is_confirmed).toBeUndefined();
+    // Scoped to cost_likelihood: 'likely' and not dismissed — otherwise every
+    // amount-less routine calendar event (gym, standup) would flood this
+    // prompt now that sync keeps every event, not only amount-bearing ones.
+    // See docs/features/UPCOMING-EVENTS.md § Forecast Impact.
+    expect(missingAmountWhere.where.cost_likelihood).toBe('likely');
+    expect(missingAmountWhere.where.is_dismissed).toBe(false);
   });
 
   it('returns a null recommendation when the projection is positive', async () => {
