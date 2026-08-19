@@ -20,7 +20,6 @@ const ERROR_KEY_BY_MESSAGE = {
   'validation failed: unparseable amount': 'csvImport.error.unparseableAmount',
   'validation failed: unparseable date': 'csvImport.error.unparseableDate',
   'validation failed: mapping': 'csvImport.error.mapping',
-  'unprocessable: ai parse failed': 'csvImport.error.aiFailed',
 };
 
 function resolveErrorKey(message) {
@@ -99,18 +98,14 @@ export function ImportPage() {
         amount: data.detectedMapping.amount,
         description: data.detectedMapping.description,
       });
+      // The server never fails this request over an AI outage (it uploads
+      // first, then tries Claude) — a wholly-undetected mapping is how it
+      // reports "AI unavailable, map columns yourself" on the success path.
+      setAiFailed(!data.detectedMapping.date && !data.detectedMapping.amount);
       setStep(STEP.MAPPING);
     } catch (err) {
-      if (resolveErrorKey(err.message) === 'csvImport.error.aiFailed') {
-        setAiFailed(true);
-        setHeader(await readHeader(file));
-        setMapping({ date: null, amount: null, description: null });
-        setPreviewRows([]);
-        setStep(STEP.MAPPING);
-      } else {
-        setError(t(resolveErrorKey(err.message)));
-        setStep(STEP.SELECT);
-      }
+      setError(t(resolveErrorKey(err.message)));
+      setStep(STEP.SELECT);
     }
   };
 

@@ -127,7 +127,7 @@ Response `data`:
 }
 ```
 
-`detectedMapping` values are `null` where Claude found no matching column — the client must let the user pick manually. Never persists any rows.
+`detectedMapping` values are `null` where Claude found no matching column, or where Claude was unreachable entirely — the file is still uploaded and `importId` is still returned either way (upload happens before the Claude call, not after), so this endpoint never fails just because Claude is down. The client must let the user pick manually whenever any value is `null`. Never persists any rows.
 
 ```
 POST /api/imports/:id/confirm   🔒   body: { "mapping": { "date": "...", "amount": "...", "description": "..." | null } }

@@ -6,3 +6,9 @@ build/
 coverage/
 *.log
 .DS_Store
+
+# Playwright (ticket A-18) — auth storage state holds real JWTs, and both
+# are regenerated on every run, so neither belongs in version control.
+e2e/.auth/
+playwright-report/
+test-results/

@@ -143,9 +143,17 @@ function mapRow(headerRow, row, mapping) {
   };
 }
 
+const UNDETECTED_MAPPING = { date: null, amount: null, description: null };
+
 /**
  * Uploads the file, asks Claude for a column mapping, and returns a
  * preview — writes no transactions. docs/API.md § CSV Import.
+ *
+ * Upload happens before the Claude call, not after: column detection is an
+ * enhancement, storing the file is the critical path. If Claude is down,
+ * this still succeeds with an all-null `detectedMapping` (never throws for
+ * that case) so the client's manual-mapping fallback has a real `importId`
+ * to confirm against — see docs/API.md § CSV Import's "AI unavailable" note.
  *
  * @param {number} userId
  * @param {{ buffer: Buffer, originalname: string, mimetype: string, size: number }} file
@@ -155,9 +163,19 @@ async function previewImport(userId, file) {
 
   const { headerRow, rows } = parseCsvBuffer(file.buffer);
   const sampleRows = rows.slice(0, SAMPLE_ROW_COUNT_FOR_AI);
-  const detectedMapping = await claudeService.detectColumnMapping(userId, headerRow, sampleRows);
 
   const fileUrl = await storageService.uploadCsvFile(file.buffer, file.originalname);
+
+  let detectedMapping;
+  try {
+    detectedMapping = await claudeService.detectColumnMapping(userId, headerRow, sampleRows);
+  } catch {
+    // Never leak the raw AI failure here — the caller already logged it via
+    // claudeService's own ai_calls bookkeeping. Falling back to "nothing
+    // detected" degrades to the same manual-mapping UI as a low-confidence
+    // real result, rather than losing the upload entirely.
+    detectedMapping = UNDETECTED_MAPPING;
+  }
 
   const csvImport = await CsvImport.create({
     user_id: userId,

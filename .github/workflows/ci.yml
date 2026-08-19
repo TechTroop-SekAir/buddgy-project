@@ -111,6 +111,25 @@ jobs:
   client:
     runs-on: ubuntu-latest
 
+    # A dedicated database (ticket A-18), separate from buddgy_ci/buddgy_ci_test
+    # above — the Playwright suite boots a real server + client against it
+    # (playwright.config.js's webServer entries), so it needs its own Postgres
+    # rather than sharing the server job's runner.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: buddgy_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -120,14 +139,56 @@ jobs:
           cache: npm
           cache-dependency-path: client/package-lock.json
 
-      - name: Install dependencies
+      - name: Install client dependencies
         run: npm ci
         working-directory: client
 
-      # No client tests exist yet (client/package.json's `test` script is a
-      # placeholder) — `build` is the real check available today: it fails
-      # on broken imports, bad JSX, etc. Swap in `npm test` once Darya's
-      # A-18 (Playwright) lands.
+      # No client unit tests exist yet (client/package.json's `test` script
+      # is a placeholder) — `build` is the fast fail available today: it
+      # catches broken imports, bad JSX, etc. before the slower E2E run below.
       - name: Build
         run: npm run build
         working-directory: client
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Install root dependencies (Playwright)
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # Same DATABASE_URL playwright.config.js's server webServer entry uses —
+      # done as its own step (rather than relying on e2e/global-setup.js's
+      # internal ordering relative to webServer) so the schema is guaranteed
+      # ready before anything starts.
+      - name: Migrate + seed the E2E database
+        run: |
+          npm run db:migrate
+          node seed.js
+        working-directory: server
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/buddgy_e2e
+
+      # Ticket A-18 — full user flows through a real browser, against a real
+      # server + database (docs/TESTING.md § Strategy's E2E layer). Unlike
+      # every other credential in this workflow, CLOUDINARY_URL must be a
+      # real account — e2e/csv-import.spec.js's upload has no mocked or
+      # gracefully-degraded path the way the Claude/Calendar flows do (see
+      # playwright.config.js's SERVER_ENV comment). Add CLOUDINARY_URL as a
+      # repo secret (Settings → Secrets and variables → Actions) for this
+      # step to pass; without it, only csv-import.spec.js fails here.
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

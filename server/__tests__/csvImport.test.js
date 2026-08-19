@@ -146,7 +146,10 @@ describe('POST /api/imports/preview', () => {
     expect(mockUploadCsvFile).not.toHaveBeenCalled();
   });
 
-  it('returns 422 when Claude fails, with no stack trace leaked', async () => {
+  it('still uploads and returns a usable preview when Claude fails', async () => {
+    // Upload happens before the Claude call precisely so a Claude outage
+    // doesn't cost the user their file — the manual-mapping fallback needs
+    // a real importId to confirm against.
     mockDetectColumnMapping.mockRejectedValue(Object.assign(new Error('boom'), { statusCode: 422, isAppError: true }));
 
     const res = await request(app)
@@ -154,7 +157,11 @@ describe('POST /api/imports/preview', () => {
       .set('Authorization', authHeader())
       .attach('file', Buffer.from(CLEAN_CSV, 'utf8'), 'statement.csv');
 
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(200);
+    expect(mockUploadCsvFile).toHaveBeenCalled();
+    expect(res.body.data.importId).toBe(12);
+    expect(res.body.data.detectedMapping).toEqual({ date: null, amount: null, description: null });
+    expect(res.body.data.previewRows).toEqual([]);
     expect(JSON.stringify(res.body)).not.toMatch(/at .*\(.*:\d+:\d+\)/);
   });
 
