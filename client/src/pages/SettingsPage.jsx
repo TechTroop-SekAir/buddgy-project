@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Alert, Badge, Button, Card, Modal } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { useMonth } from '../context/MonthContext';
 import calendarService from '../services/calendarService';
 
 const ERROR_KEY_BY_MESSAGE = {
@@ -30,6 +31,8 @@ function checkMockConnected(userId) {
 export function SettingsPage() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
+  const { month } = useMonth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [callbackNotice, setCallbackNotice] = useState(null);
   const [syncResult, setSyncResult] = useState(null);
@@ -76,6 +79,12 @@ export function SettingsPage() {
     onSuccess: (data) => {
       setSyncError('');
       setSyncResult(data.newEvents);
+      // Bug fix: this previously invalidated nothing, so newly synced events
+      // never showed on /planned-expenses (or the dashboard's missing-amount
+      // prompt) until a manual reload. Same keys PlannedExpensesPage.jsx
+      // invalidates on its own mutations.
+      queryClient.invalidateQueries({ queryKey: ['planned-expenses', user?.id, month] });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user?.id, month] });
     },
     onError: (err) => {
       setSyncResult(null);

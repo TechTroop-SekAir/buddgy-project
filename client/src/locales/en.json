@@ -324,6 +324,19 @@
     "deleteConfirmCalendarWarning": "This expense was synced from Google Calendar — it may reappear the next time you sync.",
     "missingAmount": {
       "badge": "Missing amount"
+    },
+    "upcoming": {
+      "title": "Upcoming Events",
+      "body": "Calendar events that might cost money. Mark them as free, or say how much you plan to spend.",
+      "empty": "No upcoming events need attention right now.",
+      "dismiss": "Won't cost money",
+      "spend": "How much will you spend?",
+      "spendModalTitle": "How much do you plan to spend?",
+      "spendModalSubmit": "Save",
+      "showDismissed": "Show dismissed events ({{count}})",
+      "hideDismissed": "Hide dismissed events",
+      "dismissedTitle": "Events marked as not costing money",
+      "undoDismiss": "Undo"
     }
   },
   "addPlannedExpenseModal": {

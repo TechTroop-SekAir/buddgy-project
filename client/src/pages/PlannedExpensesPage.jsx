@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Button, EmptyState, Skeleton, Table } from '../components/ui';
 import { PlannedExpenseFormModal } from '../components/plannedExpenses/PlannedExpenseFormModal';
 import { PlannedExpenseRow } from '../components/plannedExpenses/PlannedExpenseRow';
+import { UpcomingEventsCard } from '../components/plannedExpenses/UpcomingEventsCard';
 import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
 import plannedExpenseService from '../services/plannedExpenseService';
@@ -20,14 +21,18 @@ export function PlannedExpensesPage() {
   const queryKey = ['planned-expenses', user.id, month];
   const [isAddOpen, setIsAddOpen] = useState(false);
 
+  // Fetched with includeDismissed so UpcomingEventsCard's "show dismissed"
+  // toggle has something to undo (docs/features/UPCOMING-EVENTS.md) — the
+  // main table below filters dismissed rows back out itself.
   const {
-    data: plannedExpenses = [],
+    data: allPlannedExpenses = [],
     isLoading,
     isError,
   } = useQuery({
     queryKey,
-    queryFn: () => plannedExpenseService.list(user.id, month),
+    queryFn: () => plannedExpenseService.list(user.id, month, { includeDismissed: true }),
   });
+  const plannedExpenses = allPlannedExpenses.filter((p) => !p.is_dismissed);
 
   const { data: categories = [], isError: isCategoriesError } = useQuery({
     queryKey: ['categories', user.id, month],
@@ -62,6 +67,30 @@ export function PlannedExpensesPage() {
     },
   });
 
+  // Dismiss/undo and the spend prompt are all just PATCHes — same
+  // invalidation rule as the mutations above (docs/STATE.md's staleness rule).
+  const dismissMutation = useMutation({
+    mutationFn: (id) => plannedExpenseService.update(id, { is_dismissed: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+  const undoDismissMutation = useMutation({
+    mutationFn: (id) => plannedExpenseService.update(id, { is_dismissed: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+  const spendMutation = useMutation({
+    mutationFn: ({ id, payload }) => plannedExpenseService.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+    },
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -90,7 +119,21 @@ export function PlannedExpensesPage() {
 
       {!isLoading && isError && <Alert className="mt-6">{t('plannedExpenses.error')}</Alert>}
 
-      {!isLoading && !isError && plannedExpenses.length === 0 && isCurrentMonth && (
+      {!isLoading && !isError && (
+        <UpcomingEventsCard
+          className="mt-6"
+          plannedExpenses={allPlannedExpenses}
+          categoryOptions={categoryOptions}
+          onDismiss={(id) => dismissMutation.mutateAsync(id)}
+          onUndoDismiss={(id) => undoDismissMutation.mutateAsync(id)}
+          onSpend={(id, payload) => spendMutation.mutateAsync({ id, payload })}
+        />
+      )}
+
+      {/* allPlannedExpenses, not plannedExpenses: if every row is dismissed,
+          the user still has calendar data — the "connect and sync" empty
+          state below would be misleading. */}
+      {!isLoading && !isError && allPlannedExpenses.length === 0 && isCurrentMonth && (
         <EmptyState
           className="mt-16"
           message={t('plannedExpenses.empty')}

@@ -3,8 +3,13 @@ import * as mockPlannedExpenseService from './mockPlannedExpenseService';
 
 // GET /api/planned-expenses?month= and PATCH /api/planned-expenses/:id are
 // real and working server-side (ticket A-20: server/routes/plannedExpenses.js).
-async function list(userId, month) {
-  return api.get('/planned-expenses', { params: { month } });
+// includeDismissed (ticket C-14) opts into rows the user dismissed from
+// Upcoming Events ("this won't cost money") — off by default so the main
+// table and the card's primary list never show them.
+async function list(userId, month, { includeDismissed = false } = {}) {
+  return api.get('/planned-expenses', {
+    params: { month, ...(includeDismissed ? { include_dismissed: true } : {}) },
+  });
 }
 
 async function update(id, payload) {

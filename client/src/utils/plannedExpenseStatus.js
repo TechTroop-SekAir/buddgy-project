@@ -6,3 +6,26 @@
 export function hasMissingAmount(plannedExpense) {
   return plannedExpense.amount_agorot == null || plannedExpense.amount_agorot === 0;
 }
+
+// A calendar-synced event Claude judged likely to cost money and the user
+// hasn't yet confirmed or dismissed — the definition of "Upcoming Events"
+// (docs/features/UPCOMING-EVENTS.md), shared by UpcomingEventsCard.jsx and
+// PlannedExpensesPage.jsx so the two can't drift on it.
+export function isUpcomingEvent(plannedExpense) {
+  return (
+    plannedExpense.source === 'calendar' &&
+    plannedExpense.cost_likelihood === 'likely' &&
+    !plannedExpense.is_confirmed &&
+    !plannedExpense.is_dismissed
+  );
+}
+
+// Same event, but the user already said "this won't cost money" — the
+// dismissed list the "show dismissed" toggle surfaces for undo.
+export function isDismissedUpcomingEvent(plannedExpense) {
+  return (
+    plannedExpense.source === 'calendar' &&
+    plannedExpense.cost_likelihood === 'likely' &&
+    plannedExpense.is_dismissed
+  );
+}

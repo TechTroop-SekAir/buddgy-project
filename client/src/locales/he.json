@@ -325,6 +325,19 @@
     "deleteConfirmCalendarWarning": "ההוצאה הזו סונכרנה מיומן Google — ייתכן שתופיע שוב בסנכרון הבא.",
     "missingAmount": {
       "badge": "סכום חסר"
+    },
+    "upcoming": {
+      "title": "אירועים קרובים",
+      "body": "אירועים מהיומן שעשויים לעלות כסף. אפשר לסמן שהם לא יעלו כסף, או לציין כמה מתכננים להוציא.",
+      "empty": "אין כרגע אירועים קרובים שדורשים תשומת לב.",
+      "dismiss": "לא יעלה כסף",
+      "spend": "כמה תוציא?",
+      "spendModalTitle": "כמה מתכננים להוציא?",
+      "spendModalSubmit": "שמירה",
+      "showDismissed": "הצגת אירועים שסומנו ({{count}})",
+      "hideDismissed": "הסתרת אירועים שסומנו",
+      "dismissedTitle": "אירועים שסומנו כלא כרוכים בהוצאה",
+      "undoDismiss": "ביטול"
     }
   },
   "addPlannedExpenseModal": {
