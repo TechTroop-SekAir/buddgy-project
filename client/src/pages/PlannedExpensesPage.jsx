@@ -43,6 +43,16 @@ export function PlannedExpensesPage() {
       // forecast formula (docs/ARCHITECTURE.md § Forecast Computation), so
       // this must invalidate forecast too (docs/STATE.md's staleness rule).
       queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+      // Also invalidate the dashboard's envelope list — reassigning or
+      // confirming a planned expense changes what that envelope's card
+      // should show, so its cache (DashboardPage.jsx's `['categories', ...]`
+      // query) must be treated as stale here too, same staleness rule.
+      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
+      // Confirming now atomically creates a real transaction
+      // (plannedExpenseService.js's update()), so the transactions list
+      // (TransactionsPage.jsx, DashboardPage.jsx's quick-entry mutation)
+      // must be treated as stale here too.
+      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
     },
   });
 

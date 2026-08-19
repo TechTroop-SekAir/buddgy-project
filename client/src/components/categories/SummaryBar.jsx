@@ -27,7 +27,15 @@ function StatTile({ icon, accent, label, value, isLoading }) {
 // category list loads); the commitment-based totals below come from the
 // forecast query, which loads separately and can lag behind or fail
 // independently — see docs/ARCHITECTURE.md § Forecast Computation.
-export function SummaryBar({ categories = [], forecast, isForecastLoading, isForecastError, monthLabel }) {
+export function SummaryBar({
+  categories = [],
+  forecast,
+  isForecastLoading,
+  isForecastError,
+  income,
+  isIncomeLoading,
+  monthLabel,
+}) {
   const { t } = useTranslation();
   const totals = categories.reduce(
     (acc, category) => ({
@@ -41,58 +49,46 @@ export function SummaryBar({ categories = [], forecast, isForecastLoading, isFor
   const overallPercent = totals.budget > 0 ? (totals.spent / totals.budget) * 100 : 0;
   const overallColor = overallPercent >= 100 ? 'status-danger' : overallPercent >= 90 ? 'status-critical' : overallPercent >= 75 ? 'status-warning' : 'status-ok';
 
+  const incomeTotalAgorot = income?.total_agorot ?? 0;
+  const plannedTotalAgorot = forecast?.totalEndOfMonthSpendAgorot ?? 0;
+  const plannedSavingsBalanceAgorot = incomeTotalAgorot - plannedTotalAgorot;
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatTile
-          icon="trendingUp"
-          accent={{ chip: 'bg-cat-1-tint', icon: 'text-cat-1' }}
-          label={t('categoryManagement.totalBudget')}
-          value={formatShekelsRounded(totals.budget)}
-        />
-        <StatTile
-          icon="trendingDown"
-          accent={{ chip: 'bg-cat-2-tint', icon: 'text-cat-2' }}
-          label={t('categoryManagement.totalSpent')}
-          value={formatShekelsRounded(totals.spent)}
-        />
-        <StatTile
-          icon="piggyBank"
-          accent={{ chip: 'bg-cat-4-tint', icon: 'text-cat-4' }}
-          label={t('categoryManagement.safeToSpend')}
-          value={formatShekelsRounded(remainingTotalBudget)}
-          isLoading={isForecastLoading}
-        />
-      </div>
-
-      {isForecastError && (
+      {isForecastError ? (
         <Card padding={0} className="rounded-lg border border-border-card bg-bg-surface p-5 shadow-sm" role="alert">
           <p className="text-sm text-form-error">{t('forecast.error')}</p>
         </Card>
-      )}
-
-      {!isForecastError && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Card padding={0} className="rounded-lg border border-border-card bg-bg-surface p-5 shadow-sm">
-            <p className="text-xs font-medium text-text-muted">{t('categoryManagement.totalPlannedExpenses')}</p>
-            {isForecastLoading ? (
-              <Skeleton height={24} width={96} mt={4} />
-            ) : (
-              <p className="mt-0.5 font-mono text-xl font-semibold text-text-primary">
-                {formatShekelsRounded(forecast?.totalPlannedExpensesAgorot ?? 0)}
-              </p>
-            )}
-          </Card>
-          <Card padding={0} className="rounded-lg border border-border-card bg-bg-surface p-5 shadow-sm">
-            <p className="text-xs font-medium text-text-muted">{t('categoryManagement.totalEndOfMonthSpend')}</p>
-            {isForecastLoading ? (
-              <Skeleton height={24} width={96} mt={4} />
-            ) : (
-              <p className="mt-0.5 font-mono text-xl font-semibold text-text-primary">
-                {formatShekelsRounded(forecast?.totalEndOfMonthSpendAgorot ?? 0)}
-              </p>
-            )}
-          </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile
+            icon="wallet"
+            accent={{ chip: 'bg-cat-1-tint', icon: 'text-cat-1' }}
+            label={t('summaryBar.income')}
+            value={formatShekelsRounded(incomeTotalAgorot)}
+            isLoading={isIncomeLoading}
+          />
+          <StatTile
+            icon="trendingDown"
+            accent={{ chip: 'bg-cat-2-tint', icon: 'text-cat-2' }}
+            label={t('summaryBar.actualExpenses')}
+            value={formatShekelsRounded(forecast?.totalActualSpentAgorot ?? totals.spent)}
+            isLoading={isForecastLoading}
+          />
+          <StatTile
+            icon="calendarDays"
+            accent={{ chip: 'bg-cat-5-tint', icon: 'text-cat-5' }}
+            label={t('summaryBar.plannedExpenses')}
+            value={formatShekelsRounded(plannedTotalAgorot)}
+            isLoading={isForecastLoading}
+          />
+          <StatTile
+            icon="piggyBank"
+            accent={{ chip: 'bg-cat-4-tint', icon: 'text-cat-4' }}
+            label={t('summaryBar.plannedSavingsBalance')}
+            value={formatShekelsRounded(plannedSavingsBalanceAgorot)}
+            isLoading={isForecastLoading || isIncomeLoading}
+          />
         </div>
       )}
 

@@ -53,9 +53,14 @@ const CLIENT_ENV = {
   // Real auth/category/transaction flows (categoryService.js/
   // transactionService.js are never mock-gated — see client/CLAUDE.md), but
   // the Calendar OAuth dance is mocked so no live Google credentials are
-  // needed for e2e/calendar-sync.spec.js.
+  // needed for e2e/calendar-sync.spec.js. Planned-expense CRUD used to ride
+  // along on VITE_USE_MOCK_CALENDAR (see plannedExpenseService.js's header
+  // comment) but has its own flag now, left false here so
+  // e2e/planned-expenses.spec.js's confirm flow hits the real
+  // transaction/envelope-spent effects instead of a localStorage mock.
   VITE_USE_MOCK_API: 'false',
   VITE_USE_MOCK_CALENDAR: 'true',
+  VITE_USE_MOCK_PLANNED_EXPENSES: 'false',
 };
 
 module.exports = defineConfig({

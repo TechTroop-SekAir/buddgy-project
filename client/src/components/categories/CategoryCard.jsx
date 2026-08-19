@@ -89,26 +89,32 @@ export function CategoryCard({ category, onDelete, onEdit, atRiskEnvelopeIds = [
           </div>
         </div>
 
-        <Menu position="bottom-end" withinPortal>
-          <Menu.Target>
-            <ActionIcon
-              variant="subtle"
-              size="sm"
-              aria-label={t('categoryManagement.cardMenu', { name: category.name })}
-              className="opacity-100 transition-opacity duration-fast focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-            >
-              <Icon name="moreHorizontal" size="sm" />
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Item leftSection={<Icon name="pencil" size="sm" />} onClick={() => setEditOpen(true)}>
-              {t('common.edit')}
-            </Menu.Item>
-            <Menu.Item leftSection={<Icon name="trash" size="sm" />} color="status-danger" onClick={openConfirm}>
-              {t('common.delete')}
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
+        <div className="flex items-center gap-1">
+          <ActionIcon
+            variant="subtle"
+            size="sm"
+            aria-label={t('common.edit')}
+            onClick={() => setEditOpen(true)}
+          >
+            <Icon name="pencil" size="sm" />
+          </ActionIcon>
+          <Menu position="bottom-end" withinPortal>
+            <Menu.Target>
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                aria-label={t('categoryManagement.cardMenu', { name: category.name })}
+              >
+                <Icon name="moreHorizontal" size="sm" />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item leftSection={<Icon name="trash" size="sm" />} color="status-danger" onClick={openConfirm}>
+                {t('common.delete')}
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </div>
       </div>
 
       <div className="flex items-end justify-between mb-3">

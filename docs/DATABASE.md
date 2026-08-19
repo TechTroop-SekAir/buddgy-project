@@ -97,6 +97,7 @@ erDiagram
 | google_event_id | VARCHAR(128) | UNIQUE per user (`user_id`, `google_event_id`) — prevents duplicate sync without colliding across users invited to the same Google event; NULL for manual rows |
 | is_confirmed | BOOLEAN | DEFAULT false |
 | source | VARCHAR(20) | `'calendar'` \| `'manual'` — DEFAULT `'calendar'` |
+| transaction_id | INT FK → transactions | `ON DELETE SET NULL` — nullable; set when confirming creates the linked transaction, see [Idempotency](#idempotency) |
 
 ## csv_imports
 
@@ -155,6 +156,8 @@ Two UNIQUE constraints exist specifically to make retryable operations safe:
 - **`planned_expenses.google_event_id`** — re-running `POST /api/calendar/sync` must `UPSERT` (insert-or-update) on the `(user_id, google_event_id)` pair, never blind-insert. Scoped to `user_id` because Google assigns the same event id to every attendee of a shared event — a global unique would let one user's sync overwrite another's row.
 
 Both are enforced at the DB level (`UNIQUE`), but the service layer must also handle the constraint violation gracefully — see `CLAUDE.md` § Database Rules and `.claude/commands/qa.md` § Buddgy Critical Test Cases.
+
+**Confirming a planned expense** (`PATCH /api/planned-expenses/:id` with `is_confirmed: true`) is idempotent by transition, not by a UNIQUE constraint: `server/services/plannedExpenseService.js`'s `update()` only creates the linked `transaction_id` row when `is_confirmed` actually flips `false → true`, so re-confirming an already-confirmed row is a no-op. Both the row update and the transaction create/delete happen inside one `sequelize.transaction`, so a failure at any step leaves nothing partially applied. Unconfirming (`true → false`) deletes the linked transaction and clears `transaction_id` — a destructive, deliberate reversal, not a soft unlink.
 
 ## Migration Conventions
 

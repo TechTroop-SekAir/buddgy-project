@@ -158,7 +158,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       # Same DATABASE_URL playwright.config.js's server webServer entry uses —
       # done as its own step (rather than relying on e2e/global-setup.js's

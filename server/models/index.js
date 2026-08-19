@@ -36,6 +36,12 @@ db.PlannedExpense.belongsTo(db.User, { foreignKey: 'user_id' });
 db.Envelope.hasMany(db.PlannedExpense, { foreignKey: 'envelope_id', onDelete: 'SET NULL' });
 db.PlannedExpense.belongsTo(db.Envelope, { foreignKey: 'envelope_id' });
 
+// The transaction a planned expense spawns when confirmed — see
+// plannedExpenseService.js's update(). SET NULL mirrors envelope_id above:
+// deleting the transaction unlinks it rather than cascading.
+db.PlannedExpense.belongsTo(db.Transaction, { foreignKey: 'transaction_id', onDelete: 'SET NULL' });
+db.Transaction.hasOne(db.PlannedExpense, { foreignKey: 'transaction_id' });
+
 db.User.hasMany(db.CsvImport, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 db.CsvImport.belongsTo(db.User, { foreignKey: 'user_id' });
 
