@@ -10,7 +10,11 @@ const { shekelsToAgorot } = require('../utils/money');
 // Both Claude call sites live in this file and are never called directly
 // from a controller — docs/INTEGRATIONS.md § Anthropic Claude API.
 
-const MODEL_ID = 'claude-3-5-sonnet-20241022';
+// claude-3-5-sonnet-20241022 was retired by Anthropic and now 404s
+// (not_found_error) — discovered when classifyEventCostLikelihood's calls
+// started failing 100% of the time in ai_calls. Every function in this file
+// shares one model id, so this repairs Quick Entry and CSV mapping too.
+const MODEL_ID = 'claude-sonnet-5';
 const MAX_TOKENS = 512;
 // A stalled connection must fail fast, not hang the request indefinitely —
 // docs/INTEGRATIONS.md § Failure Handling.

@@ -84,27 +84,42 @@ endpoint moving a row into `is_confirmed: true`, which the forecast already know
 1. Fetch events as today (`MAX_EVENTS_PER_SYNC = 50`, `timeMin: now`, `singleEvents: true`).
 2. Run the existing `extractAmountAgorot(title)` on each. A match ⇒ `cost_likelihood: 'likely'`; no
    Claude call needed for that event.
-3. Batch every remaining event's title into **one** Claude call —
+3. Before classifying, fetch each batch event's *current* `cost_likelihood` from the DB (a single
+   `findAll` keyed on `google_event_id`). Only events still `'unknown'` (brand new, or left
+   unresolved by a prior failed classification) go to Claude — an event already `'likely'`/`'unlikely'`
+   is never re-sent.
+4. Batch those still-`'unknown'` events' titles into **one** Claude call —
    `classifyEventCostLikelihood(userId, events)` in `server/services/claudeService.js` — not one call
    per event, to keep sync latency and `ai_calls` volume bounded.
-4. Upsert **every** event (not only amount-bearing ones, as today) via the existing `findOrCreate`
+5. Upsert **every** event (not only amount-bearing ones, as today) via the existing `findOrCreate`
    keyed on `{ user_id, google_event_id }` inside the existing `sequelize.transaction`.
-5. Re-sync semantics, extending the existing "don't clobber user decisions" rule that already
+6. Re-sync semantics, extending the existing "don't clobber user decisions" rule that already
    protects `envelope_id` and `is_confirmed`:
    - `is_dismissed` is **never** reset by a re-sync.
-   - `cost_likelihood` is refreshed only while the row is not dismissed and not confirmed.
-6. Returns `{ newEvents, likelyCostly }` (was `{ newEvents }`) so the client can report something
-   useful right after a sync.
+   - **`cost_likelihood` is sticky once decided.** It's only ever written when the row's prior value
+     was `'unknown'` — never overwritten once it's `'likely'`/`'unlikely'`. This was a real bug found
+     post-launch: without it, a transient classifier failure on a *later* sync would silently flip an
+     already-`'likely'` row back to `'unknown'`, making it vanish from Upcoming Events with no user
+     action — the exact thing dismiss/undo exists to prevent doing safely.
+7. Returns `{ newEvents, likelyCostly }` (was `{ newEvents }`) so the client can report something
+   useful right after a sync. `likelyCostly` reflects each event's *resulting* likelihood for this
+   sync (including rows that were already `'likely'` and untouched), not just newly-classified ones.
 
 ### The Claude call
 
 Mirrors the existing pattern in `claudeService.js` exactly:
 
 ```js
-const MODEL_ID = 'claude-3-5-sonnet-20241022'; // same constant already in the file
+const MODEL_ID = 'claude-sonnet-5'; // same constant already in the file
 const MAX_TOKENS = 512;
 const CLAUDE_TIMEOUT_MS = 15000;
 ```
+
+> **Post-launch fix:** this constant was originally `claude-3-5-sonnet-20241022`, which Anthropic has
+> since retired — every call 404'd (`not_found_error`), so every classified event silently stuck at
+> `cost_likelihood: 'unknown'` and never appeared in Upcoming Events. Diagnosed via `ai_calls` (100%
+> `event_cost` failures) and reproducing the raw `generateObject` call directly. Fixing the shared
+> constant also repairs Quick Entry and CSV mapping, which were failing the same way.
 
 - Vercel AI SDK `generateObject` + a zod schema — no manual JSON parsing.
 - Schema: `{ events: [{ google_event_id: string, likely_costly: boolean }] }`.

@@ -1,6 +1,7 @@
 'use strict';
 
 const { google } = require('googleapis');
+const { Op } = require('sequelize');
 const { sequelize, PlannedExpense } = require('../models');
 const { shekelsToAgorot } = require('../utils/money');
 const { getAuthedClient } = require('./googleCalendarService');
@@ -75,12 +76,28 @@ async function syncPlannedExpenses(userId) {
       }))
       .filter((e) => e.dueDate); // an event with no date at all can't become a planned expense
 
+    // Classification is sticky: once a row has left 'unknown' (whether by
+    // amount extraction or a prior successful classify), no later sync ever
+    // touches it again — only is_dismissed/is_confirmed (explicit user
+    // actions) can move it out of Upcoming Events after that. Without this,
+    // a transient classifier failure on a later sync would silently flip an
+    // already-'likely' row back to 'unknown' and it would vanish from the
+    // list with no user action — see docs/features/UPCOMING-EVENTS.md § Sync.
+    const existingRows = await PlannedExpense.findAll({
+      where: { user_id: userId, google_event_id: { [Op.in]: events.map((e) => e.event.id) } },
+      attributes: ['google_event_id', 'cost_likelihood'],
+    });
+    const priorLikelihoodByEventId = new Map(existingRows.map((r) => [r.google_event_id, r.cost_likelihood]));
+
     // An event whose title already carries an amount is 'likely' without
-    // needing a model call. Everything else is batched into one Claude call
-    // per sync (not one per event) — a classifier failure must not fail the
-    // sync (docs/INTEGRATIONS.md § Failure Handling), so it's caught here and
-    // those events just stay 'unknown'.
-    const toClassify = events.filter((e) => e.amountAgorot === null);
+    // needing a model call. Everything else — that's still undecided — is
+    // batched into one Claude call per sync (not one per event). A
+    // classifier failure must not fail the sync (docs/INTEGRATIONS.md §
+    // Failure Handling), so it's caught here; those events just stay
+    // 'unknown' and are retried on the next sync.
+    const toClassify = events.filter(
+      (e) => e.amountAgorot === null && (priorLikelihoodByEventId.get(e.event.id) ?? 'unknown') === 'unknown'
+    );
     let likelihoodByEventId = new Map();
     if (toClassify.length > 0) {
       try {
@@ -90,7 +107,7 @@ async function syncPlannedExpenses(userId) {
         );
         likelihoodByEventId = new Map(results.map((r) => [r.google_event_id, r.likely_costly]));
       } catch {
-        // Leave likelihoodByEventId empty — those events resolve to 'unknown' below.
+        // Leave likelihoodByEventId empty — those events stay 'unknown' below.
       }
     }
 
@@ -99,15 +116,23 @@ async function syncPlannedExpenses(userId) {
 
     await sequelize.transaction(async (transaction) => {
       for (const { event, amountAgorot, dueDate } of events) {
-        const costLikelihood =
+        // Only a genuinely new determination for *this* sync — never
+        // recomputed from a prior 'likely'/'unlikely' value.
+        const freshLikelihood =
           amountAgorot !== null
             ? 'likely'
             : likelihoodByEventId.has(event.id)
               ? (likelihoodByEventId.get(event.id) ? 'likely' : 'unlikely')
-              : 'unknown';
-        if (costLikelihood === 'likely') likelyCostly += 1;
+              : null; // no new data this sync
 
-        const [record, created] = await PlannedExpense.findOrCreate({
+        const priorLikelihood = priorLikelihoodByEventId.get(event.id) ?? 'unknown';
+        const wasUnknown = priorLikelihood === 'unknown';
+        // 'unknown' for a brand-new row, freshLikelihood for a row moving
+        // out of 'unknown' this sync, otherwise whatever it already was.
+        const currentLikelihood = wasUnknown ? (freshLikelihood ?? 'unknown') : priorLikelihood;
+        if (currentLikelihood === 'likely') likelyCostly += 1;
+
+        const [, created] = await PlannedExpense.findOrCreate({
           where: { user_id: userId, google_event_id: event.id },
           defaults: {
             user_id: userId,
@@ -115,23 +140,24 @@ async function syncPlannedExpenses(userId) {
             amount_agorot: amountAgorot,
             due_date: dueDate,
             google_event_id: event.id,
-            cost_likelihood: costLikelihood,
+            cost_likelihood: currentLikelihood,
           },
           transaction,
         });
 
         // Re-syncing must not clobber a user's envelope assignment,
         // confirmation, or dismissal on an already-known event — only
-        // refresh title/amount/date, and cost_likelihood only while the row
-        // is still undecided (docs/features/UPCOMING-EVENTS.md § Sync).
+        // refresh title/amount/date. cost_likelihood is only ever set here
+        // when freshLikelihood exists AND the row was still 'unknown'
+        // (sticky-once-classified, see above).
         // Scoped by user_id too: Google reuses the same event id across every
         // attendee of a shared event, and google_event_id is only unique per
         // user (see the scope-google-event-id-unique migration) — without
         // this, one user's sync could read/overwrite another user's row.
         if (!created) {
           const fields = { title: event.summary, amount_agorot: amountAgorot, due_date: dueDate };
-          if (!record.is_dismissed && !record.is_confirmed) {
-            fields.cost_likelihood = costLikelihood;
+          if (freshLikelihood && wasUnknown) {
+            fields.cost_likelihood = freshLikelihood;
           }
           await PlannedExpense.update(fields, {
             where: { user_id: userId, google_event_id: event.id },

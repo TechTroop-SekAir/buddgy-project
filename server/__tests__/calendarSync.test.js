@@ -19,10 +19,12 @@ jest.mock('../services/claudeService', () => ({
   classifyEventCostLikelihood: (...args) => mockClassifyEventCostLikelihood(...args),
 }));
 
+const mockFindAll = jest.fn();
 const mockFindOrCreate = jest.fn();
 const mockUpdate = jest.fn();
 jest.mock('../models', () => ({
   PlannedExpense: {
+    findAll: (...args) => mockFindAll(...args),
     findOrCreate: (...args) => mockFindOrCreate(...args),
     update: (...args) => mockUpdate(...args),
   },
@@ -40,6 +42,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockGetAuthedClient.mockResolvedValue({ fake: 'client' });
   mockClassifyEventCostLikelihood.mockResolvedValue([]);
+  // Default: no prior rows — every test overrides this when it needs to
+  // simulate a re-sync against already-known events.
+  mockFindAll.mockResolvedValue([]);
 });
 
 describe('syncPlannedExpenses', () => {
@@ -65,7 +70,7 @@ describe('syncPlannedExpenses', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it('keeps an amount-less event and classifies it via a single batched Claude call', async () => {
+  it('keeps a new amount-less event and classifies it via a single batched Claude call', async () => {
     mockEventsList.mockResolvedValue({
       data: {
         items: [
@@ -92,7 +97,7 @@ describe('syncPlannedExpenses', () => {
     expect(mockFindOrCreate.mock.calls[1][0].defaults).toMatchObject({ cost_likelihood: 'unlikely' });
   });
 
-  it('leaves events unknown when the classifier fails, without failing the sync', async () => {
+  it('leaves a new event unknown when the classifier fails, without failing the sync', async () => {
     mockEventsList.mockResolvedValue({
       data: { items: [{ id: 'evt-1', summary: 'חתונה של דנה', start: { date: '2026-09-01' } }] },
     });
@@ -105,11 +110,12 @@ describe('syncPlannedExpenses', () => {
     expect(mockFindOrCreate.mock.calls[0][0].defaults).toMatchObject({ cost_likelihood: 'unknown' });
   });
 
-  it('refreshes an already-known event without incrementing newEvents', async () => {
+  it('refreshes title/amount/date on an already-known event without incrementing newEvents', async () => {
+    mockFindAll.mockResolvedValue([{ google_event_id: 'evt-1', cost_likelihood: 'likely' }]);
     mockEventsList.mockResolvedValue({
       data: { items: [{ id: 'evt-1', summary: 'Rent ₪4500', start: { date: '2026-09-01' } }] },
     });
-    mockFindOrCreate.mockResolvedValue([{ is_dismissed: false, is_confirmed: false }, false]);
+    mockFindOrCreate.mockResolvedValue([{}, false]);
 
     const result = await syncPlannedExpenses(AUTHED_USER_ID);
 
@@ -123,28 +129,49 @@ describe('syncPlannedExpenses', () => {
     });
   });
 
-  it('does not overwrite cost_likelihood on a dismissed row when re-syncing', async () => {
+  it('does not re-classify or overwrite an already-"likely" row on re-sync (sticky classification)', async () => {
+    mockFindAll.mockResolvedValue([{ google_event_id: 'evt-1', cost_likelihood: 'likely' }]);
     mockEventsList.mockResolvedValue({
-      data: { items: [{ id: 'evt-1', summary: 'Standup', start: { date: '2026-09-02' } }] },
+      data: { items: [{ id: 'evt-1', summary: 'חתונה של דנה', start: { date: '2026-09-01' } }] },
     });
-    mockClassifyEventCostLikelihood.mockResolvedValue([{ google_event_id: 'evt-1', likely_costly: true }]);
-    mockFindOrCreate.mockResolvedValue([{ is_dismissed: true, is_confirmed: false }, false]);
+    mockFindOrCreate.mockResolvedValue([{}, false]);
 
-    await syncPlannedExpenses(AUTHED_USER_ID);
+    const result = await syncPlannedExpenses(AUTHED_USER_ID);
 
+    expect(mockClassifyEventCostLikelihood).not.toHaveBeenCalled();
     expect(mockUpdate.mock.calls[0][0]).not.toHaveProperty('cost_likelihood');
+    expect(result).toEqual({ newEvents: 0, likelyCostly: 1 }); // still counted as likely
   });
 
-  it('does not overwrite cost_likelihood on a confirmed row when re-syncing', async () => {
+  it('a classifier failure on re-sync does not downgrade an already-"likely" row to unknown', async () => {
+    mockFindAll.mockResolvedValue([{ google_event_id: 'evt-1', cost_likelihood: 'likely' }]);
     mockEventsList.mockResolvedValue({
-      data: { items: [{ id: 'evt-1', summary: 'Standup', start: { date: '2026-09-02' } }] },
+      data: { items: [{ id: 'evt-1', summary: 'חתונה של דנה', start: { date: '2026-09-01' } }] },
+    });
+    mockFindOrCreate.mockResolvedValue([{}, false]);
+
+    const result = await syncPlannedExpenses(AUTHED_USER_ID);
+
+    // Not reclassified at all (sticky), so the classifier is never even called
+    // — but even if it had failed, the assertion below is what matters: the
+    // row must still read as likely afterward.
+    expect(mockUpdate.mock.calls[0][0]).not.toHaveProperty('cost_likelihood');
+    expect(result.likelyCostly).toBe(1);
+  });
+
+  it('re-classifies a still-"unknown" row on the next sync', async () => {
+    mockFindAll.mockResolvedValue([{ google_event_id: 'evt-1', cost_likelihood: 'unknown' }]);
+    mockEventsList.mockResolvedValue({
+      data: { items: [{ id: 'evt-1', summary: 'חתונה של דנה', start: { date: '2026-09-01' } }] },
     });
     mockClassifyEventCostLikelihood.mockResolvedValue([{ google_event_id: 'evt-1', likely_costly: true }]);
-    mockFindOrCreate.mockResolvedValue([{ is_dismissed: false, is_confirmed: true }, false]);
+    mockFindOrCreate.mockResolvedValue([{}, false]);
 
-    await syncPlannedExpenses(AUTHED_USER_ID);
+    const result = await syncPlannedExpenses(AUTHED_USER_ID);
 
-    expect(mockUpdate.mock.calls[0][0]).not.toHaveProperty('cost_likelihood');
+    expect(mockClassifyEventCostLikelihood).toHaveBeenCalledTimes(1);
+    expect(mockUpdate.mock.calls[0][0]).toMatchObject({ cost_likelihood: 'likely' });
+    expect(result).toEqual({ newEvents: 0, likelyCostly: 1 });
   });
 
   it('maps a 401 from events.list to a client-safe reconnect error', async () => {
