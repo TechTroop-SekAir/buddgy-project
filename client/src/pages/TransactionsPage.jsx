@@ -66,6 +66,10 @@ export function TransactionsPage() {
       queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
       queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
       queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+      // A transaction created by confirming a planned expense keeps that row's
+      // is_confirmed/transaction_id in sync server-side (plannedExpenseService.js)
+      // — invalidate here too or the Planned Expenses page keeps showing stale state.
+      queryClient.invalidateQueries({ queryKey: ['planned-expenses', user.id, month] });
     },
   });
 
@@ -77,6 +81,10 @@ export function TransactionsPage() {
       queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
       queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
       queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
+      // Deleting a transaction that came from confirming a planned expense
+      // reverts that row to unconfirmed server-side (transactionService.js
+      // remove()) — invalidate so the Planned Expenses page reflects it.
+      queryClient.invalidateQueries({ queryKey: ['planned-expenses', user.id, month] });
     },
   });
 

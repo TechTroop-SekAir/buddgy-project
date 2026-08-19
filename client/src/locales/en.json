@@ -316,6 +316,7 @@
     "deleteConfirmTitle": "Delete planned expense?",
     "deleteConfirmBody": "This will permanently delete \"{{title}}\". This can't be undone.",
     "deleteConfirmCalendarWarning": "This expense was synced from Google Calendar — it may reappear the next time you sync.",
+    "deleteConfirmConfirmedWarning": "This expense is confirmed — deleting it also deletes its linked transaction and removes it from your spending.",
     "missingAmount": {
       "badge": "Missing amount"
     }
@@ -378,12 +379,14 @@
     "titleLabel": "Title",
     "titlePlaceholder": "e.g. Rent",
     "amountLabel": "Amount",
-    "dueDateLabel": "Due date",
+    "endDateLabel": "Repeat until",
+    "endDateHint": "Creates one planned expense per month, from this month through the month you choose.",
     "envelopeLabel": "Category",
     "submit": "Add",
     "titleRequired": "Title is required",
     "amountInvalid": "Amount must be greater than 0",
-    "dueDateRequired": "Due date is required",
+    "endDateRequired": "Choose when the recurring expense ends",
+    "endDateBeforeToday": "End date must be today or later",
     "noCategoriesHint": "You don't have any categories yet — you can still save this without one."
   },
   "admin": {

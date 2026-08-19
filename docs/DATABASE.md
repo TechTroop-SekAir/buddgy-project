@@ -12,6 +12,7 @@
 | [planned_expenses](#planned_expenses) | Future spend, from calendar sync or manual entry |
 | [csv_imports](#csv_imports) | Audit trail of bank-statement uploads |
 | [ai_calls](#ai_calls) | Usage log backing `GET /api/admin/stats`' `aiCallCount` |
+| [income_sources](#income_sources) | Onboarding wizard's income step, per month |
 | [categories](#categories) | Global admin category catalog (feeds AI classification) |
 | [Indexes](#indexes) | What's indexed and why |
 | [Idempotency](#idempotency) | How duplicate imports/syncs are prevented |
@@ -38,8 +39,10 @@ erDiagram
     users ||--o{ planned_expenses : owns
     users ||--o{ csv_imports : uploads
     users ||--o{ ai_calls : "logged for (nullable)"
+    users ||--o{ income_sources : owns
     envelopes ||--o{ transactions : "assigned to (nullable)"
     envelopes ||--o{ planned_expenses : "assigned to"
+    transactions ||--o| planned_expenses : "spawned from confirm (nullable)"
 ```
 
 ## users
@@ -54,6 +57,7 @@ erDiagram
 | google_refresh_token | TEXT | **Encrypted at rest**, NULL until calendar is connected — see [`SECURITY.md`](./SECURITY.md) |
 | role | VARCHAR(20) | `'user'` \| `'admin'` |
 | disabled | BOOLEAN | DEFAULT false — set via `PATCH /api/admin/users/:id` (ticket B-08); checked on every request in `middleware/auth.js`, not just at login, so disabling takes effect immediately (see [`API.md`](./API.md) § Admin) |
+| onboarding_completed_at | TIMESTAMP | Nullable, set once via `PATCH /api/auth/onboarding` (idempotent — a second call doesn't move it). `null` is what makes the onboarding wizard (`client/src/components/onboarding/OnboardingWizardModal.jsx`) open; see [`API.md`](./API.md) § Auth |
 | created_at | TIMESTAMP | DEFAULT now() |
 
 ## envelopes
@@ -122,6 +126,19 @@ erDiagram
 
 **Note:** logged from inside `server/services/claudeService.js` — the single boundary both AI call sites (`parseQuickEntry`, `detectColumnMapping`) go through — never from a controller. A logging failure is caught and never allowed to break the AI feature itself (`CLAUDE.md` § Error Handling).
 
+## income_sources
+
+| Column | Type | Notes |
+|---|---|---|
+| id | SERIAL PK | |
+| user_id | INT FK → users | `ON DELETE CASCADE` |
+| month | DATEONLY | First-of-month convention, same as `envelopes.month` |
+| label | VARCHAR(80) | e.g. "Salary", "Freelance" |
+| amount_agorot | INTEGER | NOT NULL |
+| sort_order | INTEGER | DEFAULT 0 — preserves the order rows were entered in on the client |
+
+Backs the onboarding wizard's income step (`client/src/components/onboarding/IncomeStep.jsx`) and the Dashboard's income figure (`SummaryBar.jsx`) — previously client-only, stored in `localStorage` (`mockIncomeService.js`), so it never reached the DB and vanished on a different device/browser. `PUT /api/income-sources` is a full-month replace, not a per-row upsert — see [`API.md`](./API.md) § Income Sources.
+
 ## categories
 
 | Column | Type | Notes |
@@ -145,6 +162,8 @@ Beyond the PK and UNIQUE indexes implied above:
 | `transactions` | `(user_id, transaction_date)` | Powers the transaction list, date filters, and forecast aggregation |
 | `transactions` | `(envelope_id)` | Powers per-envelope balance calculation |
 | `planned_expenses` | `(user_id, due_date)` | Powers the forecast window query |
+| `planned_expenses` | `(transaction_id)` | Postgres doesn't auto-index FK child columns; `transactionService.js`'s `remove()` looks this up on every transaction delete, and the `ON DELETE SET NULL` trigger scans it too |
+| `income_sources` | `(user_id, month)` | Every `GET`/`PUT` filters by both — same reasoning as envelopes' `(user_id, month)` index |
 
 Add these as part of the initial migration, not as an afterthought — the forecast and dashboard queries are the hottest paths in the app.
 
@@ -158,6 +177,12 @@ Two UNIQUE constraints exist specifically to make retryable operations safe:
 Both are enforced at the DB level (`UNIQUE`), but the service layer must also handle the constraint violation gracefully — see `CLAUDE.md` § Database Rules and `.claude/commands/qa.md` § Buddgy Critical Test Cases.
 
 **Confirming a planned expense** (`PATCH /api/planned-expenses/:id` with `is_confirmed: true`) is idempotent by transition, not by a UNIQUE constraint: `server/services/plannedExpenseService.js`'s `update()` only creates the linked `transaction_id` row when `is_confirmed` actually flips `false → true`, so re-confirming an already-confirmed row is a no-op. Both the row update and the transaction create/delete happen inside one `sequelize.transaction`, so a failure at any step leaves nothing partially applied. Unconfirming (`true → false`) deletes the linked transaction and clears `transaction_id` — a destructive, deliberate reversal, not a soft unlink.
+
+**Editing an already-confirmed row** (envelope/amount/title/due_date changed without touching `is_confirmed`) mirrors the same field changes onto the linked transaction in the same DB transaction, so the two rows can't drift apart — e.g. reassigning a confirmed row's envelope moves the transaction's spend with it.
+
+**Deleting the link from either side keeps both rows honest, symmetrically:**
+- Deleting a **confirmed planned expense** (`DELETE /api/planned-expenses/:id`) also deletes its linked transaction, inside one `sequelize.transaction` — otherwise the transaction would be orphaned (still `source: 'planned_expense'`, but nothing pointing at it).
+- Deleting the **linked transaction** (`DELETE /api/transactions/:id`) reverts the planned expense to `is_confirmed: false, transaction_id: null` instead of leaving it stuck confirmed-with-no-transaction. This runs before the row destroy, ahead of the FK's `ON DELETE SET NULL`, so the service — not the trigger — decides the resulting state. The `transaction_id IS NULL` filter used by `forecastService.js`'s planned-expense sums (see `docs/ARCHITECTURE.md` § Forecast Computation) then only ever matches genuine legacy rows confirmed before this link existed, not rows whose transaction was deleted out from under them.
 
 ## Migration Conventions
 

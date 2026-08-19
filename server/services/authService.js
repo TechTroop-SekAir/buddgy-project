@@ -10,10 +10,18 @@ const JWT_TTL = '7d';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function toPublicUser(user) {
-  const { id, email, full_name, avatar_url, role, google_refresh_token } = user;
+  const { id, email, full_name, avatar_url, role, google_refresh_token, onboarding_completed_at } = user;
   // Derived boolean only — the encrypted token itself must never leave the
   // server. Ticket A-12 needs this so the client can show Connect vs Sync.
-  return { id, email, full_name, avatar_url, role, connected: Boolean(google_refresh_token) };
+  return {
+    id,
+    email,
+    full_name,
+    avatar_url,
+    role,
+    connected: Boolean(google_refresh_token),
+    onboarding_completed_at,
+  };
 }
 
 function signToken(user) {
@@ -73,7 +81,17 @@ async function login({ email, password }) {
   const normalizedEmail = typeof email === 'string' ? email.toLowerCase().trim() : email;
   const user = await User.findOne({
     where: { email: normalizedEmail },
-    attributes: ['id', 'email', 'password_hash', 'full_name', 'avatar_url', 'role', 'google_refresh_token', 'disabled'],
+    attributes: [
+      'id',
+      'email',
+      'password_hash',
+      'full_name',
+      'avatar_url',
+      'role',
+      'google_refresh_token',
+      'disabled',
+      'onboarding_completed_at',
+    ],
   });
   if (!user || !user.password_hash) {
     throw new AppError('unauthorized', 401);
@@ -95,7 +113,16 @@ async function login({ email, password }) {
 
 async function findUserById(id) {
   const user = await User.findByPk(id, {
-    attributes: ['id', 'email', 'full_name', 'avatar_url', 'role', 'google_refresh_token', 'disabled'],
+    attributes: [
+      'id',
+      'email',
+      'full_name',
+      'avatar_url',
+      'role',
+      'google_refresh_token',
+      'disabled',
+      'onboarding_completed_at',
+    ],
   });
   if (!user || user.disabled) {
     throw new AppError('unauthorized', 401);
@@ -103,4 +130,22 @@ async function findUserById(id) {
   return toPublicUser(user);
 }
 
-module.exports = { register, login, findUserById };
+/**
+ * Idempotent — set only if not already set, mirroring
+ * client/src/services/mockAuthService.js's completeOnboarding(), so a
+ * retried/duplicate call never moves an already-recorded timestamp.
+ */
+async function completeOnboarding(id) {
+  const user = await User.findByPk(id, {
+    attributes: ['id', 'email', 'full_name', 'avatar_url', 'role', 'google_refresh_token', 'disabled', 'onboarding_completed_at'],
+  });
+  if (!user || user.disabled) {
+    throw new AppError('unauthorized', 401);
+  }
+  if (!user.onboarding_completed_at) {
+    await user.update({ onboarding_completed_at: new Date() });
+  }
+  return toPublicUser(user);
+}
+
+module.exports = { register, login, findUserById, completeOnboarding };

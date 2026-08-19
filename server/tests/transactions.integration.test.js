@@ -17,7 +17,7 @@ jest.mock('../services/claudeService', () => ({
 const request = require('supertest');
 const app = require('../app');
 const { resetDb, closeDb } = require('./helpers/db');
-const { createUser, createEnvelope, createTransaction, authHeader } = require('./helpers/fixtures');
+const { createUser, createEnvelope, createTransaction, createPlannedExpense, authHeader } = require('./helpers/fixtures');
 
 beforeEach(async () => {
   await resetDb();
@@ -152,6 +152,38 @@ describe('DELETE /api/transactions/:id', () => {
 
     const res = await request(app).delete(`/api/transactions/${transaction.id}`).set('Authorization', authHeader(other));
     expect(res.status).toBe(404);
+  });
+
+  it('deleting the transaction a confirm created reverts the planned expense to unconfirmed', async () => {
+    const user = await createUser();
+    const plannedExpense = await createPlannedExpense({
+      user_id: user.id,
+      amount_agorot: 5000,
+      due_date: '2026-08-18',
+      is_confirmed: false,
+    });
+    const confirmed = await request(app)
+      .patch(`/api/planned-expenses/${plannedExpense.id}`)
+      .set('Authorization', authHeader(user))
+      .send({ is_confirmed: true });
+    const transactionId = confirmed.body.data.transaction_id;
+
+    const res = await request(app).delete(`/api/transactions/${transactionId}`).set('Authorization', authHeader(user));
+    expect(res.status).toBe(200);
+
+    const list = await request(app).get('/api/planned-expenses?month=2026-08').set('Authorization', authHeader(user));
+    const reverted = list.body.data.find((p) => p.id === plannedExpense.id);
+    expect(reverted.is_confirmed).toBe(false);
+    expect(reverted.transaction_id).toBe(null);
+
+    // Re-confirmable now that it's unconfirmed again — proves the row isn't
+    // stuck (the pre-fix bug: is_confirmed: true, transaction_id: null).
+    const reconfirmed = await request(app)
+      .patch(`/api/planned-expenses/${plannedExpense.id}`)
+      .set('Authorization', authHeader(user))
+      .send({ is_confirmed: true });
+    expect(reconfirmed.status).toBe(200);
+    expect(reconfirmed.body.data.transaction_id).not.toBeNull();
   });
 });
 

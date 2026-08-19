@@ -18,4 +18,9 @@ async function me(req, res) {
   return ok(res, { user });
 }
 
-module.exports = { register, login, me };
+async function completeOnboarding(req, res) {
+  const user = await authService.completeOnboarding(req.user.id);
+  return ok(res, { user });
+}
+
+module.exports = { register, login, me, completeOnboarding };

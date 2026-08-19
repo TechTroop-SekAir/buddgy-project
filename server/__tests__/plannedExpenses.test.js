@@ -17,6 +17,7 @@ const mockPlannedExpenseCreate = jest.fn();
 const mockEnvelopeFindOne = jest.fn();
 const mockTransactionCreate = jest.fn();
 const mockTransactionDestroy = jest.fn();
+const mockTransactionUpdate = jest.fn();
 // requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
 // caller from a DB lookup, not just the JWT claim — every test here is a
 // single non-admin user, so echoing the signed id back is enough.
@@ -43,6 +44,7 @@ jest.mock('../models', () => ({
   Transaction: {
     create: (...args) => mockTransactionCreate(...args),
     destroy: (...args) => mockTransactionDestroy(...args),
+    update: (...args) => mockTransactionUpdate(...args),
   },
   User: {
     findByPk: (...args) => mockUserFindByPk(...args),
@@ -341,7 +343,68 @@ describe('PATCH /api/planned-expenses/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.is_confirmed).toBe(false);
     expect(res.body.data.transaction_id).toBe(null);
-    expect(mockTransactionDestroy).toHaveBeenCalledWith({ where: { id: 501 }, transaction: FAKE_DB_TRANSACTION });
+    expect(mockTransactionDestroy).toHaveBeenCalledWith({
+      where: { id: 501, user_id: AUTHED_USER_ID },
+      transaction: FAKE_DB_TRANSACTION,
+    });
+  });
+
+  it('reassigning an already-confirmed planned expense writes the new envelope back to its linked transaction', async () => {
+    mockPlannedExpenseFindOne.mockResolvedValue(
+      makePlannedExpenseInstance({
+        id: 3,
+        user_id: AUTHED_USER_ID,
+        envelope_id: OWNED_ENVELOPE_ID,
+        title: 'Car service',
+        amount_agorot: 45000,
+        due_date: '2026-08-20',
+        google_event_id: 'evt_3',
+        is_confirmed: true,
+        transaction_id: 501,
+      })
+    );
+    const otherOwnedEnvelopeId = 11;
+    mockEnvelopeFindOne.mockResolvedValue({ id: otherOwnedEnvelopeId });
+
+    const res = await request(app)
+      .patch('/api/planned-expenses/3')
+      .set('Authorization', authHeader())
+      .send({ envelope_id: otherOwnedEnvelopeId });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.envelope_id).toBe(otherOwnedEnvelopeId);
+    expect(mockTransactionCreate).not.toHaveBeenCalled();
+    expect(mockTransactionDestroy).not.toHaveBeenCalled();
+    expect(mockTransactionUpdate).toHaveBeenCalledWith(
+      { envelope_id: otherOwnedEnvelopeId },
+      { where: { id: 501, user_id: AUTHED_USER_ID }, transaction: FAKE_DB_TRANSACTION }
+    );
+  });
+
+  it('editing an unconfirmed planned expense never touches a transaction', async () => {
+    mockPlannedExpenseFindOne.mockResolvedValue(
+      makePlannedExpenseInstance({
+        id: 3,
+        user_id: AUTHED_USER_ID,
+        envelope_id: OWNED_ENVELOPE_ID,
+        title: 'Car service',
+        amount_agorot: 45000,
+        due_date: '2026-08-20',
+        google_event_id: 'evt_3',
+        is_confirmed: false,
+        transaction_id: null,
+      })
+    );
+
+    const res = await request(app)
+      .patch('/api/planned-expenses/3')
+      .set('Authorization', authHeader())
+      .send({ title: 'Car service (renamed)' });
+
+    expect(res.status).toBe(200);
+    expect(mockTransactionUpdate).not.toHaveBeenCalled();
+    expect(mockTransactionCreate).not.toHaveBeenCalled();
+    expect(mockTransactionDestroy).not.toHaveBeenCalled();
   });
 
   it('rejects assigning to an envelope the caller does not own', async () => {
@@ -413,6 +476,32 @@ describe('DELETE /api/planned-expenses/:id', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ id: 3 });
+    expect(instance.destroy).toHaveBeenCalled();
+    expect(mockTransactionDestroy).not.toHaveBeenCalled();
+  });
+
+  it('deleting a confirmed planned expense also deletes its linked transaction', async () => {
+    const instance = makePlannedExpenseInstance({
+      id: 3,
+      user_id: AUTHED_USER_ID,
+      envelope_id: OWNED_ENVELOPE_ID,
+      title: 'Car service',
+      amount_agorot: 45000,
+      due_date: '2026-08-20',
+      google_event_id: 'evt_3',
+      is_confirmed: true,
+      transaction_id: 501,
+    });
+    mockPlannedExpenseFindOne.mockResolvedValue(instance);
+
+    const res = await request(app).delete('/api/planned-expenses/3').set('Authorization', authHeader());
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ id: 3 });
+    expect(mockTransactionDestroy).toHaveBeenCalledWith({
+      where: { id: 501, user_id: AUTHED_USER_ID },
+      transaction: FAKE_DB_TRANSACTION,
+    });
     expect(instance.destroy).toHaveBeenCalled();
   });
 

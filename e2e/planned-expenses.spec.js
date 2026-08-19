@@ -17,7 +17,10 @@ test.use({ storageState: path.join(__dirname, '.auth', 'user.json') });
 test('confirming a planned expense creates a transaction and updates envelope spent', async ({ page }) => {
   const envelopeName = `E2E Envelope ${Date.now()}`;
   const expenseTitle = `E2E Expense ${Date.now()}`;
-  const dueDate = new Date().toISOString().slice(0, 10);
+  // Every planned expense recurs monthly from today through this end date
+  // (PlannedExpenseFormModal.jsx) — set to today so exactly one row (this
+  // month's) is created, matching this test's single-confirm assertion below.
+  const endDate = new Date().toISOString().slice(0, 10);
 
   // Create an envelope to attach the planned expense to.
   await page.goto('/dashboard');
@@ -41,7 +44,7 @@ test('confirming a planned expense creates a transaction and updates envelope sp
   await expect(addExpenseDialog.getByRole('heading', { name: t.addPlannedExpenseModal.title })).toBeVisible();
   await addExpenseDialog.getByLabel(t.addPlannedExpenseModal.titleLabel).fill(expenseTitle);
   await addExpenseDialog.getByLabel(t.addPlannedExpenseModal.amountLabel).fill('250');
-  await addExpenseDialog.locator('#planned-expense-due-date').fill(dueDate);
+  await addExpenseDialog.locator('#planned-expense-end-date').fill(endDate);
   await addExpenseDialog.getByRole('textbox', { name: t.addPlannedExpenseModal.envelopeLabel }).click();
   await page.getByRole('option', { name: envelopeName, exact: true }).click();
   await addExpenseDialog.getByRole('button', { name: t.addPlannedExpenseModal.submit }).click();
