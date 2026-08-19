@@ -87,3 +87,4 @@ To be implemented only after all use cases above are complete:
 - PWA with push notifications when an envelope nears depletion
 - Export data to CSV and to Google Sheets
 - AI agents: a Budget Advisor that answers free-text spending questions against real budget data, and a Calendar Sync Conflict agent that flags duplicate/ambiguous planned expenses after a sync — see [`features/AGENTS.md`](./features/AGENTS.md)
+- Upcoming Events: classify every synced calendar event (not just ones with an amount in the title) by likelihood of costing money, with dismiss/undo and a spend prompt — see [`features/UPCOMING-EVENTS.md`](./features/UPCOMING-EVENTS.md)

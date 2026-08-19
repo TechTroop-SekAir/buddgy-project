@@ -20,5 +20,6 @@ This directory is the single source of truth for the Buddgy spec.
 | [`PLAN.md`](./PLAN.md) | Per-person checklist (Darya/Matan/Ofek), dates, definition of done, risks |
 | [`PLAN-DETAILS.md`](./PLAN-DETAILS.md) | Day-by-day schedule, demo script, requirement traceability — TA-facing detail |
 | [`features/AGENTS.md`](./features/AGENTS.md) | Post-MVP: Budget Advisor & Calendar Conflict AI agents — tool-use architecture, API/DB additions, work split |
+| [`features/UPCOMING-EVENTS.md`](./features/UPCOMING-EVENTS.md) | Calendar events classified by cost-likelihood, dismiss/undo, spend prompt — data model, sync changes, client surfaces, forecast-impact fix |
 
 For **how Claude should work** (process, not spec), see `.claude/commands/`: `/dev`, `/product`, `/qa`, `/design`. These reference the files above rather than repeating them — if something looks duplicated, the command file should be pointing here instead.
