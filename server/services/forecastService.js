@@ -75,9 +75,15 @@ async function get(userId, monthInput) {
     user_id: userId,
     transaction_date: { [Op.between]: [from, to] },
   });
+  // transaction_id: null excludes confirmed planned expenses that already
+  // spawned a transaction (plannedExpenseService.js's update()) — their
+  // amount is already counted via overallActual below. Filtering on the
+  // link (not on is_confirmed) is what keeps a confirmed-but-unlinked row
+  // (e.g. one confirmed before this link existed) still counted here.
   const overallPlanned = await sumAgorot(PlannedExpense, 'amount_agorot', {
     user_id: userId,
     is_confirmed: true,
+    transaction_id: null,
     due_date: { [Op.between]: [from, to] },
   });
   const totalEndOfMonthSpendAgorot = overallActual + overallPlanned;
@@ -133,6 +139,7 @@ async function get(userId, monthInput) {
       user_id: userId,
       envelope_id: { [Op.in]: envelopeIds },
       is_confirmed: true,
+      transaction_id: null,
       due_date: { [Op.between]: [from, to] },
     }),
   ]);

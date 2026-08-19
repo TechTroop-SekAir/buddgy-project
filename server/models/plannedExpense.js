@@ -22,6 +22,9 @@ module.exports = (sequelize, DataTypes) => {
       cost_likelihood: { type: DataTypes.STRING(10), allowNull: false, defaultValue: 'unknown' },
       // User said "this won't cost money" — sticky across re-syncs.
       is_dismissed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      // The transaction created when this row was confirmed — see
+      // plannedExpenseService.js's update(). Null until confirmed.
+      transaction_id: { type: DataTypes.INTEGER },
     },
     {
       tableName: 'planned_expenses',

@@ -8,19 +8,23 @@ import { ForecastBanner } from '../components/categories/ForecastBanner';
 import { SummaryBar } from '../components/categories/SummaryBar';
 import { MissingAmountPrompt } from '../components/categories/MissingAmountPrompt';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
+import { OnboardingWizardModal } from '../components/onboarding/OnboardingWizardModal';
 import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
 import categoryService from '../services/categoryService';
 import transactionService from '../services/transactionService';
 import forecastService from '../services/forecastService';
 import plannedExpenseService from '../services/plannedExpenseService';
+import incomeService from '../services/incomeService';
+import authService from '../services/authService';
 import { getCurrentMonth } from '../utils/month';
 import { getDaysRemainingInMonth, getMonthLabel } from '../utils/date';
 import { sortCategoriesBySpent } from '../utils/categoryStatus';
+import { hasLocalOnboardingOverride, setLocalOnboardingOverride } from '../utils/onboardingOverride';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
@@ -47,6 +51,17 @@ export function DashboardPage() {
     queryKey: forecastQueryKey,
     queryFn: () => forecastService.get(user.id, month),
     enabled: categories.length > 0,
+  });
+
+  const incomeQueryKey = ['income-sources', user.id, month];
+
+  const {
+    data: income,
+    isLoading: isIncomeLoading,
+    isError: isIncomeError,
+  } = useQuery({
+    queryKey: incomeQueryKey,
+    queryFn: () => incomeService.list(user.id, month),
   });
 
   // Every mutation below changes money-relevant data, so per docs/STATE.md's
@@ -96,9 +111,46 @@ export function DashboardPage() {
     },
   });
 
+  // Sequential on purpose: a failed income-save must never leave onboarding
+  // marked complete with no income persisted. monthly_budget_agorot: 1 is a
+  // placeholder (server rejects 0) — formatShekelsRounded() displays it as
+  // ₪0 everywhere, matching the real intent of "no budget set yet."
+  //
+  // incomeService.replace() already falls back to the mock on a 404 (backend
+  // route not shipped yet) internally — see incomeService.js. The
+  // onboarding-completion route has no such service-level fallback (its mock
+  // counterpart can't stand in for a real-mode user — see
+  // utils/onboardingOverride.js), so that one's still handled here.
+  const onboardingMutation = useMutation({
+    mutationFn: async ({ incomeRows, selectedCategories }) => {
+      await incomeService.replace(user.id, month, incomeRows);
+
+      await Promise.all(
+        selectedCategories.map((category) =>
+          categoryService.create(user.id, { ...category, monthly_budget_agorot: 1, month })
+        )
+      );
+
+      try {
+        await authService.completeOnboarding();
+        await refreshUser();
+      } catch (err) {
+        if (err.status !== 404) throw err;
+        setLocalOnboardingOverride(user.id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: forecastQueryKey });
+      queryClient.invalidateQueries({ queryKey: incomeQueryKey });
+    },
+  });
+
   const sortedCategories = sortCategoriesBySpent(categories);
   const monthLabel = getMonthLabel(month);
   const daysRemaining = getDaysRemainingInMonth(month);
+  const hasIncome = income?.rows?.length > 0;
+  const hasSummaryData = categories.length > 0 || hasIncome;
 
   return (
     <div>
@@ -132,21 +184,32 @@ export function DashboardPage() {
       {!isLoading && isError && <Alert className="mt-6">{t('dashboard.error')}</Alert>}
 
       {/* Forecast panel is always a full-width block above the envelope
-          grid, stacked at every breakpoint — not a side column. */}
-      {!isLoading && !isError && categories.length > 0 && (
+          grid, stacked at every breakpoint — not a side column. SummaryBar
+          alone can render before any categories exist (e.g. right after
+          onboarding with income entered but no categories picked) since it
+          already falls back gracefully when `forecast` is undefined; the
+          forecast-dependent banner/prompt stay gated on real category data. */}
+      {!isLoading && !isError && hasSummaryData && (
         <div className="flex flex-col gap-4">
-          <ForecastBanner forecast={forecast} isLoading={isForecastLoading} isError={isForecastError} />
+          {categories.length > 0 && (
+            <ForecastBanner forecast={forecast} isLoading={isForecastLoading} isError={isForecastError} />
+          )}
           <SummaryBar
             categories={categories}
             forecast={forecast}
             isForecastLoading={isForecastLoading}
             isForecastError={isForecastError}
+            income={income}
+            isIncomeLoading={isIncomeLoading}
+            isIncomeError={isIncomeError}
             monthLabel={monthLabel}
           />
-          <MissingAmountPrompt
-            plannedExpenses={forecast?.missingAmountPlannedExpenses}
-            onSubmit={(id, payload) => missingAmountMutation.mutateAsync({ id, payload })}
-          />
+          {categories.length > 0 && (
+            <MissingAmountPrompt
+              plannedExpenses={forecast?.missingAmountPlannedExpenses}
+              onSubmit={(id, payload) => missingAmountMutation.mutateAsync({ id, payload })}
+            />
+          )}
         </div>
       )}
 
@@ -199,6 +262,11 @@ export function DashboardPage() {
         opened={isQuickEntryOpen}
         onClose={() => setIsQuickEntryOpen(false)}
         onConfirm={(payload) => quickEntryMutation.mutateAsync(payload)}
+      />
+
+      <OnboardingWizardModal
+        opened={!user?.onboarding_completed_at && !hasLocalOnboardingOverride(user?.id)}
+        onFinish={(payload) => onboardingMutation.mutateAsync(payload)}
       />
     </div>
   );

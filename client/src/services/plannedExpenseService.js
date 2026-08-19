@@ -26,14 +26,16 @@ async function remove(id) {
 
 const realPlannedExpenseService = { list, update, create, remove };
 
-// Paired with calendarService.js on the same VITE_USE_MOCK_CALENDAR flag
-// (not the global VITE_USE_MOCK_API — see calendarService.js's comment for
-// why): mockCalendarService.js's sync() writes rows into the
-// buddgy_mock_planned_expenses localStorage key, and only
-// mockPlannedExpenseService.js reads from it. If this stayed on the real
-// branch while calendarService.js went mock, synced rows would never show
-// up on the Planned Expenses page.
+// Its own VITE_USE_MOCK_PLANNED_EXPENSES flag, independent of
+// VITE_USE_MOCK_CALENDAR — planned-expense CRUD isn't a Google API call, so
+// it stays real even when Calendar OAuth is mocked (docs/TESTING.md §
+// Mocking Policy only names Google Calendar and Claude as mockable). This
+// used to share calendarService.js's flag so mockCalendarService.js's
+// sync()-seeded rows would show up here, but that meant e2e's calendar mock
+// silently mocked planned-expense confirm too — see e2e/planned-expenses.spec.js,
+// which needs the real create/update endpoints to assert on the transaction
+// and envelope-spent effects of confirming.
 const plannedExpenseService =
-  import.meta.env.VITE_USE_MOCK_CALENDAR === 'true' ? mockPlannedExpenseService : realPlannedExpenseService;
+  import.meta.env.VITE_USE_MOCK_PLANNED_EXPENSES === 'true' ? mockPlannedExpenseService : realPlannedExpenseService;
 
 export default plannedExpenseService;

@@ -31,14 +31,25 @@ test('create, edit, view, and delete an envelope', async ({ page }) => {
   // View: the new card renders with its budget. Matched on the digits only
   // (not the full currency-formatted string) since exact symbol/spacing is
   // an Intl.NumberFormat(locale) detail, not what this test is checking.
-  const card = page.locator('div', { has: page.getByText(name, { exact: true }) }).first();
+  //
+  // Scoped via the "..." menu button rather than the name text: that button's
+  // aria-label is already unique per envelope (interpolated with `name`), and
+  // walking exactly two `div` ancestors up from it (CategoryCard.jsx: button
+  // -> edit/menu button row -> header row, which also contains the name and
+  // budget text) lands on the one div that's this card's header without
+  // being ambiguous. A `div` scoped by `has: getByText(name)` or
+  // `has: cardMenuButton` alone instead matches every ancestor div up to the
+  // page root — `.first()`/`.last()` on that list is either the whole card
+  // grid (every envelope, not just this one) or a div one level too deep
+  // (the button's own row, which doesn't contain the name/budget text).
+  const cardMenuButton = page.getByRole('button', { name: interpolate(t.categoryManagement.cardMenu, { name }) });
+  const card = cardMenuButton.locator('xpath=ancestor::div[2]');
   await expect(card).toBeVisible();
   await expect(card.getByText(/1,000/).first()).toBeVisible();
 
-  // Edit budget via the card's per-envelope menu.
-  const cardMenuButton = page.getByRole('button', { name: interpolate(t.categoryManagement.cardMenu, { name }) });
-  await cardMenuButton.click();
-  await page.getByRole('menuitem', { name: t.common.edit }).click();
+  // Edit budget via the card's dedicated edit button — CategoryCard.jsx
+  // renders it standalone next to the "..." menu, not as a menu item.
+  await card.getByRole('button', { name: t.common.edit }).click();
 
   const editDialog = page.getByRole('dialog');
   await expect(editDialog.getByRole('heading', { name: t.editCategoryModal.title })).toBeVisible();

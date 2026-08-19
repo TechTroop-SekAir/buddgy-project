@@ -10,14 +10,14 @@
   "nav": {
     "dashboard": "לוח בקרה",
     "transactions": "תנועות",
-    "plannedExpenses": "הוצאות מתוכננות",
+    "plannedExpenses": "הוצאות שוטפות",
     "imports": "ייבוא CSV",
     "settings": "הגדרות",
     "logout": "התנתקות",
     "backToDashboard": "→ לוח בקרה",
     "admin": "ניהול",
     "imports": "ייבוא",
-    "plannedExpenses": "הוצאות מתוכננות",
+    "plannedExpenses": "הוצאות שוטפות",
     "settings": "הגדרות",
     "menu": "תפריט",
     "profileMenu": "תפריט חשבון"
@@ -69,12 +69,7 @@
     "monthMeta_other": "{{month}} · נותרו {{count}} ימים"
   },
   "categoryManagement": {
-    "totalBudget": "תקציב כולל",
-    "totalSpent": "סך ההוצאות",
     "remainingBalance": "יתרה נותרת",
-    "totalPlannedExpenses": "סך ההוצאות המתוכננות",
-    "totalEndOfMonthSpend": "סך ההוצאות הצפוי בסוף החודש",
-    "remainingTotalBudget": "יתרת תקציב כוללת",
     "projectedDeficitLabel": "גירעון צפוי",
     "spentOf": "{{spent}} מתוך {{budget}} נוצלו",
     "deleteConfirmTitle": "למחוק את הקטגוריה?",
@@ -92,7 +87,6 @@
     "overByLabel": "חריגה של",
     "percentUsed": "{{percent}}% נוצלו",
     "envelopesHeading": "מעטפות",
-    "safeToSpend": "בטוח לבזבז",
     "overallSpending": "הוצאות סה״כ — {{month}}",
     "remainingOf": "{{remaining}} מתוך {{budget}} נותרו",
     "cardMenu": "פעולות עבור {{name}}",
@@ -270,18 +264,18 @@
   },
   "calendar": {
     "title": "יומן Google",
-    "notConnected": "יש לחבר את יומן Google שלך כדי לייבא הוצאות מתוכננות באופן אוטומטי.",
+    "notConnected": "יש לחבר את יומן Google שלך כדי לייבא הוצאות שוטפות באופן אוטומטי.",
     "connect": "חיבור יומן Google",
     "connected": "מחובר",
-    "connectedBody": "באדג'י קורא אירועים קרובים עם סכום בכותרת והופך אותם להוצאות מתוכננות.",
+    "connectedBody": "באדג'י קורא אירועים קרובים עם סכום בכותרת והופך אותם להוצאות שוטפות.",
     "sync": "סנכרון עכשיו",
     "syncing": "מסנכרן…",
-    "syncResult_one": "נמצאה הוצאה מתוכננת חדשה אחת.",
-    "syncResult_other": "נמצאו {{count}} הוצאות מתוכננות חדשות.",
+    "syncResult_one": "נמצאה הוצאה שוטפת חדשה אחת.",
+    "syncResult_other": "נמצאו {{count}} הוצאות שוטפות חדשות.",
     "syncResultZero": "לא נמצאו אירועים חדשים. רק אירועים עם סכום בכותרת (למשל \"שכירות ₪4500\") נקלטים.",
     "disconnect": "ניתוק",
     "disconnectConfirmTitle": "לנתק את יומן Google?",
-    "disconnectConfirmBody": "באדג'י יפסיק לסנכרן אירועים חדשים. הוצאות מתוכננות שכבר יובאו יישארו.",
+    "disconnectConfirmBody": "באדג'י יפסיק לסנכרן אירועים חדשים. הוצאות שוטפות שכבר יובאו יישארו.",
     "callbackSuccess": "יומן Google חובר בהצלחה.",
     "callbackError": "משהו השתבש בחיבור יומן Google. יש לנסות שוב.",
     "error": {
@@ -298,18 +292,18 @@
     "loading": "טוען תחזית…",
     "error": "לא הצלחנו לטעון את התחזית. יש לנסות שוב.",
     "missingAmountTitle": "סכומים חסרים",
-    "missingAmountBody": "להוצאות המתוכננות הבאות, שסונכרנו מהיומן, אין עדיין סכום — יש להוסיף הערכה כדי שייכללו בתחזית.",
+    "missingAmountBody": "להוצאות השוטפות הבאות, שסונכרנו מהיומן, אין עדיין סכום — יש להוסיף הערכה כדי שייכללו בתחזית.",
     "missingAmountSubmit": "שמירה",
     "missingAmountInvalid": "הסכום חייב להיות גדול מ-0",
     "recommendation": "כדאי לקצץ {{amount}} מהקטגוריה {{envelope}}"
   },
   "plannedExpenses": {
-    "title": "הוצאות מתוכננות",
-    "loading": "טוען הוצאות מתוכננות…",
-    "error": "לא הצלחנו לטעון את ההוצאות המתוכננות שלך. יש לנסות שוב.",
+    "title": "הוצאות שוטפות",
+    "loading": "טוען הוצאות שוטפות…",
+    "error": "לא הצלחנו לטעון את ההוצאות השוטפות שלך. יש לנסות שוב.",
     "categoriesError": "לא הצלחנו לטעון את הקטגוריות — אפשרויות הקטגוריה עשויות להיות חסרות.",
-    "empty": "אין עדיין הוצאות מתוכננות — יש לחבר ולסנכרן את היומן מהגדרות.",
-    "emptyMonth": "אין הוצאות מתוכננות לחודש זה.",
+    "empty": "אין עדיין הוצאות שוטפות — יש לחבר ולסנכרן את היומן מהגדרות.",
+    "emptyMonth": "אין הוצאות שוטפות לחודש זה.",
     "goToSettings": "מעבר להגדרות",
     "dateHeader": "תאריך יעד",
     "titleHeader": "כותרת",
@@ -319,8 +313,8 @@
     "actionsHeader": "פעולות",
     "envelopeNone": "ללא שיוך",
     "confirm": "אישור",
-    "addButton": "הוספת הוצאה מתוכננת",
-    "deleteConfirmTitle": "למחוק את ההוצאה המתוכננת?",
+    "addButton": "הוספת הוצאה שוטפת",
+    "deleteConfirmTitle": "למחוק את ההוצאה השוטפת?",
     "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{title}}\". לא ניתן לבטל פעולה זו.",
     "deleteConfirmCalendarWarning": "ההוצאה הזו סונכרנה מיומן Google — ייתכן שתופיע שוב בסנכרון הבא.",
     "missingAmount": {
@@ -340,8 +334,61 @@
       "undoDismiss": "ביטול"
     }
   },
+  "onboarding": {
+    "title": "ברוכים הבאים ל-Buddgy",
+    "steps": {
+      "income": "הכנסות",
+      "categories": "קטגוריות"
+    },
+    "income": {
+      "heading": "כמה הכנסה חודשית נטו יש לך? אפשר להוסיף כמה מקורות.",
+      "totalLabel": "סך הכנסה חודשית",
+      "amountLabel": "סכום",
+      "addRow": "הוספת מקור הכנסה",
+      "removeRow": "הסרת שורה",
+      "continue": "המשך",
+      "defaultRows": {
+        "primarySalary": "משכורת ראשית",
+        "secondarySalary": "משכורת משנית",
+        "stipend": "קצבה/אחר"
+      },
+      "errors": {
+        "labelRequired": "יש להזין שם למקור ההכנסה",
+        "amountInvalid": "הסכום חייב להיות גדול מ-0"
+      }
+    },
+    "categories": {
+      "heading": "אילו קטגוריות תרצו להוסיף? אפשר לבחור כמה שרוצים, או לדלג ולהוסיף מאוחר יותר.",
+      "back": "חזרה",
+      "finish": "סיום",
+      "selectAll": "בחר הכל",
+      "deselectAll": "בטל הכל",
+      "suggestions": {
+        "housing": {
+          "label": "דיור ומגורים",
+          "options": { "rent": "שכירות", "mortgage": "משכנתא" }
+        },
+        "utilities": "חשבונות בית",
+        "transport": "רכב ותחבורה",
+        "insurance": "ביטוחים",
+        "dailyLiving": "מחיה ויומיום",
+        "selfCare": "טיפוח ופנאי",
+        "debtsAndLoans": "התחייבויות והלוואות",
+        "savings": "חיסכון והשקעות",
+        "events": "אירועים",
+        "vacations": "חופשות",
+        "general": "הוצאות כלליות"
+      }
+    }
+  },
+  "summaryBar": {
+    "income": "הכנסות",
+    "actualExpenses": "הוצאות בפועל",
+    "plannedExpenses": "תכנון הוצאות / צפוי",
+    "plannedSavingsBalance": "יתרה מתוכננת לחיסכון"
+  },
   "addPlannedExpenseModal": {
-    "title": "הוספת הוצאה מתוכננת",
+    "title": "הוספת הוצאה שוטפת",
     "titleLabel": "כותרת",
     "titlePlaceholder": "לדוגמה: שכר דירה",
     "amountLabel": "סכום",

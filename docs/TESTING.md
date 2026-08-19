@@ -38,7 +38,7 @@ These are specific to this domain and must exist regardless of what else is in f
 - Forecast math handles zero envelopes / zero planned expenses without throwing
 - Cross-user data isolation on every resource type
 
-Primary E2E flows: auth, envelope CRUD, quick-entry → confirm → save, CSV upload → mapping → import, calendar connect → sync → confirm.
+Primary E2E flows: auth, onboarding wizard, envelope CRUD, quick-entry → confirm → save, CSV upload → mapping → import, calendar connect → sync, planned expense confirm → transaction → envelope spent.
 
 ## Mocking Policy
 
