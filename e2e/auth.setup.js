@@ -11,12 +11,37 @@ const ADMIN_FILE = path.join(__dirname, '.auth', 'admin.json');
 // UI once per role and saves storageState, so every other spec starts
 // already authenticated instead of re-running the login form each time.
 // The login flow itself is still exercised fresh in auth.spec.js.
+//
+// OnboardingWizardModal (client/src/pages/DashboardPage.jsx) opens whenever
+// user.onboarding_completed_at is missing — which it always is, since the
+// backend hasn't shipped that column/route yet (see
+// client/src/utils/onboardingOverride.js). Its non-dismissible overlay would
+// otherwise intercept pointer events on every other spec's first dashboard
+// interaction (e.g. auth.spec.js's logout test). Seed the same
+// per-user-id localStorage override the app's own 404-fallback path writes,
+// so every spec that reuses this storageState starts past onboarding. The
+// wizard itself is exercised fresh, without this override, in
+// onboarding.spec.js.
+async function markOnboardingComplete(page) {
+  await page.evaluate(() => {
+    const token = localStorage.getItem('buddgy_token');
+    if (!token) return;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const KEY = 'buddgy_onboarding_override';
+    const raw = localStorage.getItem(KEY);
+    const overrides = raw ? JSON.parse(raw) : {};
+    overrides[payload.sub] = true;
+    localStorage.setItem(KEY, JSON.stringify(overrides));
+  });
+}
+
 async function loginAndSave(page, email, password, storageStatePath) {
   await page.goto('/login');
   await page.getByLabel(t.auth.emailLabel).fill(email);
   await page.getByLabel(t.auth.passwordLabel).fill(password);
   await page.getByRole('button', { name: t.auth.login.submit }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
+  await markOnboardingComplete(page);
   await page.context().storageState({ path: storageStatePath });
 }
 
