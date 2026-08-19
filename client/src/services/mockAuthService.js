@@ -62,7 +62,7 @@ export async function register({ email, password }) {
   assertPresent({ email, password });
   if (fakeUsers.has(email)) throw new Error('duplicate');
 
-  const user = { id: crypto.randomUUID(), email, role: 'user' };
+  const user = { id: crypto.randomUUID(), email, role: 'user', onboarding_completed_at: null };
   fakeUsers.set(email, { user, password });
   saveUsers(fakeUsers);
 
@@ -82,9 +82,9 @@ export async function login({ email, password }) {
   };
 }
 
-export async function me() {
-  await delay(150);
-
+// Shared by me() and completeOnboarding() — both need "which user is this
+// token for," so the token-decode-and-lookup lives in one place.
+function getCurrentUserRecord() {
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token) throw new Error('unauthorized');
 
@@ -97,6 +97,20 @@ export async function me() {
 
   const record = [...fakeUsers.values()].find((r) => r.user.id === payload.userId);
   if (!record) throw new Error('unauthorized');
+  return record;
+}
 
+export async function me() {
+  await delay(150);
+  return { user: withConnected(getCurrentUserRecord().user) };
+}
+
+export async function completeOnboarding() {
+  await delay(150);
+  const record = getCurrentUserRecord();
+  if (!record.user.onboarding_completed_at) {
+    record.user = { ...record.user, onboarding_completed_at: new Date().toISOString() };
+    saveUsers(fakeUsers);
+  }
   return { user: withConnected(record.user) };
 }

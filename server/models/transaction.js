@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
       envelope_id: { type: DataTypes.INTEGER },
       amount_agorot: { type: DataTypes.INTEGER, allowNull: false },
       description: { type: DataTypes.STRING(255) },
-      // 'quick_entry' | 'csv' | 'manual'
+      // 'quick_entry' | 'csv' | 'manual' | 'planned_expense'
       source: { type: DataTypes.STRING(20), allowNull: false },
       transaction_date: { type: DataTypes.DATEONLY, allowNull: false },
       // Computed from (user_id, amount_agorot, transaction_date, description)

@@ -68,12 +68,7 @@
     "monthMeta_other": "{{month}} · {{count}} days remaining"
   },
   "categoryManagement": {
-    "totalBudget": "Total Budget",
-    "totalSpent": "Total Spent",
     "remainingBalance": "Remaining Balance",
-    "totalPlannedExpenses": "Total Planned Expenses",
-    "totalEndOfMonthSpend": "Total End-of-Month Spend",
-    "remainingTotalBudget": "Remaining Total Budget",
     "projectedDeficitLabel": "Projected Deficit",
     "spentOf": "{{spent}} of {{budget}} spent",
     "deleteConfirmTitle": "Delete category?",
@@ -91,7 +86,6 @@
     "overByLabel": "Over by",
     "percentUsed": "{{percent}}% used",
     "envelopesHeading": "Envelopes",
-    "safeToSpend": "Safe to spend",
     "overallSpending": "Overall spending — {{month}}",
     "remainingOf": "{{remaining}} remaining of {{budget}}",
     "cardMenu": "Actions for {{name}}",
@@ -325,6 +319,59 @@
     "missingAmount": {
       "badge": "Missing amount"
     }
+  },
+  "onboarding": {
+    "title": "Welcome to Buddgy",
+    "steps": {
+      "income": "Income",
+      "categories": "Categories"
+    },
+    "income": {
+      "heading": "How much net monthly income do you have? You can add multiple sources.",
+      "totalLabel": "Total monthly income",
+      "amountLabel": "Amount",
+      "addRow": "Add income source",
+      "removeRow": "Remove row",
+      "continue": "Continue",
+      "defaultRows": {
+        "primarySalary": "Primary salary",
+        "secondarySalary": "Secondary salary",
+        "stipend": "Stipend/Other"
+      },
+      "errors": {
+        "labelRequired": "Enter a name for this income source",
+        "amountInvalid": "Amount must be greater than 0"
+      }
+    },
+    "categories": {
+      "heading": "Which categories would you like to add? Pick as many as you like, or skip and add them later.",
+      "back": "Back",
+      "finish": "Finish",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "suggestions": {
+        "housing": {
+          "label": "Housing",
+          "options": { "rent": "Rent", "mortgage": "Mortgage" }
+        },
+        "utilities": "Household bills",
+        "transport": "Car & transport",
+        "insurance": "Insurance",
+        "dailyLiving": "Daily living",
+        "selfCare": "Self-care & leisure",
+        "debtsAndLoans": "Debts & loans",
+        "savings": "Savings & investments",
+        "events": "Events",
+        "vacations": "Vacations",
+        "general": "General expenses"
+      }
+    }
+  },
+  "summaryBar": {
+    "income": "Income",
+    "actualExpenses": "Actual expenses",
+    "plannedExpenses": "Planned/projected expenses",
+    "plannedSavingsBalance": "Planned savings balance"
   },
   "addPlannedExpenseModal": {
     "title": "Add planned expense",

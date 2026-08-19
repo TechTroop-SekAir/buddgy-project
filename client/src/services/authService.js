@@ -16,7 +16,11 @@ async function me() {
   return api.get('/auth/me');
 }
 
-const realAuthService = { register, login, me };
+async function completeOnboarding() {
+  return api.patch('/auth/onboarding');
+}
+
+const realAuthService = { register, login, me, completeOnboarding };
 
 // VITE_USE_MOCK_API gates which implementation callers get — AuthContext and
 // the auth pages only ever call `authService.*` and never know which one is

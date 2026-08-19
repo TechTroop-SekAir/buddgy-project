@@ -15,6 +15,9 @@ module.exports = (sequelize, DataTypes) => {
       is_confirmed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
       // 'calendar' | 'manual'
       source: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'calendar' },
+      // The transaction created when this row was confirmed — see
+      // plannedExpenseService.js's update(). Null until confirmed.
+      transaction_id: { type: DataTypes.INTEGER },
     },
     {
       tableName: 'planned_expenses',

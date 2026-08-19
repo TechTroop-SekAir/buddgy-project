@@ -81,6 +81,54 @@ describe('GET /api/forecast', () => {
     expect(res.body.data.projectedBalanceAgorot).toBe(100000);
   });
 
+  it('confirming a planned expense via the endpoint counts it once as actual spend, not also as planned', async () => {
+    const user = await createUser();
+    const food = await createEnvelope({ user_id: user.id, name: 'Food', monthly_budget_agorot: 100000, month: '2026-08-01' });
+    const bill = await createPlannedExpense({
+      user_id: user.id,
+      envelope_id: food.id,
+      amount_agorot: 30000,
+      due_date: '2026-08-18',
+      is_confirmed: false,
+    });
+
+    const confirmRes = await request(app)
+      .patch(`/api/planned-expenses/${bill.id}`)
+      .set('Authorization', authHeader(user))
+      .send({ is_confirmed: true });
+    expect(confirmRes.status).toBe(200);
+    expect(confirmRes.body.data.transaction_id).not.toBeNull();
+
+    const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader(user));
+
+    expect(res.body.data.totalActualSpentAgorot).toBe(30000);
+    // Not double-counted — the confirmed row is now linked to a real
+    // transaction, so it's excluded from the "planned" sum.
+    expect(res.body.data.totalPlannedExpensesAgorot).toBe(0);
+    expect(res.body.data.totalEndOfMonthSpendAgorot).toBe(30000);
+    expect(res.body.data.projectedBalanceAgorot).toBe(70000);
+  });
+
+  it('a confirmed planned expense not yet linked to a transaction is still counted as planned (legacy/manual state)', async () => {
+    const user = await createUser();
+    const envelope = await createEnvelope({ user_id: user.id, monthly_budget_agorot: 100000, month: '2026-08-01' });
+    // Constructed directly via the fixture, bypassing the PATCH endpoint —
+    // simulates a row confirmed before the transaction_id link existed.
+    await createPlannedExpense({
+      user_id: user.id,
+      envelope_id: envelope.id,
+      amount_agorot: 40000,
+      due_date: '2026-08-18',
+      is_confirmed: true,
+      transaction_id: null,
+    });
+
+    const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader(user));
+
+    expect(res.body.data.totalActualSpentAgorot).toBe(0);
+    expect(res.body.data.totalPlannedExpensesAgorot).toBe(40000);
+  });
+
   it('counts an unassigned transaction toward the overall total but not against any envelope', async () => {
     const user = await createUser();
     const envelope = await createEnvelope({ user_id: user.id, monthly_budget_agorot: 20000, month: '2026-08-01' });

@@ -75,6 +75,10 @@ async function createPlannedExpense(overrides = {}) {
     google_event_id: overrides.google_event_id ?? unique('evt'),
     is_confirmed: overrides.is_confirmed ?? false,
     source: overrides.source ?? 'calendar',
+    // The transaction this row spawned when confirmed — see
+    // plannedExpenseService.js's update(). Lets a test construct the
+    // "already linked" state directly, without going through the endpoint.
+    transaction_id: overrides.transaction_id ?? null,
   });
 }
 
