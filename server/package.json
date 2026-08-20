@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.37",
+    "@ai-sdk/google": "^2.0.88",
     "ai": "^7.0.59",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.10.0",
