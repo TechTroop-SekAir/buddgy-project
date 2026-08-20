@@ -114,16 +114,23 @@ Mirrors `forecastService`'s existing choice to keep `recommendation` a structure
 > **`explanationKey`**: a locale key, not a Hebrew sentence. The server has no locale context
 > (`client/CLAUDE.md` § i18n forbids server-authored user-facing strings), so this leans on the
 > exact same structured-data pattern `recommendation` already uses, one level further —
-> `client/src/locales/{he,en}.json`'s `advisor.reply.*` resolves it. Carry this through when
-> A-21 builds the real verdict: pick/construct an `explanationKey`, don't return prose.
+> `client/src/locales/{he,en}.json`'s `advisor.reply.*` resolves it. **A-21 landed this as a fixed
+> 5-value enum**, mapped from `{verdict, amountAgorot, suggestion}` in `advisorService.js#mapExplanationKey`:
+> `advisor.reply.inBudget`, `.inBudgetStatus` (no concrete amount asked about), `.nearLimit`,
+> `.overBudgetWithSuggestion`, `.overBudgetNoSuggestion`. Each key is static per case — all dynamic
+> data (amount, balance, envelope name, cut) rides in the response's own structured fields, which
+> the client interpolates client-side (`PromptBar.jsx`), same as `forecast.recommendation`.
 
 ### New/changed files
 
-- `server/services/advisorService.js` — **transport shipped, agent brain not yet.** `ask(userId, text)`
-  currently just logs to `ai_calls` (`kind: 'budget_advisor'`) and returns a fixed placeholder
-  verdict. **Remaining A-21 scope:** replace the function body with the tool-use loop (tool
-  definitions, `claudeService` calls, envelope-ID revalidation) — signature and response
-  contract are frozen, don't change them.
+- `server/services/advisorService.js` — **done (A-21).** `ask(userId, text)` runs a read-only
+  tool-use loop (`get_envelopes`, `get_forecast`, `get_recent_transactions`, capped at 3 steps via
+  `claudeService.js#runToolLoop`), with envelope-id revalidation and JS-side money math — signature
+  and response contract unchanged from the placeholder.
+- `server/services/claudeService.js` — **done (A-21, absorbing C-11's harness scope).** No separate
+  C-11 ticket was run; A-21 added the shared `runToolLoop()` tool-calling helper (Vercel AI SDK
+  `generateText` + `stopWhen`) directly, general enough for a future Calendar Conflict agent to
+  reuse unchanged.
 - `server/controllers/advisorController.js`, `server/routes/advisor.js` — done: thin controller,
   router-level `requireAuth`, real `validate()` entry (`POST /api/advisor/ask`, 1–500 chars).
 - `client/src/components/advisor/PromptBar.jsx` — done: the floating prompt bar (all six
@@ -218,6 +225,14 @@ Same bar as every other ticket in [`PLAN.md`](../PLAN.md#definition-of-done), ap
 | Ticket | Owner | Core agentic piece | Sub-mission |
 |---|---|---|---|
 | **C-11** | Ofek | The tool-use harness in `claudeService.js` itself — the actual agent loop (Vercel AI SDK tool calling, tool-call/tool-result round-trips, iteration cap), model migration off `claude-3-5-sonnet-20241022` → `claude-sonnet-5`, `ai_calls` logging for the new `kind` values. This is the infrastructure both agents below are built on. | Migrations: `planned_expenses` conflict columns + `ai_calls.kind` values (small, self-contained, no agent logic) |
+
+> **Implemented deviation:** C-11 was never run as a separate ticket. When A-21 picked up work, the
+> model migration to `claude-sonnet-5` had already landed (all three existing `claudeService.js`
+> functions were already on it), but no tool-use harness existed yet. A-21 absorbed that scope
+> directly — adding `runToolLoop()` (Vercel AI SDK `generateText` + `stopWhen`, 3-step default cap)
+> to `claudeService.js` as part of building the Budget Advisor — rather than waiting on a separate
+> ticket. `runToolLoop()` is written domain-agnostic, so B-11 (Calendar Conflict, not yet built) can
+> reuse it unchanged when picked up.
 
 **Agent owners (each builds on C-11):**
 

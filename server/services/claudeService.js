@@ -1,6 +1,6 @@
 'use strict';
 
-const { generateObject } = require('ai');
+const { generateObject, generateText, stepCountIs, hasToolCall } = require('ai');
 const { createAnthropic } = require('@ai-sdk/anthropic');
 const { z } = require('zod');
 const { AiCall } = require('../models');
@@ -31,6 +31,17 @@ const EVENT_COST_MAX_TOKENS = 4000;
 // A stalled connection must fail fast, not hang the request indefinitely —
 // docs/INTEGRATIONS.md § Failure Handling.
 const CLAUDE_TIMEOUT_MS = 15000;
+// Shared default step cap for every tool-use agent (Budget Advisor via
+// A-21, Calendar Conflict later) — bounds latency/cost per
+// docs/features/AGENTS.md § Risks ("cap tool calls per request, e.g. max 3
+// loop iterations"). A caller may pass its own `stopWhen` to override.
+const TOOL_LOOP_DEFAULT_MAX_STEPS = 3;
+// A tool loop spends output tokens across every step (tool-call JSON plus
+// the eventual final answer), not one shot like generateObject — start
+// conservative, re-verify against real ai_calls traffic once this ships
+// (same caveat EVENT_COST_MAX_TOKENS's comment above flags for a different
+// function).
+const TOOL_LOOP_MAX_TOKENS = 2048;
 
 function loadApiKey() {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -260,4 +271,50 @@ async function classifyEventCostLikelihood(userId, events) {
   return object.events.filter((e) => validEventIds.has(e.google_event_id));
 }
 
-module.exports = { parseQuickEntry, detectColumnMapping, classifyEventCostLikelihood, logAiCall };
+/**
+ * Generic read-only tool-use loop wrapping generateText — shared
+ * infrastructure for every tool-calling agent under docs/features/AGENTS.md
+ * (Budget Advisor via A-21; a future Calendar Conflict agent reuses this
+ * unchanged). Callers own their own tool definitions, system/prompt text,
+ * and how they interpret the result — this only owns the model call itself
+ * (model id, step cap, timeout, abortSignal), the same plumbing every other
+ * function in this file already centralizes.
+ *
+ * Unlike parseQuickEntry/detectColumnMapping/classifyEventCostLikelihood,
+ * this does NOT call logAiCall or throw AppError — a tool loop has a
+ * failure mode those don't (the SDK call succeeds, but the step cap is hit
+ * with no usable final tool call), which only the caller can detect, so the
+ * caller owns the full success/failure verdict and logs accordingly. Errors
+ * from generateText itself (timeout, malformed tool input, rate limit)
+ * propagate uncaught, same as every other function here's failure contract.
+ *
+ * @param {{ system: string, prompt: string, tools: object, stopWhen?: unknown, maxOutputTokens?: number }} params
+ */
+async function runToolLoop({ system, prompt, tools, stopWhen, maxOutputTokens = TOOL_LOOP_MAX_TOKENS }) {
+  return generateText({
+    model: anthropic(MODEL_ID),
+    system,
+    prompt,
+    tools,
+    stopWhen: stopWhen ?? stepCountIs(TOOL_LOOP_DEFAULT_MAX_STEPS),
+    maxOutputTokens,
+    abortSignal: AbortSignal.timeout(CLAUDE_TIMEOUT_MS),
+  });
+}
+
+// Re-exported so callers building a `stopWhen` for runToolLoop (e.g.
+// advisorService.js's `[stepCountIs(N), hasToolCall('provide_verdict')]`)
+// never need their own `require('ai')` — this file is the only place in the
+// codebase that touches the `ai` package directly, which matters in tests:
+// any file that mocks `../services/claudeService` wholesale (the existing
+// pattern every controller-adjacent test already uses) stays insulated from
+// `ai`'s ESM-only build without also having to mock `ai` itself.
+module.exports = {
+  parseQuickEntry,
+  detectColumnMapping,
+  classifyEventCostLikelihood,
+  logAiCall,
+  runToolLoop,
+  stepCountIs,
+  hasToolCall,
+};

@@ -2,6 +2,20 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionIcon, Alert, Icon, TextInput } from '../ui';
 import { useAdvisorPrompt } from '../../hooks/useAdvisorPrompt';
+import { formatShekels } from '../../utils/money';
+
+// explanationKey is a static locale key per verdict category (never a
+// sentence — server has no locale context, client/CLAUDE.md § i18n) with
+// all dynamic data riding along in the response's own structured fields,
+// same pattern as forecast.recommendation (ForecastBanner.jsx).
+function replyText(t, message) {
+  return t(message.explanationKey, {
+    amount: message.amountAgorot != null ? formatShekels(message.amountAgorot) : undefined,
+    balance: message.projectedBalanceAfterAgorot != null ? formatShekels(message.projectedBalanceAfterAgorot) : undefined,
+    cutAmount: message.suggestion ? formatShekels(message.suggestion.cutAgorot) : undefined,
+    envelope: message.suggestion?.envelopeName,
+  });
+}
 
 // Floating AI prompt bar, shown on every authenticated page (AppShellLayout).
 // Translated (not copied) from docs/design-ref/DashboardPage.tsx.md's mock —
@@ -51,7 +65,7 @@ export function PromptBar() {
                       {t('advisor.title')}
                     </p>
                   )}
-                  {m.role === 'user' ? m.text : t(m.replyKey)}
+                  {m.role === 'user' ? m.text : replyText(t, m)}
                 </div>
               </div>
             ))}
