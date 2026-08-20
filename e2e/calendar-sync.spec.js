@@ -25,7 +25,12 @@ test('connects the calendar and syncs planned expenses', async ({ page }) => {
   await expect(page.getByRole('button', { name: t.calendar.connect })).toBeVisible();
   await page.getByRole('button', { name: t.calendar.connect }).click();
 
-  await expect(page).toHaveURL(/calendar=connected/);
+  // Not asserting on the intermediate `?calendar=connected` URL here: the
+  // connect flow does a full page reload to that URL, but SettingsPage's own
+  // mount effect strips the query param again via history.replace within
+  // ~30ms of mounting — a window too small for toHaveURL's polling to catch
+  // reliably (confirmed by instrumenting the real timings). The banner/badge
+  // below are the actual outcome that matters and are stable once shown.
   await expect(page.getByText(t.calendar.callbackSuccess)).toBeVisible();
   await expect(page.getByText(t.calendar.connected, { exact: true })).toBeVisible();
 
