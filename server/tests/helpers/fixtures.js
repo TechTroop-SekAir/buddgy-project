@@ -79,6 +79,14 @@ async function createPlannedExpense(overrides = {}) {
     // plannedExpenseService.js's update(). Lets a test construct the
     // "already linked" state directly, without going through the endpoint.
     transaction_id: overrides.transaction_id ?? null,
+    // 'likely' (not the model's 'unknown' default) so a fixture-created row
+    // is a normal planned expense a test can rely on, including surfacing in
+    // forecastService.js's missingAmountPlannedExpenses query, which gates
+    // on cost_likelihood: 'likely' (docs/features/UPCOMING-EVENTS.md §
+    // Forecast Impact). Override to 'unknown'/'unlikely' to construct the
+    // calendar-classifier's other states on purpose.
+    cost_likelihood: overrides.cost_likelihood ?? 'likely',
+    is_dismissed: overrides.is_dismissed ?? false,
   });
 }
 

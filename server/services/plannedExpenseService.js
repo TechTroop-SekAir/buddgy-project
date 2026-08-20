@@ -40,6 +40,13 @@ async function create(userId, { envelope_id = null, title, amount_agorot, due_da
     google_event_id: null,
     is_confirmed: false,
     source: 'manual',
+    // A manually-added row is unambiguously something the user wants
+    // tracked — unlike a calendar-synced row, which is what
+    // cost_likelihood's 'unknown' default and forecastService.js's
+    // missing-amount filter were designed to gate on (docs/features/
+    // UPCOMING-EVENTS.md § Forecast Impact). Without this, a manual entry
+    // with no amount yet silently never appears in MissingAmountPrompt.
+    cost_likelihood: 'likely',
   });
   return plannedExpense.get({ plain: true });
 }
