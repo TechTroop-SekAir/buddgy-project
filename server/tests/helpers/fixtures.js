@@ -8,7 +8,7 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User, Envelope, Transaction, PlannedExpense, Category, CsvImport } = require('../../models');
+const { User, Envelope, Transaction, PlannedExpense, CsvImport } = require('../../models');
 
 const FIXTURE_PASSWORD = 'password123';
 const BCRYPT_ROUNDS = 12; // matches server/services/authService.js
@@ -82,15 +82,6 @@ async function createPlannedExpense(overrides = {}) {
   });
 }
 
-async function createCategory(overrides = {}) {
-  return Category.create({
-    name_he: overrides.name_he ?? 'מזון',
-    name_en: overrides.name_en ?? unique('Food'),
-    color: overrides.color ?? '#f97316',
-    is_active: overrides.is_active ?? true,
-  });
-}
-
 async function createCsvImport(overrides = {}) {
   return CsvImport.create({
     user_id: overrides.user_id,
@@ -112,7 +103,6 @@ module.exports = {
   createEnvelope,
   createTransaction,
   createPlannedExpense,
-  createCategory,
   createCsvImport,
   authHeader,
 };

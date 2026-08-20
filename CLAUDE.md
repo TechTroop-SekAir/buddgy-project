@@ -11,7 +11,7 @@
 **App:** Buddgy
 **Purpose:** A monthly budgeting app built on the Envelope Budgeting method. Users pre-allocate a budget to spending "envelopes" and track balances via AI-parsed free-text entry, CSV import, and Google Calendar sync of upcoming planned expenses, with forward-looking cash-flow forecasts.
 **Stage:** MVP
-**Users:** Guest (landing page, method explanation, read-only demo), Registered User (envelopes, transactions, imports, calendar sync, forecasts), Admin (global category catalog, user management, usage stats)
+**Users:** Guest (landing page, method explanation, read-only demo), Registered User (envelopes, transactions, imports, calendar sync, forecasts), Admin (user management, usage stats)
 
 ---
 

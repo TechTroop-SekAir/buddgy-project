@@ -69,9 +69,7 @@
     "monthMeta_other": "{{month}} · נותרו {{count}} ימים"
   },
   "categoryManagement": {
-    "remainingBalance": "יתרה נותרת",
     "projectedDeficitLabel": "גירעון צפוי",
-    "spentOf": "{{spent}} מתוך {{budget}} נוצלו",
     "deleteConfirmTitle": "למחוק את הקטגוריה?",
     "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\". לא ניתן לבטל פעולה זו.",
     "status": {
@@ -86,7 +84,7 @@
     "leftLabel": "נותר",
     "overByLabel": "חריגה של",
     "percentUsed": "{{percent}}% נוצלו",
-    "envelopesHeading": "מעטפות",
+    "heading": "קטגוריות",
     "overallSpending": "הוצאות סה״כ — {{month}}",
     "remainingOf": "{{remaining}} מתוך {{budget}} נותרו",
     "cardMenu": "פעולות עבור {{name}}",
@@ -185,16 +183,6 @@
       "retry": "ניסיון נוסף"
     }
   },
-"categories": {
-    "housing": "דיור",
-    "groceries": "מזון וקניות",
-    "utilities": "חשבונות וחשמל",
-    "transport": "תחבורה",
-    "healthcare": "בריאות",
-    "diningOut": "מסעדות",
-    "entertainment": "בידור",
-    "shopping": "קניות"
-  },
   "errors": {
     "unauthorized": "אימייל או סיסמה שגויים.",
     "duplicate": "קיים כבר חשבון עם כתובת אימייל זו.",
@@ -210,8 +198,6 @@
       "amountAgorot": "הסכום חייב להיות גדול מ-0",
       "transactionDate": "יש להזין תאריך תקין",
       "description": "יש להזין תיאור",
-      "nameHe": "נדרש שם בעברית (עד 80 תווים)",
-      "nameEn": "נדרש שם באנגלית (עד 80 תווים)",
       "color": "הצבע חייב להיות קוד הקסדצימלי תקין, לדוגמה #f97316"
     }
   },
@@ -406,24 +392,8 @@
   "admin": {
     "title": "פאנל ניהול",
     "tabs": {
-      "categories": "קטגוריות",
       "users": "משתמשים",
       "stats": "סטטיסטיקות"
-    },
-    "categories": {
-      "addButton": "הוספת קטגוריה",
-      "loading": "טוען קטגוריות…",
-      "empty": "אין עדיין קטגוריות בקטלוג.",
-      "error": "לא הצלחנו לטעון את הקטגוריות. יש לנסות שוב.",
-      "nameHeHeader": "שם בעברית",
-      "nameEnHeader": "שם באנגלית",
-      "colorHeader": "צבע",
-      "statusHeader": "סטטוס",
-      "actionsHeader": "פעולות",
-      "activeBadge": "פעילה",
-      "inactiveBadge": "לא פעילה",
-      "deleteConfirmTitle": "למחוק את הקטגוריה?",
-      "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{name}}\" מהקטלוג הגלובלי. לא ניתן לבטל פעולה זו."
     },
     "users": {
       "loading": "טוען משתמשים…",

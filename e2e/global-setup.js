@@ -15,6 +15,6 @@ module.exports = async function globalSetup() {
   console.log('[e2e/global-setup] migrating buddgy_e2e...');
   execFileSync('npm', ['run', 'db:migrate'], { cwd: SERVER_DIR, env, stdio: 'inherit', shell: true });
 
-  console.log('[e2e/global-setup] seeding base accounts + category catalog...');
+  console.log('[e2e/global-setup] seeding base accounts...');
   execFileSync('node', ['seed.js'], { cwd: SERVER_DIR, env, stdio: 'inherit' });
 };

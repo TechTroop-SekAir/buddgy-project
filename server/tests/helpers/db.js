@@ -16,7 +16,7 @@ const { sequelize } = require('../../models');
 // snake_case, plural table names — must match server/models/index.js's
 // registered models. Order doesn't matter: TRUNCATE ... CASCADE in one
 // statement handles FKs among the listed tables regardless of order.
-const TABLES = ['ai_calls', 'csv_imports', 'planned_expenses', 'transactions', 'envelopes', 'categories', 'users'];
+const TABLES = ['ai_calls', 'csv_imports', 'planned_expenses', 'transactions', 'envelopes', 'users'];
 
 function assertTestDatabase() {
   const { database } = sequelize.config;

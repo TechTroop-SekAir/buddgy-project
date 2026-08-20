@@ -35,7 +35,7 @@ Buddgy is a monthly budgeting app built on the Envelope Budgeting method: the us
 
 - **Guest** — Not logged in. Can view the landing page, the method explanation, and a read-only demo.
 - **Registered User** — The core user of the system. Manages envelopes, transactions, imports and forecasts.
-- **Admin** — System administrator. Manages the global category catalog and users.
+- **Admin** — System administrator. Manages users and views usage stats.
 
 ## Use Cases (Per User)
 
@@ -64,7 +64,6 @@ Has all Guest use cases, plus:
 
 Has all Registered User use cases, plus:
 
-- Manage the global category catalog used by the classification engine
 - View the user list and disable a user
 - View basic usage statistics (number of users, transactions created, AI calls)
 
