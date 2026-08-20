@@ -3,10 +3,10 @@ const { test, expect } = require('@playwright/test');
 const { t } = require('./helpers/locale');
 
 // This file intentionally does NOT set a default storageState — auth.setup.js
-// seeds a buddgy_onboarding_override for the shared user/admin storageState
+// completes onboarding server-side for the shared user/admin storageState
 // files so the rest of the suite never sees this modal (see its comment).
-// This spec needs a genuinely fresh user, with no override yet, so the
-// modal is guaranteed to open — same reasoning as auth.spec.js's
+// This spec needs a genuinely fresh user, with no onboarding_completed_at
+// yet, so the modal is guaranteed to open — same reasoning as auth.spec.js's
 // "registers a new user" test, which stops at the URL assertion and never
 // exercises the wizard itself.
 test('completes the onboarding wizard after first registration', async ({ page }) => {
@@ -33,15 +33,23 @@ test('completes the onboarding wizard after first registration', async ({ page }
   await modal.getByLabel(transportLabel, { exact: true }).check();
   await modal.getByRole('button', { name: t.onboarding.categories.finish }).click();
 
-  // Finishing calls a real income replace + real category creates, then
-  // falls back to the local override on the (expected) 404 from the
-  // completion PATCH — see auth.setup.js's comment. Either way the modal
-  // must close and the chosen categories must show up as envelope cards.
+  // Finishing calls a real income replace, real category creates, and the
+  // real PATCH /api/auth/onboarding — server/services/authService.js's
+  // completeOnboarding(). The modal closes and the chosen categories show
+  // up as envelope cards.
   await expect(modal).toBeHidden();
   await expect(page.getByText(housingLabel, { exact: true })).toBeVisible();
   await expect(page.getByText(transportLabel, { exact: true })).toBeVisible();
 
-  // Reload to prove the override persisted — the wizard must not reopen.
+  // Prove server-side persistence, not a client-local flag: clear all
+  // localStorage (dropping only the JWT, which persistence must not depend
+  // on) and reload — the wizard must not reopen. Before the onboarding
+  // backend shipped, this was the one assertion the client couldn't pass:
+  // completion lived only in localStorage, so it was per-browser, not
+  // per-account.
+  const token = await page.evaluate(() => localStorage.getItem('buddgy_token'));
+  await page.evaluate(() => localStorage.clear());
+  await page.evaluate((savedToken) => localStorage.setItem('buddgy_token', savedToken), token);
   await page.reload();
   await expect(page.getByRole('heading', { name: t.onboarding.title })).toBeHidden();
 });

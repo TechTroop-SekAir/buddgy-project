@@ -69,6 +69,12 @@ export function PlannedExpensesPage() {
     },
   });
 
+  // A recurring submission is N independent creates (one row per month,
+  // same non-atomic Promise.all pattern DashboardPage.jsx's onboardingMutation
+  // uses for creating several envelopes from one user action) — not a single
+  // bulk-create endpoint, since each row is fully independent afterward.
+  const createPlannedExpenses = (payloads) => Promise.all(payloads.map((payload) => createMutation.mutateAsync(payload)));
+
   const deleteMutation = useMutation({
     mutationFn: (id) => plannedExpenseService.remove(id),
     onSuccess: () => {
@@ -114,7 +120,7 @@ export function PlannedExpensesPage() {
         opened={isAddOpen}
         categoryOptions={categoryOptions}
         onClose={() => setIsAddOpen(false)}
-        onSubmit={(payload) => createMutation.mutateAsync(payload)}
+        onSubmit={createPlannedExpenses}
       />
 
       {isCategoriesError && <Alert className="mt-4">{t('plannedExpenses.categoriesError')}</Alert>}

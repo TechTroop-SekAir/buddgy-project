@@ -20,7 +20,6 @@ import authService from '../services/authService';
 import { getCurrentMonth } from '../utils/month';
 import { getDaysRemainingInMonth, getMonthLabel } from '../utils/date';
 import { sortCategoriesBySpent } from '../utils/categoryStatus';
-import { hasLocalOnboardingOverride, setLocalOnboardingOverride } from '../utils/onboardingOverride';
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -115,12 +114,6 @@ export function DashboardPage() {
   // marked complete with no income persisted. monthly_budget_agorot: 1 is a
   // placeholder (server rejects 0) — formatShekelsRounded() displays it as
   // ₪0 everywhere, matching the real intent of "no budget set yet."
-  //
-  // incomeService.replace() already falls back to the mock on a 404 (backend
-  // route not shipped yet) internally — see incomeService.js. The
-  // onboarding-completion route has no such service-level fallback (its mock
-  // counterpart can't stand in for a real-mode user — see
-  // utils/onboardingOverride.js), so that one's still handled here.
   const onboardingMutation = useMutation({
     mutationFn: async ({ incomeRows, selectedCategories }) => {
       await incomeService.replace(user.id, month, incomeRows);
@@ -131,13 +124,8 @@ export function DashboardPage() {
         )
       );
 
-      try {
-        await authService.completeOnboarding();
-        await refreshUser();
-      } catch (err) {
-        if (err.status !== 404) throw err;
-        setLocalOnboardingOverride(user.id);
-      }
+      await authService.completeOnboarding();
+      await refreshUser();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -265,7 +253,7 @@ export function DashboardPage() {
       />
 
       <OnboardingWizardModal
-        opened={!user?.onboarding_completed_at && !hasLocalOnboardingOverride(user?.id)}
+        opened={!user?.onboarding_completed_at}
         onFinish={(payload) => onboardingMutation.mutateAsync(payload)}
       />
     </div>

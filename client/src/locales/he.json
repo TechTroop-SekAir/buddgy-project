@@ -317,6 +317,7 @@
     "deleteConfirmTitle": "למחוק את ההוצאה השוטפת?",
     "deleteConfirmBody": "פעולה זו תמחק לצמיתות את \"{{title}}\". לא ניתן לבטל פעולה זו.",
     "deleteConfirmCalendarWarning": "ההוצאה הזו סונכרנה מיומן Google — ייתכן שתופיע שוב בסנכרון הבא.",
+    "deleteConfirmConfirmedWarning": "ההוצאה הזו מאושרת — מחיקתה תמחק גם את התנועה המקושרת אליה ותסיר אותה מההוצאות שלך.",
     "missingAmount": {
       "badge": "סכום חסר"
     },
@@ -392,12 +393,14 @@
     "titleLabel": "כותרת",
     "titlePlaceholder": "לדוגמה: שכר דירה",
     "amountLabel": "סכום",
-    "dueDateLabel": "תאריך יעד",
+    "endDateLabel": "לחזור עד",
+    "endDateHint": "יוצר הוצאה שוטפת אחת לכל חודש, החל מהחודש הנוכחי ועד לחודש שנבחר.",
     "envelopeLabel": "קטגוריה",
     "submit": "הוספה",
     "titleRequired": "יש להזין כותרת",
     "amountInvalid": "הסכום חייב להיות גדול מ-0",
-    "dueDateRequired": "יש לבחור תאריך יעד",
+    "endDateRequired": "יש לבחור מתי ההוצאה החוזרת מסתיימת",
+    "endDateBeforeToday": "תאריך הסיום חייב להיות היום או מאוחר יותר",
     "noCategoriesHint": "עדיין אין לך קטגוריות — אפשר לשמור גם בלי לבחור אחת."
   },
   "admin": {

@@ -1,7 +1,7 @@
 'use strict';
 
 const { Op } = require('sequelize');
-const { Transaction, Envelope } = require('../models');
+const { Transaction, Envelope, PlannedExpense, sequelize } = require('../models');
 const AppError = require('../utils/AppError');
 const { normalizeMonth } = require('./envelopeService');
 const { monthRange } = require('../utils/month');
@@ -60,8 +60,12 @@ async function create(userId, { envelope_id = null, amount_agorot, description, 
   return transaction.get({ plain: true });
 }
 
-async function findOwned(userId, id) {
-  const transaction = await Transaction.findOne({ where: { id, user_id: userId }, attributes: PUBLIC_ATTRIBUTES });
+async function findOwned(userId, id, { transaction: dbTransaction } = {}) {
+  const transaction = await Transaction.findOne({
+    where: { id, user_id: userId },
+    attributes: PUBLIC_ATTRIBUTES,
+    transaction: dbTransaction,
+  });
   if (!transaction) throw new AppError('not found', 404);
   return transaction;
 }
@@ -82,10 +86,27 @@ async function update(userId, id, patch) {
   return transaction.get({ plain: true });
 }
 
+/**
+ * If this transaction is the one a planned expense's confirm created
+ * (plannedExpenseService.js's update()), deleting it here must not leave
+ * that row stuck at is_confirmed: true with a now-dangling transaction_id
+ * (the FK is ON DELETE SET NULL, so the id alone would go stale silently).
+ * Reverting to unconfirmed makes the row re-confirmable and lets
+ * forecastService's transaction_id: null filter treat it as genuinely
+ * unconfirmed rather than re-counting it as still-planned spend.
+ */
 async function remove(userId, id) {
-  const transaction = await findOwned(userId, id);
-  await transaction.destroy();
-  return { id: transaction.id };
+  return sequelize.transaction(async (t) => {
+    const transaction = await findOwned(userId, id, { transaction: t });
+
+    await PlannedExpense.update(
+      { is_confirmed: false, transaction_id: null },
+      { where: { transaction_id: id, user_id: userId }, transaction: t }
+    );
+
+    await transaction.destroy({ transaction: t });
+    return { id: transaction.id };
+  });
 }
 
 module.exports = { list, create, update, remove };

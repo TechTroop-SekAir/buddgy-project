@@ -1,26 +1,15 @@
 import api from './api';
 import * as mockIncomeService from './mockIncomeService';
 
-// Backend routes for this resource may not exist yet — the client is built
-// to the agreed contract ahead of the backend shipping it. A 404 here isn't
-// a real failure, so each function falls back to the mock (localStorage)
-// implementation instead of surfacing an error to the caller.
+// Real implementation, backed by server/routes/income.js. api.js's response
+// interceptor already unwraps the { data, error } envelope, so these
+// resolve directly to { rows, total_agorot }.
 async function list(userId, month) {
-  try {
-    return await api.get('/income-sources', { params: { month } });
-  } catch (err) {
-    if (err.status !== 404) throw err;
-    return mockIncomeService.list(userId, month);
-  }
+  return api.get('/income-sources', { params: { month } });
 }
 
 async function replace(userId, month, rows) {
-  try {
-    return await api.put('/income-sources', { month, rows });
-  } catch (err) {
-    if (err.status !== 404) throw err;
-    return mockIncomeService.replace(userId, month, rows);
-  }
+  return api.put('/income-sources', { month, rows });
 }
 
 const realIncomeService = { list, replace };

@@ -69,6 +69,14 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
     }
   };
 
+  // Deleting a confirmed row deletes its linked transaction too (mirrors
+  // unconfirm) — warn before that money silently disappears from the ledger.
+  const deleteWarningKey = plannedExpense.is_confirmed
+    ? 'plannedExpenses.deleteConfirmConfirmedWarning'
+    : plannedExpense.source === 'calendar'
+      ? 'plannedExpenses.deleteConfirmCalendarWarning'
+      : null;
+
   return (
     <Table.Tr>
       <Table.Td className="text-start">{formatDate(plannedExpense.due_date)}</Table.Td>
@@ -117,7 +125,7 @@ export function PlannedExpenseRow({ plannedExpense, categoryOptions, onReassign,
         opened={deleteConfirmOpen}
         title={t('plannedExpenses.deleteConfirmTitle')}
         body={t('plannedExpenses.deleteConfirmBody', { title: plannedExpense.title })}
-        warning={plannedExpense.source === 'calendar' ? t('plannedExpenses.deleteConfirmCalendarWarning') : null}
+        warning={deleteWarningKey ? t(deleteWarningKey) : null}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         loading={isDeleting}

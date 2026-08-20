@@ -129,6 +129,37 @@ describe('GET /api/forecast', () => {
     expect(res.body.data.totalPlannedExpensesAgorot).toBe(40000);
   });
 
+  it('deleting a confirm-created transaction drops both actual and planned totals, not one while the other rises', async () => {
+    const user = await createUser();
+    const food = await createEnvelope({ user_id: user.id, name: 'Food', monthly_budget_agorot: 100000, month: '2026-08-01' });
+    const bill = await createPlannedExpense({
+      user_id: user.id,
+      envelope_id: food.id,
+      amount_agorot: 30000,
+      due_date: '2026-08-18',
+      is_confirmed: false,
+    });
+    const confirmRes = await request(app)
+      .patch(`/api/planned-expenses/${bill.id}`)
+      .set('Authorization', authHeader(user))
+      .send({ is_confirmed: true });
+    const transactionId = confirmRes.body.data.transaction_id;
+
+    await request(app).delete(`/api/transactions/${transactionId}`).set('Authorization', authHeader(user));
+
+    const res = await request(app).get('/api/forecast?month=2026-08').set('Authorization', authHeader(user));
+
+    // Pre-fix bug: totalActualSpentAgorot dropped to 0 but totalPlannedExpensesAgorot
+    // rose to 30000 (the ON DELETE SET NULL left is_confirmed: true, transaction_id:
+    // null, which matched the "planned" filter) — net effect on the forecast was
+    // zero, so the delete appeared to do nothing. Both must be 0 now: the revert
+    // in transactionService.js's remove() also flips is_confirmed to false.
+    expect(res.body.data.totalActualSpentAgorot).toBe(0);
+    expect(res.body.data.totalPlannedExpensesAgorot).toBe(0);
+    expect(res.body.data.totalEndOfMonthSpendAgorot).toBe(0);
+    expect(res.body.data.projectedBalanceAgorot).toBe(100000);
+  });
+
   it('counts an unassigned transaction toward the overall total but not against any envelope', async () => {
     const user = await createUser();
     const envelope = await createEnvelope({ user_id: user.id, monthly_budget_agorot: 20000, month: '2026-08-01' });

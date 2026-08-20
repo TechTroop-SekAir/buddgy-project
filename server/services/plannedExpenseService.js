@@ -145,8 +145,35 @@ async function update(userId, id, patch) {
     }
 
     if (isUnconfirming && plannedExpense.transaction_id) {
-      await Transaction.destroy({ where: { id: plannedExpense.transaction_id }, transaction: t });
+      await Transaction.destroy({
+        where: { id: plannedExpense.transaction_id, user_id: userId },
+        transaction: t,
+      });
       fields.transaction_id = null;
+    }
+
+    // Editing an *already*-confirmed row (envelope/amount/title/due_date,
+    // is_confirmed absent from the patch) previously left the linked
+    // transaction untouched — the transaction is what envelope spend and
+    // the forecast actually read, so it silently drifted from what the
+    // planned-expense row showed. Mirror the same field changes onto it.
+    if (!isConfirming && !isUnconfirming && plannedExpense.is_confirmed && plannedExpense.transaction_id) {
+      // amount_agorot is already positive-validated by updateBodySchema
+      // (routes/plannedExpenses.js) when present — no extra guard needed
+      // here, unlike the isConfirming branch above, which has to fall back
+      // to the row's own (possibly null) amount_agorot.
+      const transactionFields = {};
+      if (envelope_id !== undefined) transactionFields.envelope_id = envelope_id;
+      if (amount_agorot !== undefined) transactionFields.amount_agorot = amount_agorot;
+      if (title !== undefined) transactionFields.description = title;
+      if (due_date !== undefined) transactionFields.transaction_date = due_date;
+
+      if (Object.keys(transactionFields).length > 0) {
+        await Transaction.update(transactionFields, {
+          where: { id: plannedExpense.transaction_id, user_id: userId },
+          transaction: t,
+        });
+      }
     }
 
     await plannedExpense.update(fields, { transaction: t });
@@ -154,10 +181,27 @@ async function update(userId, id, patch) {
   });
 }
 
+/**
+ * Symmetric with unconfirming (which deletes the linked transaction,
+ * docs/DATABASE.md § Idempotency) — deleting a confirmed row must also
+ * remove the money it represents, or the transaction is orphaned: it keeps
+ * source: 'planned_expense' but nothing points at it anymore, and it stays
+ * on the envelope's spend forever with no way back to the planning record.
+ */
 async function remove(userId, id) {
-  const plannedExpense = await findOwned(userId, id);
-  await plannedExpense.destroy();
-  return { id: plannedExpense.id };
+  return sequelize.transaction(async (t) => {
+    const plannedExpense = await findOwned(userId, id, { transaction: t, lock: t.LOCK.UPDATE });
+
+    if (plannedExpense.transaction_id) {
+      await Transaction.destroy({
+        where: { id: plannedExpense.transaction_id, user_id: userId },
+        transaction: t,
+      });
+    }
+
+    await plannedExpense.destroy({ transaction: t });
+    return { id: plannedExpense.id };
+  });
 }
 
 module.exports = { create, list, update, remove };

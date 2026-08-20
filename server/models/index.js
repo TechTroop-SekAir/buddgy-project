@@ -19,6 +19,7 @@ db.PlannedExpense = require('./plannedExpense')(sequelize, DataTypes);
 db.CsvImport = require('./csvImport')(sequelize, DataTypes);
 db.Category = require('./category')(sequelize, DataTypes);
 db.AiCall = require('./aiCall')(sequelize, DataTypes);
+db.IncomeSource = require('./incomeSource')(sequelize, DataTypes);
 
 // Associations — mirrors docs/DATABASE.md § ERD
 db.User.hasMany(db.Envelope, { foreignKey: 'user_id', onDelete: 'CASCADE' });
@@ -49,6 +50,9 @@ db.CsvImport.belongsTo(db.User, { foreignKey: 'user_id' });
 // usage from /api/admin/stats' aiCallCount (docs/DATABASE.md § ai_calls).
 db.User.hasMany(db.AiCall, { foreignKey: 'user_id', onDelete: 'SET NULL' });
 db.AiCall.belongsTo(db.User, { foreignKey: 'user_id' });
+
+db.User.hasMany(db.IncomeSource, { foreignKey: 'user_id', onDelete: 'CASCADE' });
+db.IncomeSource.belongsTo(db.User, { foreignKey: 'user_id' });
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;

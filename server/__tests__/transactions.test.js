@@ -15,10 +15,15 @@ const mockTransactionFindAll = jest.fn();
 const mockTransactionFindOne = jest.fn();
 const mockTransactionCreate = jest.fn();
 const mockEnvelopeFindOne = jest.fn();
+const mockPlannedExpenseUpdate = jest.fn();
 // requireAuth (server/middleware/auth.js, ticket B-08) now resolves the
 // caller from a DB lookup, not just the JWT claim — every test here is a
 // single non-admin user, so echoing the signed id back is enough.
 const mockUserFindByPk = jest.fn((id) => Promise.resolve({ id, role: 'user', disabled: false }));
+
+// Fake DB-transaction token handed to transactionService.js's remove() —
+// same shape as __tests__/plannedExpenses.test.js's FAKE_DB_TRANSACTION.
+const FAKE_DB_TRANSACTION = { LOCK: { UPDATE: 'UPDATE' } };
 
 // Mock at the models boundary, same shape as __tests__/envelopes.test.js and
 // __tests__/csvImport.test.js — DB stays mocked; CI's real Postgres run
@@ -32,8 +37,14 @@ jest.mock('../models', () => ({
   Envelope: {
     findOne: (...args) => mockEnvelopeFindOne(...args),
   },
+  PlannedExpense: {
+    update: (...args) => mockPlannedExpenseUpdate(...args),
+  },
   User: {
     findByPk: (...args) => mockUserFindByPk(...args),
+  },
+  sequelize: {
+    transaction: (cb) => cb(FAKE_DB_TRANSACTION),
   },
 }));
 
@@ -212,6 +223,10 @@ describe('DELETE /api/transactions/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ id: 3 });
     expect(instance.destroy).toHaveBeenCalled();
+    expect(mockPlannedExpenseUpdate).toHaveBeenCalledWith(
+      { is_confirmed: false, transaction_id: null },
+      { where: { transaction_id: 3, user_id: AUTHED_USER_ID }, transaction: FAKE_DB_TRANSACTION }
+    );
   });
 
   it('returns 404 for another user\'s transaction and never calls destroy', async () => {

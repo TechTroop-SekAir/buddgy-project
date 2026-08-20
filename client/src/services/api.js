@@ -35,9 +35,8 @@ client.interceptors.response.use(
     }
     const message = error.response?.data?.error || error.message || 'Request failed.';
     const rejected = new Error(message);
-    // Lets a caller distinguish "route doesn't exist yet" (404) from a real
-    // failure — see DashboardPage.jsx's onboardingMutation for why this
-    // matters (backend endpoints not shipped yet, mustn't hard-fail the UI).
+    // Lets a caller distinguish status codes (e.g. 400 field errors vs. a
+    // 5xx) without re-parsing the Error message.
     rejected.status = error.response?.status;
     return Promise.reject(rejected);
   }
