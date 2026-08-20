@@ -440,7 +440,12 @@
       "unbudgetedExpense": "I need to spend 400 NIS, unbudgeted — what now?"
     },
     "reply": {
-      "notConnected": "Buddgy AI isn't connected yet — this is a placeholder reply."
+      "notConnected": "Buddgy AI isn't connected yet — this is a placeholder reply.",
+      "inBudget": "You're fine — spending {{amount}} still leaves a projected balance of {{balance}} this month.",
+      "inBudgetStatus": "You're on track — your projected balance for the month is {{balance}}.",
+      "nearLimit": "It's tight, but you can make it work — your projected balance would be {{balance}}.",
+      "overBudgetWithSuggestion": "Spending {{amount}} would put you over budget. Consider cutting {{cutAmount}} from {{envelope}} to balance it out.",
+      "overBudgetNoSuggestion": "Spending {{amount}} would put you over budget, and there's no envelope with enough room to absorb it right now."
     }
   }
 }

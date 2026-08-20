@@ -119,11 +119,11 @@ erDiagram
 |---|---|---|
 | id | SERIAL PK | |
 | user_id | INT FK → users | **`ON DELETE SET NULL`** — deliberately not `CASCADE` like every other user-owned table above: deleting a user must not erase historical AI usage from `/api/admin/stats`' `aiCallCount` |
-| kind | VARCHAR(20) | `'quick_entry'` \| `'csv_mapping'` |
+| kind | VARCHAR(20) | `'quick_entry'` \| `'csv_mapping'` \| `'event_cost'` \| `'budget_advisor'` |
 | succeeded | BOOLEAN | NOT NULL — failed calls (timeout, rate limit, malformed model output) still cost Anthropic spend and are still counted |
 | created_at | TIMESTAMP | DEFAULT now() |
 
-**Note:** logged from inside `server/services/claudeService.js` — the single boundary both AI call sites (`parseQuickEntry`, `detectColumnMapping`) go through — never from a controller. A logging failure is caught and never allowed to break the AI feature itself (`CLAUDE.md` § Error Handling).
+**Note:** logged from inside `server/services/claudeService.js` — the single boundary every AI call site (`parseQuickEntry`, `detectColumnMapping`, `classifyEventCostLikelihood`, and `advisorService.ask`'s tool-use loop via `runToolLoop`) goes through — never from a controller. A logging failure is caught and never allowed to break the AI feature itself (`CLAUDE.md` § Error Handling).
 
 ## income_sources
 

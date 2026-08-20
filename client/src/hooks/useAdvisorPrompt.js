@@ -17,7 +17,7 @@ export function useAdvisorPrompt() {
   const mutation = useMutation({
     mutationFn: (text) => advisorService.ask(text),
     onSuccess: (result) => {
-      setMessages((prev) => [...prev, { id: messageId(), role: 'assistant', replyKey: result.explanationKey }]);
+      setMessages((prev) => [...prev, { id: messageId(), role: 'assistant', ...result }]);
     },
   });
 
