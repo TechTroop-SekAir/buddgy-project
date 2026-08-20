@@ -204,7 +204,7 @@ export function DashboardPage() {
       {!isLoading && !isError && categories.length > 0 && (
         <>
           <div className="mb-4 mt-7 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-text-strong">{t('categoryManagement.envelopesHeading')}</h2>
+            <h2 className="text-base font-semibold text-text-strong">{t('categoryManagement.heading')}</h2>
             <Button variant="subtle" color="accent" size="sm" onClick={() => setIsAddOpen(true)}>
               <Icon name="plus" size="sm" className="me-1" />
               {t('dashboard.addCategory')}

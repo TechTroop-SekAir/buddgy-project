@@ -1,7 +1,7 @@
 // Maps category names to a components/ui/Icon registry key and a deterministic
-// accent-palette index. Pure util, zero lucide-react imports — mirrors
-// categoryLabel.js's pattern of a fixed lookup with a safe fallback for
-// real user-entered names. See docs/DASHBOARD-REDESIGN.md Step 3.
+// accent-palette index. Pure util, zero lucide-react imports — a fixed lookup
+// with a safe fallback for real user-entered names. See
+// docs/DASHBOARD-REDESIGN.md Step 3.
 const ICON_BY_NAME = {
   Housing: 'home',
   Groceries: 'shoppingCart',

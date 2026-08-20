@@ -13,7 +13,6 @@
 | [csv_imports](#csv_imports) | Audit trail of bank-statement uploads |
 | [ai_calls](#ai_calls) | Usage log backing `GET /api/admin/stats`' `aiCallCount` |
 | [income_sources](#income_sources) | Onboarding wizard's income step, per month |
-| [categories](#categories) | Global admin category catalog (feeds AI classification) |
 | [Indexes](#indexes) | What's indexed and why |
 | [Idempotency](#idempotency) | How duplicate imports/syncs are prevented |
 | [Migration Conventions](#migration-conventions) | Naming, up/down rules |
@@ -139,19 +138,6 @@ erDiagram
 
 Backs the onboarding wizard's income step (`client/src/components/onboarding/IncomeStep.jsx`) and the Dashboard's income figure (`SummaryBar.jsx`) — previously client-only, stored in `localStorage` (`mockIncomeService.js`), so it never reached the DB and vanished on a different device/browser. `PUT /api/income-sources` is a full-month replace, not a per-row upsert — see [`API.md`](./API.md) § Income Sources.
 
-## categories
-
-| Column | Type | Notes |
-|---|---|---|
-| id | SERIAL PK | |
-| name_he | VARCHAR(80) | Hebrew display name |
-| name_en | VARCHAR(80) | UNIQUE — English name, canonical key for the AI classification engine |
-| color | VARCHAR(7) | Display color (hex) |
-| is_active | BOOLEAN | DEFAULT true — retiring a category sets this rather than deleting it |
-| created_at | TIMESTAMP | DEFAULT now() |
-
-**Note:** this is a standalone, admin-managed reference table with no FK to any other table — it does not appear in the ERD above. It backs `/api/admin/categories` (see [`API.md`](./API.md) § Admin) and feeds the free-text classification engine's taxonomy (`docs/OVERVIEW.md` § Admin); it is unrelated to `envelopes`, which the client UI also labels "Category" — see `client/src/services/categoryService.js`'s header comment and `docs/PLAN.md` ticket A-06 for that naming collision. `DELETE /api/admin/categories/:id` is a hard delete; `is_active` is the soft-retire path.
-
 ## Indexes
 
 Beyond the PK and UNIQUE indexes implied above:
@@ -190,3 +176,4 @@ Both are enforced at the DB level (`UNIQUE`), but the service layer must also ha
 - Every migration has a complete `down`.
 - Foreign keys and the indexes above are added in the same migration as the table, not deferred.
 - Seeders (`server/seeders/`) provide demo data for local dev via `npm run db:seed:dev` and for the Day 12 demo — see [`PLAN.md`](./PLAN.md).
+- The `categories` table (global admin catalog: `name_he`/`name_en`/`color`/`is_active`) was dropped in migration `20260820000400-drop-categories.js` — it was never wired to any feature (`server/services/claudeService.js` classifies against the user's `envelopes` only, and `transactions` has no column to persist a category label), so it sat as dead schema behind an admin CRUD screen that changed nothing. `envelopes` remains the only budgeting concept in the schema; the client UI's "Category" label refers to it (`docs/PLAN.md` ticket A-06).

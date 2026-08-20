@@ -68,9 +68,7 @@
     "monthMeta_other": "{{month}} · {{count}} days remaining"
   },
   "categoryManagement": {
-    "remainingBalance": "Remaining Balance",
     "projectedDeficitLabel": "Projected Deficit",
-    "spentOf": "{{spent}} of {{budget}} spent",
     "deleteConfirmTitle": "Delete category?",
     "deleteConfirmBody": "This will permanently delete \"{{name}}\". This can't be undone.",
     "status": {
@@ -85,7 +83,7 @@
     "leftLabel": "Left",
     "overByLabel": "Over by",
     "percentUsed": "{{percent}}% used",
-    "envelopesHeading": "Envelopes",
+    "heading": "Categories",
     "overallSpending": "Overall spending — {{month}}",
     "remainingOf": "{{remaining}} remaining of {{budget}}",
     "cardMenu": "Actions for {{name}}",
@@ -184,16 +182,6 @@
       "retry": "Try again"
     }
   },
-"categories": {
-    "housing": "Housing",
-    "groceries": "Groceries",
-    "utilities": "Utilities",
-    "transport": "Transport",
-    "healthcare": "Healthcare",
-    "diningOut": "Dining Out",
-    "entertainment": "Entertainment",
-    "shopping": "Shopping"
-  },
   "errors": {
     "unauthorized": "Incorrect email or password.",
     "duplicate": "An account with this email already exists.",
@@ -209,8 +197,6 @@
       "amountAgorot": "Amount must be greater than 0",
       "transactionDate": "Enter a valid date",
       "description": "Description is required",
-      "nameHe": "Hebrew name is required (max 80 characters)",
-      "nameEn": "English name is required (max 80 characters)",
       "color": "Color must be a valid hex code, e.g. #f97316"
     }
   },
@@ -294,7 +280,7 @@
     "missingAmountBody": "These calendar-synced expenses have no amount yet — add an estimate so they count toward your forecast.",
     "missingAmountSubmit": "Save",
     "missingAmountInvalid": "Amount must be greater than 0",
-    "recommendation": "Cut {{amount}} from the {{envelope}} envelope"
+    "recommendation": "Cut {{amount}} from the {{envelope}} category"
   },
   "plannedExpenses": {
     "title": "Planned Expenses",
@@ -405,24 +391,8 @@
   "admin": {
     "title": "Admin Panel",
     "tabs": {
-      "categories": "Categories",
       "users": "Users",
       "stats": "Stats"
-    },
-    "categories": {
-      "addButton": "Add category",
-      "loading": "Loading categories…",
-      "empty": "No categories in the catalog yet.",
-      "error": "Couldn't load categories. Please try again.",
-      "nameHeHeader": "Hebrew name",
-      "nameEnHeader": "English name",
-      "colorHeader": "Color",
-      "statusHeader": "Status",
-      "actionsHeader": "Actions",
-      "activeBadge": "Active",
-      "inactiveBadge": "Inactive",
-      "deleteConfirmTitle": "Delete category?",
-      "deleteConfirmBody": "This will permanently delete \"{{name}}\" from the global catalog. This can't be undone."
     },
     "users": {
       "loading": "Loading users…",

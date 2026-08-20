@@ -256,11 +256,9 @@ describe('admin routes never leak raw envelope/transaction/planned-expense rows'
     const user = await createUser();
 
     const users = await request(app).get('/api/admin/users').set('Authorization', authHeader(user));
-    const categories = await request(app).get('/api/admin/categories').set('Authorization', authHeader(user));
     const stats = await request(app).get('/api/admin/stats').set('Authorization', authHeader(user));
 
     expect(users.status).toBe(403);
-    expect(categories.status).toBe(403);
     expect(stats.status).toBe(403);
   });
 

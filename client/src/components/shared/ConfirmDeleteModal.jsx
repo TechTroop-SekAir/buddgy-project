@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Alert, Button, Modal } from '../ui';
 
-// Consolidates the delete-confirmation dialog that AdminCategoriesTable,
-// TransactionRow, PlannedExpenseRow, and CategoryCard each used to
-// hand-roll independently (identical Modal/Button/error-state shape).
+// Consolidates the delete-confirmation dialog that TransactionRow,
+// PlannedExpenseRow, and CategoryCard each used to hand-roll independently
+// (identical Modal/Button/error-state shape).
 export function ConfirmDeleteModal({
   opened,
   title,

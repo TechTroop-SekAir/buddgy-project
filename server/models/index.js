@@ -17,7 +17,6 @@ db.Envelope = require('./envelope')(sequelize, DataTypes);
 db.Transaction = require('./transaction')(sequelize, DataTypes);
 db.PlannedExpense = require('./plannedExpense')(sequelize, DataTypes);
 db.CsvImport = require('./csvImport')(sequelize, DataTypes);
-db.Category = require('./category')(sequelize, DataTypes);
 db.AiCall = require('./aiCall')(sequelize, DataTypes);
 db.IncomeSource = require('./incomeSource')(sequelize, DataTypes);
 
