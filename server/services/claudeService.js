@@ -2,6 +2,7 @@
 
 const { generateObject, generateText, stepCountIs, hasToolCall } = require('ai');
 const { createAnthropic } = require('@ai-sdk/anthropic');
+const { createGoogleGenerativeAI } = require('@ai-sdk/google');
 const { z } = require('zod');
 const { AiCall } = require('../models');
 const AppError = require('../utils/AppError');
@@ -10,11 +11,24 @@ const { shekelsToAgorot } = require('../utils/money');
 // Both Claude call sites live in this file and are never called directly
 // from a controller — docs/INTEGRATIONS.md § Anthropic Claude API.
 
+// Dev-only cost toggle — NOT part of the documented architecture
+// (CLAUDE.md § External Integrations names Anthropic Claude as the
+// provider; docs/INTEGRATIONS.md, API.md, and AGENTS.md all assume it).
+// Set LLM_PROVIDER=gemini locally to run every function in this file
+// against Google's free-tier Gemini API instead, so local
+// development/testing doesn't spend Anthropic credits. Never set this in a
+// deployed environment — nothing outside this file accounts for a
+// non-Anthropic provider, and Gemini's tool-calling/structured-output
+// behavior hasn't been verified against runToolLoop the way Claude's has.
+const LLM_PROVIDER = (process.env.LLM_PROVIDER || 'anthropic').toLowerCase();
+const USE_GEMINI = LLM_PROVIDER === 'gemini';
+
 // claude-3-5-sonnet-20241022 was retired by Anthropic and now 404s
 // (not_found_error) — discovered when classifyEventCostLikelihood's calls
 // started failing 100% of the time in ai_calls. Every function in this file
 // shares one model id, so this repairs Quick Entry and CSV mapping too.
-const MODEL_ID = 'claude-sonnet-5';
+// Same sharing applies to the Gemini id below when LLM_PROVIDER=gemini.
+const MODEL_ID = USE_GEMINI ? 'gemini-3.6-flash' : 'claude-sonnet-5';
 const MAX_TOKENS = 512;
 // classifyEventCostLikelihood's output scales with input size (one object
 // per event, unlike the other two functions' fixed single-object output) —
@@ -44,16 +58,26 @@ const TOOL_LOOP_DEFAULT_MAX_STEPS = 3;
 const TOOL_LOOP_MAX_TOKENS = 2048;
 
 function loadApiKey() {
-  const key = process.env.ANTHROPIC_API_KEY;
+  // GOOGLE_GENERATIVE_AI_API_KEY is the Vercel AI SDK's own default lookup
+  // name for this provider — reusing it means no extra plumbing on the
+  // @ai-sdk/google side, and it's unambiguous next to the unrelated
+  // GOOGLE_CLIENT_ID/SECRET pair the Calendar OAuth integration already
+  // uses (CLAUDE.md § Environment Variables).
+  const varName = USE_GEMINI ? 'GOOGLE_GENERATIVE_AI_API_KEY' : 'ANTHROPIC_API_KEY';
+  const key = process.env[varName];
   if (!key) {
-    throw new Error('ANTHROPIC_API_KEY is not set. See .env.example / CLAUDE.md § Environment Variables.');
+    throw new Error(`${varName} is not set. See .env.example / CLAUDE.md § Environment Variables.`);
   }
   return key;
 }
 
 // Read once at module load — fail fast rather than discovering a missing
 // key only on the first request (server/utils/crypto.js does the same).
-const anthropic = createAnthropic({ apiKey: loadApiKey() });
+// `llmModel` (not `anthropic`) since it may be a Gemini provider — every
+// call site below just does `llmModel(MODEL_ID)`, provider-agnostic.
+const llmModel = USE_GEMINI
+  ? createGoogleGenerativeAI({ apiKey: loadApiKey() })
+  : createAnthropic({ apiKey: loadApiKey() });
 
 // Records usage for GET /api/admin/stats' aiCallCount (ticket B-08) — every
 // real Anthropic call, including ones the user later abandons or that fail,
@@ -118,7 +142,7 @@ async function parseQuickEntry(userId, text, envelopes) {
   let object;
   try {
     ({ object } = await generateObject({
-      model: anthropic(MODEL_ID),
+      model: llmModel(MODEL_ID),
       maxOutputTokens: MAX_TOKENS,
       schema: quickEntrySchema,
       prompt: buildPrompt(text, envelopes, today),
@@ -183,7 +207,7 @@ async function detectColumnMapping(userId, headerRow, sampleRows) {
   let object;
   try {
     ({ object } = await generateObject({
-      model: anthropic(MODEL_ID),
+      model: llmModel(MODEL_ID),
       maxOutputTokens: MAX_TOKENS,
       schema: columnMappingSchema,
       prompt: buildMappingPrompt(headerRow, sampleRows),
@@ -252,7 +276,7 @@ async function classifyEventCostLikelihood(userId, events) {
   let object;
   try {
     ({ object } = await generateObject({
-      model: anthropic(MODEL_ID),
+      model: llmModel(MODEL_ID),
       maxOutputTokens: EVENT_COST_MAX_TOKENS,
       schema: eventCostLikelihoodSchema,
       prompt: buildEventCostLikelihoodPrompt(events),
@@ -292,13 +316,23 @@ async function classifyEventCostLikelihood(userId, events) {
  */
 async function runToolLoop({ system, prompt, tools, stopWhen, maxOutputTokens = TOOL_LOOP_MAX_TOKENS }) {
   return generateText({
-    model: anthropic(MODEL_ID),
+    model: llmModel(MODEL_ID),
     system,
     prompt,
     tools,
     stopWhen: stopWhen ?? stepCountIs(TOOL_LOOP_DEFAULT_MAX_STEPS),
     maxOutputTokens,
-    abortSignal: AbortSignal.timeout(CLAUDE_TIMEOUT_MS),
+    // CLAUDE_TIMEOUT_MS alone is calibrated for ONE model call (every
+    // caller of generateObject above makes exactly one). A tool loop can
+    // make up to TOOL_LOOP_DEFAULT_MAX_STEPS sequential calls before it's
+    // done, so the same budget must cover all of them, not just the first —
+    // otherwise this aborts on the very last step even when every step so
+    // far succeeded (observed locally: a 3-5 step advisor loop aborting at
+    // flat 15s, worse on slower providers). Callers passing a custom
+    // `stopWhen` with a materially higher step count than
+    // TOOL_LOOP_DEFAULT_MAX_STEPS should revisit this the same way
+    // TOOL_LOOP_MAX_TOKENS's own comment already flags for token budget.
+    abortSignal: AbortSignal.timeout(TOOL_LOOP_DEFAULT_MAX_STEPS * CLAUDE_TIMEOUT_MS),
   });
 }
 
