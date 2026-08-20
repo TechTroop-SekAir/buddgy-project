@@ -32,6 +32,8 @@ import {
   Check,
   AlertTriangle,
   User,
+  Sparkles,
+  Send,
 } from 'lucide-react';
 
 // The only module allowed to import lucide-react — see client/CLAUDE.md
@@ -71,6 +73,8 @@ const ICON_REGISTRY = {
   check: Check,
   alertTriangle: AlertTriangle,
   user: User,
+  sparkles: Sparkles,
+  send: Send,
 };
 
 const SIZES = { xs: 12, sm: 14, md: 16, lg: 18 };

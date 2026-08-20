@@ -457,5 +457,20 @@
     "nameHeRequired": "Hebrew name is required (max 80 characters)",
     "nameEnRequired": "English name is required (max 80 characters)",
     "colorInvalid": "Color must be a valid hex code, e.g. #f97316"
+  },
+  "advisor": {
+    "title": "Buddgy AI",
+    "placeholder": "Ask Buddgy AI — \"Can I afford dining out tonight?\"",
+    "send": "Send",
+    "close": "Close conversation",
+    "error": "Buddgy AI couldn't answer that. Please try again.",
+    "chips": {
+      "affordDiningOut": "Can I afford dining out tonight?",
+      "groceriesLeft": "How much is left in Groceries?",
+      "unbudgetedExpense": "I need to spend 400 NIS, unbudgeted — what now?"
+    },
+    "reply": {
+      "notConnected": "Buddgy AI isn't connected yet — this is a placeholder reply."
+    }
   }
 }

@@ -109,12 +109,28 @@ Input: *"I need to spend 400 NIS on new tires, this is unbudgeted. How can I bal
 
 Mirrors `forecastService`'s existing choice to keep `recommendation` a structured object rather than a display sentence (see [`API.md`](../API.md) § Calendar & Forecast) — wording stays client-side.
 
-### New/changed files (draft)
+> **Implemented deviation:** the transport layer (route, controller, client bar/hook/service —
+> see below) shipped ahead of the agent itself, and along the way `explanation` became
+> **`explanationKey`**: a locale key, not a Hebrew sentence. The server has no locale context
+> (`client/CLAUDE.md` § i18n forbids server-authored user-facing strings), so this leans on the
+> exact same structured-data pattern `recommendation` already uses, one level further —
+> `client/src/locales/{he,en}.json`'s `advisor.reply.*` resolves it. Carry this through when
+> A-21 builds the real verdict: pick/construct an `explanationKey`, don't return prose.
 
-- `server/services/budgetAdvisorService.js` — new: builds tool definitions, runs the tool-use loop via `claudeService`, validates the model's referenced envelope IDs against the caller's own allowlist
-- `server/controllers/budgetAdvisorController.js`, `server/routes/budgetAdvisor.js` — thin controller, router-level `requireAuth`
-- `client/src/components/advisor/BudgetAdvisorModal.jsx` (or similar) — question box + result card
-- `client/src/services/budgetAdvisorService.js` — client API wrapper, following existing `forecastService.js` pattern
+### New/changed files
+
+- `server/services/advisorService.js` — **transport shipped, agent brain not yet.** `ask(userId, text)`
+  currently just logs to `ai_calls` (`kind: 'budget_advisor'`) and returns a fixed placeholder
+  verdict. **Remaining A-21 scope:** replace the function body with the tool-use loop (tool
+  definitions, `claudeService` calls, envelope-ID revalidation) — signature and response
+  contract are frozen, don't change them.
+- `server/controllers/advisorController.js`, `server/routes/advisor.js` — done: thin controller,
+  router-level `requireAuth`, real `validate()` entry (`POST /api/advisor/ask`, 1–500 chars).
+- `client/src/components/advisor/PromptBar.jsx` — done: the floating prompt bar (all six
+  authenticated pages, via `AppShellLayout`), replacing the placeholder `BudgetAdvisorModal` this
+  section originally sketched — a persistent bar, not a modal, per the design-ref mock.
+- `client/src/hooks/useAdvisorPrompt.js` — done: owns the conversation state + `useMutation`.
+- `client/src/services/advisorService.js` — done: client API wrapper, following `forecastService.js`.
 
 ### Error handling
 

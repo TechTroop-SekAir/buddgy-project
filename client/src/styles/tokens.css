@@ -15,6 +15,11 @@
   --bg-input: #ffffff;
   --bg-subtle: #f1f5f9;
   --bg-hover: #f8fafc;
+  /* Floating prompt bar card — translucent-over-page-content, so it needs
+     its own alpha value rather than a Tailwind opacity modifier (the color
+     tokens below are mapped as bare var()s with no <alpha-value>, so
+     bg-bg-surface/90 would emit invalid CSS). */
+  --bg-surface-translucent: rgb(255 255 255 / 0.9);
 
   /* Text hierarchy */
   --text-primary: #0f172a;

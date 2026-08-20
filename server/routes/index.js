@@ -17,5 +17,6 @@ router.use('/planned-expenses', require('./plannedExpenses'));
 router.use('/income-sources', require('./income'));
 router.use('/forecast', require('./forecast'));
 router.use('/admin', require('./admin'));
+router.use('/advisor', require('./advisor'));
 
 module.exports = router;

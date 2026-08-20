@@ -260,4 +260,4 @@ async function classifyEventCostLikelihood(userId, events) {
   return object.events.filter((e) => validEventIds.has(e.google_event_id));
 }
 
-module.exports = { parseQuickEntry, detectColumnMapping, classifyEventCostLikelihood };
+module.exports = { parseQuickEntry, detectColumnMapping, classifyEventCostLikelihood, logAiCall };

@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       user_id: { type: DataTypes.INTEGER },
-      // 'quick_entry' | 'csv_mapping'
+      // 'quick_entry' | 'csv_mapping' | 'budget_advisor'
       kind: { type: DataTypes.STRING(20), allowNull: false },
       succeeded: { type: DataTypes.BOOLEAN, allowNull: false },
     },

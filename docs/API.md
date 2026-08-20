@@ -12,6 +12,7 @@
 | [Transactions](#transactions) | CRUD + AI parse |
 | [CSV Import](#csv-import) | Preview + confirm |
 | [Calendar & Forecast](#calendar--forecast) | Sync, planned expenses, forecast |
+| [Budget Advisor](#budget-advisor) | Floating prompt bar transport — placeholder pending the Agent 1 tool loop |
 | [Admin](#admin) | Category catalog, users, stats |
 
 Related specs: [`DATABASE.md`](./DATABASE.md) (backing tables) · [`SECURITY.md`](./SECURITY.md) (who can call what) · [`INTEGRATIONS.md`](./INTEGRATIONS.md) (what the AI/OAuth endpoints do internally)
@@ -202,6 +203,16 @@ Forecast response `data` (ticket B-07):
 `totalActualSpentAgorot`, `totalPlannedExpensesAgorot`, `totalEndOfMonthSpendAgorot`, and `missingAmountPlannedExpenses` are all computed server-side, in the same `server/services/forecastService.js#get()` call as `projectedBalanceAgorot` — `client/src/services/forecastService.js` passes the response straight through with no client-side re-derivation. (An earlier version of this endpoint returned only `projectedBalanceAgorot`/`atRiskEnvelopes`/`recommendation`, with the client separately re-fetching envelopes/planned-expenses to derive the rest — that split let the two computations drift out of sync and was removed in favor of one implementation of the math.) `totalPlannedExpensesAgorot` sums only confirmed (`is_confirmed: true`) planned expenses for the month; `totalEndOfMonthSpendAgorot = totalActualSpentAgorot + totalPlannedExpensesAgorot`, and `projectedBalanceAgorot = totalBudget − totalEndOfMonthSpendAgorot` (the "Remaining Total Budget" the client shows — no separate field, it's the same number). `missingAmountPlannedExpenses` lists that month's planned expenses (confirmed or not) with a null/0 `amount_agorot`, for the client's actionable prompt; entries are excluded from `totalPlannedExpensesAgorot` until filled in via `PATCH`.
 
 `atRiskEnvelopes` must resolve to `[]` (not error) when the user has zero envelopes or zero planned expenses for the month — see `.claude/commands/qa.md` § Buddgy Critical Test Cases. The same degrade-gracefully rule applies to every total field (all `0`) and `missingAmountPlannedExpenses` (`[]`).
+
+## Budget Advisor
+
+```
+POST   /api/advisor/ask   🔒  { text }   → { verdict, amountAgorot, projectedBalanceAfterAgorot, suggestion, explanationKey }
+```
+
+Backs the floating prompt bar shown on every authenticated page (`client/src/components/advisor/PromptBar.jsx`). `text` is required, 1–500 characters (matches Quick Entry's cap). This is the transport layer for [Agent 1 — Budget Advisor](./features/AGENTS.md#agent-1--budget-advisor); `server/services/advisorService.js#ask()` currently returns a fixed placeholder verdict (`{ verdict: 'in_budget', amountAgorot: null, projectedBalanceAfterAgorot: null, suggestion: null, explanationKey: 'advisor.reply.notConnected' }`) and logs one `ai_calls` row (`kind: 'budget_advisor'`) — no Claude call happens yet. Ticket A-21 replaces the function body with the real read-only tool-use loop without changing this route, its validation, or the response shape.
+
+Deviates from `AGENTS.md`'s draft schema in one way: `explanationKey` is a **locale key**, not a Hebrew sentence — the server has no locale context (`client/CLAUDE.md` § i18n forbids server-authored user-facing strings), so this follows the same structured-data-not-a-sentence pattern `forecast`'s `recommendation` already uses above. The client resolves it via `t(explanationKey)` against `client/src/locales/{he,en}.json`'s `advisor.reply.*` keys.
 
 ## Admin
 

@@ -10,6 +10,7 @@ export default {
         'bg-input': 'var(--bg-input)',
         'bg-subtle': 'var(--bg-subtle)',
         'bg-hover': 'var(--bg-hover)',
+        'bg-surface-translucent': 'var(--bg-surface-translucent)',
         'text-primary': 'var(--text-primary)',
         'text-strong': 'var(--text-strong)',
         'text-secondary': 'var(--text-secondary)',
