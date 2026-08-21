@@ -23,3 +23,5 @@ Onboarding:
 in planned-expenses page: 
     upcoming events card is unnecesarry.
 
+
+before any commit and push - E2E test for client (also add it to .claude\commands\qa.md)
