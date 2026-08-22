@@ -9,6 +9,7 @@
 const ERROR_KEYS = {
   unauthorized: 'errors.unauthorized',
   duplicate: 'errors.duplicate',
+  'duplicate: name': 'errors.duplicateName',
   'validation failed: email': 'errors.validation.email',
   'validation failed: password': 'errors.validation.password',
   'validation failed: name': 'errors.validation.name',

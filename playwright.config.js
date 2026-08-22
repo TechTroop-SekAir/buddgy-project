@@ -11,15 +11,21 @@ const path = require('path');
 // needs SERVER_PORT too (to call the API directly for completeOnboarding),
 // so it's a shared constant rather than redeclared in both files.
 const { SERVER_PORT, CLIENT_PORT, BASE_URL } = require('./e2e/helpers/env');
+const { E2E_DATABASE_URL } = require('./e2e/helpers/db');
 
 // Dummy values only, same pattern as .github/workflows/ci.yml, EXCEPT
 // CLOUDINARY_URL (see its own comment below) — Claude and Google Calendar
 // are mocked/deliberately broken for this suite (e2e/quick-entry.spec.js,
 // e2e/calendar-sync.spec.js), so nothing else here needs to be real.
+// DATABASE_URL isn't a dummy, unlike the rest of this object — it has to be
+// a real, reachable Postgres login, and e2e/helpers/db.js derives it from
+// server/.env (falling back to a caller-supplied DATABASE_URL/
+// DATABASE_URL_TEST) rather than hardcoding one login that only exists on
+// some machines. The database name is still always forced to `buddgy_e2e`.
 const SERVER_ENV = {
   NODE_ENV: 'development',
   PORT: String(SERVER_PORT),
-  DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/buddgy_e2e',
+  DATABASE_URL: E2E_DATABASE_URL,
   JWT_SECRET: 'e2e-test-jwt-secret',
   CLIENT_URL: BASE_URL,
   // Deliberately invalid — client/CLAUDE.md forbids auto-saving an

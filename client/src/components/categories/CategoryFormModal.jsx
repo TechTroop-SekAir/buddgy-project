@@ -44,7 +44,13 @@ export function CategoryFormModal({ opened, category = null, onClose, onSubmit }
       form.reset();
       onClose();
     } catch (err) {
-      setSubmitError(getErrorMessage(err.message, t));
+      // Field-level, not the generic Alert below — the user's fix is
+      // right there on the name input (docs/features/HOMEPAGE-FIXES.md § 3.4).
+      if (err.message === 'duplicate: name') {
+        form.setFieldError('name', t('addCategoryModal.nameDuplicate'));
+      } else {
+        setSubmitError(getErrorMessage(err.message, t));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -94,6 +100,10 @@ export function CategoryFormModal({ opened, category = null, onClose, onSubmit }
           leftSection="₪"
           min={0}
           required
+          // Editing an existing category: select the prefilled amount on
+          // focus so typing replaces it outright instead of appending to it
+          // (docs/features/HOMEPAGE-FIXES.md § 3.1).
+          onFocus={isEdit ? (event) => event.target.select() : undefined}
           {...form.getInputProps('budgetShekels')}
         />
         {submitError && <Alert>{submitError}</Alert>}

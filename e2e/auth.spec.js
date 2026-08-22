@@ -11,7 +11,7 @@ const ADMIN_FILE = path.join(__dirname, '.auth', 'admin.json');
 // themselves, which need to start from a genuinely unauthenticated context.
 
 test.describe('unauthenticated', () => {
-  test('registers a new user and lands on the dashboard', async ({ page }) => {
+  test('registers a new user and lands on onboarding', async ({ page }) => {
     const email = `e2e-${Date.now()}@buddgy.com`;
 
     await page.goto('/register');
@@ -24,7 +24,10 @@ test.describe('unauthenticated', () => {
     await page.getByLabel(t.auth.register.confirmPasswordLabel).fill('password123');
     await page.getByRole('button', { name: t.auth.register.submit }).click();
 
-    await expect(page).toHaveURL(/\/dashboard$/);
+    // A never-onboarded user is redirected to the dedicated wizard route
+    // (docs/features/HOMEPAGE-FIXES.md § 4.3) rather than the homepage; the
+    // wizard itself is exercised fresh in onboarding.spec.js.
+    await expect(page).toHaveURL(/\/onboarding$/);
   });
 
   test('logs in with the seeded user account', async ({ page }) => {

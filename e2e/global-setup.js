@@ -1,8 +1,9 @@
 // @ts-check
 const { execFileSync } = require('child_process');
 const path = require('path');
+const { E2E_DATABASE_URL } = require('./helpers/db');
 
-const DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/buddgy_e2e';
+const DATABASE_URL = E2E_DATABASE_URL;
 const SERVER_DIR = path.join(__dirname, '..', 'server');
 
 // Runs once before the whole suite (see playwright.config.js). Idempotent —

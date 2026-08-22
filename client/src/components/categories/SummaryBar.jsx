@@ -5,7 +5,7 @@ import { formatShekels, formatShekelsRounded } from '../../utils/money';
 // Fixed-geometry tile — width/height never depend on load state, which is
 // what fixes the layout-shift bug the old flex-wrap row had (see
 // docs/DASHBOARD-REDESIGN.md Step 8).
-function StatTile({ icon, accent, label, value, isLoading }) {
+function StatTile({ icon, accent, label, value, subValue, isLoading }) {
   return (
     <Card padding={0} className="flex items-center gap-4 rounded-lg border border-border-card bg-bg-surface p-5 shadow-sm">
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${accent.chip}`}>
@@ -16,7 +16,10 @@ function StatTile({ icon, accent, label, value, isLoading }) {
         {isLoading ? (
           <Skeleton height={24} width={96} mt={4} />
         ) : (
-          <p className="mt-0.5 font-mono text-xl font-semibold text-text-primary">{value}</p>
+          <>
+            <p className="num-tabular mt-0.5 font-mono text-xl font-semibold text-text-primary">{value}</p>
+            {subValue && <p className="num-tabular font-mono text-xs text-text-muted">{subValue}</p>}
+          </>
         )}
       </div>
     </Card>
@@ -52,6 +55,11 @@ export function SummaryBar({
   const incomeTotalAgorot = income?.total_agorot ?? 0;
   const plannedTotalAgorot = forecast?.totalEndOfMonthSpendAgorot ?? 0;
   const plannedSavingsBalanceAgorot = incomeTotalAgorot - plannedTotalAgorot;
+  // "תכנון הוצאות / צפוי" previously showed actual+planned spend with no
+  // budget figure to compare it against — see docs/features/HOMEPAGE-FIXES.md
+  // § 2.2. forecast.totalBudgetAgorot falls back to totals.budget (derived
+  // from `categories`) so this still renders before the forecast query loads.
+  const totalBudgetAgorot = forecast?.totalBudgetAgorot ?? totals.budget;
 
   return (
     <div className="flex flex-col gap-4">
@@ -80,6 +88,7 @@ export function SummaryBar({
             accent={{ chip: 'bg-cat-5-tint', icon: 'text-cat-5' }}
             label={t('summaryBar.plannedExpenses')}
             value={formatShekelsRounded(plannedTotalAgorot)}
+            subValue={t('summaryBar.ofBudget', { budget: formatShekelsRounded(totalBudgetAgorot) })}
             isLoading={isForecastLoading}
           />
           <StatTile
@@ -98,7 +107,7 @@ export function SummaryBar({
             {t('categoryManagement.overallSpending', { month: monthLabel })}
           </span>
           <span
-            className={`font-mono text-sm font-semibold ${
+            className={`num-tabular font-mono text-sm font-semibold ${
               isDeficit ? 'text-status-forecast-alert' : 'text-text-primary'
             }`}
           >

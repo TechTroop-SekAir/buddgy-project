@@ -4,6 +4,7 @@ import { AppShellLayout } from './components/layout/AppShellLayout';
 import { Skeleton } from './components/ui';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { ImportPage } from './pages/ImportPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -32,7 +33,23 @@ function RouteLoading() {
 function ProtectedRoute({ children }) {
   const { user, isLoading } = useAuth();
   if (isLoading) return <RouteLoading />;
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  // A never-onboarded user is sent to the dedicated wizard route instead of
+  // the app shell (docs/features/HOMEPAGE-FIXES.md § 4.3) — before this,
+  // onboarding was a modal parked on top of the homepage.
+  if (!user.onboarding_completed_at) return <Navigate to="/onboarding" replace />;
+  return children;
+}
+
+// Mirror image of the check above: once onboarding is done, /onboarding
+// itself redirects to the homepage rather than letting a finished user
+// revisit the wizard.
+function OnboardingRoute({ children }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <RouteLoading />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.onboarding_completed_at) return <Navigate to="/dashboard" replace />;
+  return children;
 }
 
 function PublicOnlyRoute({ children }) {
@@ -69,6 +86,14 @@ export function AppRoutes() {
           <PublicOnlyRoute>
             <RegisterPage />
           </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <OnboardingRoute>
+            <OnboardingPage />
+          </OnboardingRoute>
         }
       />
       <Route

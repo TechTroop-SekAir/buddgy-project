@@ -12,6 +12,7 @@ const EMPTY_FORECAST = {
   totalActualSpentAgorot: 0,
   totalPlannedExpensesAgorot: 0,
   totalEndOfMonthSpendAgorot: 0,
+  totalBudgetAgorot: 0,
   missingAmountPlannedExpenses: [],
 };
 
@@ -124,6 +125,9 @@ async function get(userId, monthInput) {
       totalActualSpentAgorot: overallActual,
       totalPlannedExpensesAgorot: overallPlanned,
       totalEndOfMonthSpendAgorot,
+      // No envelopes exist yet, so there's nothing budgeted — matches
+      // totalBudget's own reduce() over an empty array below.
+      totalBudgetAgorot: 0,
       missingAmountPlannedExpenses,
     };
   }
@@ -174,6 +178,11 @@ async function get(userId, monthInput) {
     totalActualSpentAgorot: overallActual,
     totalPlannedExpensesAgorot: overallPlanned,
     totalEndOfMonthSpendAgorot,
+    // Sum of every envelope's monthly_budget_agorot — the "of ₪X budgeted"
+    // line SummaryBar.jsx pairs with totalEndOfMonthSpendAgorot (docs/features/
+    // HOMEPAGE-FIXES.md § 2.2: the tile previously showed actual+planned
+    // spend with no budget figure to compare it against).
+    totalBudgetAgorot: totalBudget,
     missingAmountPlannedExpenses,
   };
 }
