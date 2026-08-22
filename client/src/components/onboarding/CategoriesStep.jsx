@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, Checkbox, TextInput } from '../ui';
+import { Alert, Button, Icon, SelectableCard, TextInput } from '../ui';
 
 const CATEGORY_LABEL_KEYS = {
   housing: 'onboarding.categories.suggestions.housing.label',
@@ -17,6 +17,24 @@ const CATEGORY_LABEL_KEYS = {
 };
 const CATEGORY_KEYS = Object.keys(CATEGORY_LABEL_KEYS);
 
+// Icon/accent pairing keyed by the stable English suggestion key, not the
+// localized label — getCategoryIconName()/getCategoryAccentIndex() in
+// utils/categoryIcon.js look up English category names and would return the
+// generic "wallet"/fallback accent for every Hebrew label here.
+const CATEGORY_META = {
+  housing: { icon: 'home', accent: 5 },
+  utilities: { icon: 'zap', accent: 3 },
+  transport: { icon: 'car', accent: 4 },
+  insurance: { icon: 'shield', accent: 1 },
+  dailyLiving: { icon: 'shoppingCart', accent: 1 },
+  selfCare: { icon: 'sparkles', accent: 3 },
+  debtsAndLoans: { icon: 'creditCard', accent: 2 },
+  savings: { icon: 'piggyBank', accent: 6 },
+  events: { icon: 'partyPopper', accent: 5 },
+  vacations: { icon: 'plane', accent: 1 },
+  general: { icon: 'wallet', accent: 0 },
+};
+
 export function CategoriesStep({ onBack, onFinish, isSubmitting, submitError }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState([]);
@@ -24,7 +42,7 @@ export function CategoriesStep({ onBack, onFinish, isSubmitting, submitError }) 
 
   const isSelectAllChecked = selected.length === CATEGORY_KEYS.length;
 
-  const toggleSelectAll = (checked) => setSelected(checked ? [...CATEGORY_KEYS] : []);
+  const toggleSelectAll = () => setSelected(isSelectAllChecked ? [] : [...CATEGORY_KEYS]);
   const toggleCategory = (key) =>
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
 
@@ -42,41 +60,53 @@ export function CategoriesStep({ onBack, onFinish, isSubmitting, submitError }) 
     <div className="flex flex-col gap-4">
       <p className="text-sm text-text-secondary">{t('onboarding.categories.heading')}</p>
 
-      <Checkbox
-        label={t(isSelectAllChecked ? 'onboarding.categories.deselectAll' : 'onboarding.categories.selectAll')}
-        checked={isSelectAllChecked}
-        onChange={(e) => toggleSelectAll(e.currentTarget.checked)}
-      />
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-text-secondary">
+          {t('onboarding.categories.selectedCount', { count: selected.length })}
+        </span>
+        <Button type="button" variant="subtle" color="accent" size="sm" onClick={toggleSelectAll}>
+          {t(isSelectAllChecked ? 'onboarding.categories.deselectAll' : 'onboarding.categories.selectAll')}
+        </Button>
+      </div>
 
-      <div className="flex flex-col gap-2 ps-1">
-        {CATEGORY_KEYS.map((key) => (
-          <div key={key}>
-            <Checkbox
-              label={t(CATEGORY_LABEL_KEYS[key])}
-              checked={selected.includes(key)}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {CATEGORY_KEYS.map((key) => {
+          const label = t(CATEGORY_LABEL_KEYS[key]);
+          const meta = CATEGORY_META[key];
+          const checked = selected.includes(key);
+          return (
+            <SelectableCard
+              key={key}
+              label={label}
+              iconName={meta.icon}
+              accentIndex={meta.accent}
+              checked={checked}
               onChange={() => toggleCategory(key)}
-            />
-            {key === 'housing' && selected.includes('housing') && (
-              <TextInput
-                className="ms-8 mt-1"
-                placeholder={`${t('onboarding.categories.suggestions.housing.options.rent')} / ${t(
-                  'onboarding.categories.suggestions.housing.options.mortgage'
-                )}`}
-                value={housingCustomLabel}
-                onChange={(e) => setHousingCustomLabel(e.currentTarget.value)}
-              />
-            )}
-          </div>
-        ))}
+            >
+              {key === 'housing' && checked && (
+                <TextInput
+                  className="w-full"
+                  size="xs"
+                  placeholder={`${t('onboarding.categories.suggestions.housing.options.rent')} / ${t(
+                    'onboarding.categories.suggestions.housing.options.mortgage'
+                  )}`}
+                  value={housingCustomLabel}
+                  onChange={(e) => setHousingCustomLabel(e.currentTarget.value)}
+                />
+              )}
+            </SelectableCard>
+          );
+        })}
       </div>
 
       {submitError && <Alert>{submitError}</Alert>}
 
       <div className="flex justify-end gap-3 mt-2">
-        <Button type="button" variant="outline" color="gray" onClick={onBack} disabled={isSubmitting}>
+        <Button type="button" variant="outline" color="gray" size="lg" onClick={onBack} disabled={isSubmitting}>
           {t('onboarding.categories.back')}
         </Button>
-        <Button type="button" variant="filled" color="accent" loading={isSubmitting} onClick={handleFinish}>
+        <Button type="button" variant="filled" color="accent" size="lg" loading={isSubmitting} onClick={handleFinish}>
+          <Icon name="check" size="sm" className="me-1" />
           {t('onboarding.categories.finish')}
         </Button>
       </div>

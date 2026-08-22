@@ -17,4 +17,27 @@ body {
   .num-tabular {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Entrance animation for the onboarding step card (docs/design-ref/index.css.md) —
+     guarded by prefers-reduced-motion since it's purely decorative. */
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-up {
+    animation: fade-up 0.4s ease both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fade-up {
+      animation: none;
+    }
+  }
 }

@@ -22,3 +22,4 @@ export { Alert } from './Alert';
 export { EmptyState } from './EmptyState';
 export { Checkbox } from './Checkbox';
 export { Stepper } from './Stepper';
+export { SelectableCard } from './SelectableCard';

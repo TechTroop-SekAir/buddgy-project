@@ -8,6 +8,7 @@ import { useLocale } from '../../context/LocaleContext';
 import { useMonth } from '../../context/MonthContext';
 import { getCurrentMonth } from '../../utils/month';
 import { getMonthLabel } from '../../utils/date';
+import buddgyWordmarkGradient from '../../assets/logo/buddgy-wordmark-gradient.svg';
 
 // Sticky app header shared by every protected page (see routes.jsx's layout
 // route). Nav items reuse react-router's NavLink so "active" state is
@@ -65,11 +66,17 @@ export function AppHeader() {
             size="sm"
             className="md:hidden"
           />
-          <Link to="/dashboard" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-brand-gradient">
-              <Icon name="wallet" size="sm" className="text-bg-surface" />
-            </span>
-            <span className="text-base font-semibold tracking-tight text-text-primary">{t('common.appName')}</span>
+          {/* Baked SVG wordmark (client/src/assets/logo/), same "BUDDGY" glyph
+              outlines as the auth brand panel's lockup but filled with the
+              brand-stripe's 4-stop gradient instead of solid white — this
+              header sits on bg-surface (white), where the white variant
+              would be invisible. Latin-only by design (see AuthLayout.jsx's
+              comment on why the auth panel uses the same asset); unlike that
+              panel, this is the one live-navigation surface every locale
+              sees, so common.appName's Hebrew transliteration is dropped
+              here in favor of the brand mark. */}
+          <Link to="/dashboard" className="flex shrink-0 items-center">
+            <img src={buddgyWordmarkGradient} alt={t('common.appName')} className="h-6 w-auto" />
           </Link>
         </div>
 

@@ -22,5 +22,6 @@ This directory is the single source of truth for the Buddgy spec.
 | [`features/AGENTS.md`](./features/AGENTS.md) | Post-MVP: Budget Advisor & Calendar Conflict AI agents — tool-use architecture, API/DB additions, work split |
 | [`features/UPCOMING-EVENTS.md`](./features/UPCOMING-EVENTS.md) | Calendar events classified by cost-likelihood, dismiss/undo, spend prompt — data model, sync changes, client surfaces, forecast-impact fix |
 | [`features/HOMEPAGE-FIXES.md`](./features/HOMEPAGE-FIXES.md) | Fix plan from homepage/tabs walkthrough — menu ref-forwarding bug, onboarding backfill, UpcomingEventsCard consolidation, category uniqueness, onboarding route |
+| [`features/AUTH-ONBOARDING-REDESIGN.md`](./features/AUTH-ONBOARDING-REDESIGN.md) | Visual refresh of `/login`, `/register`, `/onboarding` to match the dashboard's design-ref language — split-screen `AuthLayout`, `SelectableCard` icon-card grid, no data/routing changes |
 
 For **how Claude should work** (process, not spec), see `.claude/commands/`: `/dev`, `/product`, `/qa`, `/design`. These reference the files above rather than repeating them — if something looks duplicated, the command file should be pointing here instead.

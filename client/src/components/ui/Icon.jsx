@@ -34,6 +34,14 @@ import {
   User,
   Sparkles,
   Send,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  CreditCard,
+  PartyPopper,
+  Plane,
 } from 'lucide-react';
 
 // The only module allowed to import lucide-react — see client/CLAUDE.md
@@ -75,9 +83,17 @@ const ICON_REGISTRY = {
   user: User,
   sparkles: Sparkles,
   send: Send,
+  mail: Mail,
+  lock: Lock,
+  eye: Eye,
+  eyeOff: EyeOff,
+  shield: ShieldCheck,
+  creditCard: CreditCard,
+  partyPopper: PartyPopper,
+  plane: Plane,
 };
 
-const SIZES = { xs: 12, sm: 14, md: 16, lg: 18 };
+const SIZES = { xs: 12, sm: 14, md: 16, lg: 18, xl: 22 };
 
 // Icons that carry inherent left/right meaning (previous/next) and must
 // physically mirror under RTL. Everything else — including directional
