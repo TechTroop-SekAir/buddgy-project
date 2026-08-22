@@ -8,3 +8,13 @@ body {
   background-color: var(--bg-page);
   color: var(--text-primary);
 }
+
+@layer utilities {
+  /* Fixed-width digits for money/stat figures (docs/features/HOMEPAGE-FIXES.md
+     § 4.2) — without this, digits in a figure that falls back off font-mono
+     (e.g. a Hebrew sans fallback glyph) can render at variable widths and
+     misalign against neighboring figures. */
+  .num-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Alert, Badge, Button, Card, Modal } from '../components/ui';
-import { UpcomingEventsCard } from '../components/plannedExpenses/UpcomingEventsCard';
 import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
 import calendarService from '../services/calendarService';
-import plannedExpenseService from '../services/plannedExpenseService';
-import categoryService from '../services/categoryService';
 
 const ERROR_KEY_BY_MESSAGE = {
   'Google Calendar is not connected.': 'calendar.error.notConnected',
@@ -51,47 +48,6 @@ export function SettingsPage() {
     (isMock && checkMockConnected(user?.id))
   );
 
-  // Same UpcomingEventsCard shown on /planned-expenses, mounted here too so
-  // the user sees it right where they just synced — docs/features/UPCOMING-EVENTS.md.
-  // Shares the ['planned-expenses', user.id, month] query key, so the sync
-  // mutation's invalidation below (and PlannedExpensesPage's own queries)
-  // refresh this for free.
-  const plannedExpensesQueryKey = ['planned-expenses', user?.id, month];
-  const { data: allPlannedExpenses = [] } = useQuery({
-    queryKey: plannedExpensesQueryKey,
-    queryFn: () => plannedExpenseService.list(user.id, month, { includeDismissed: true }),
-    enabled: Boolean(user?.id) && isCalendarConnected,
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories', user?.id, month],
-    queryFn: () => categoryService.list(user.id, month),
-    enabled: Boolean(user?.id) && isCalendarConnected,
-  });
-  const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
-
-  const dismissMutation = useMutation({
-    mutationFn: (id) => plannedExpenseService.update(id, { is_dismissed: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: plannedExpensesQueryKey });
-      queryClient.invalidateQueries({ queryKey: ['forecast', user?.id, month] });
-    },
-  });
-  const undoDismissMutation = useMutation({
-    mutationFn: (id) => plannedExpenseService.update(id, { is_dismissed: false }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: plannedExpensesQueryKey });
-      queryClient.invalidateQueries({ queryKey: ['forecast', user?.id, month] });
-    },
-  });
-  const spendMutation = useMutation({
-    mutationFn: ({ id, payload }) => plannedExpenseService.update(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: plannedExpensesQueryKey });
-      queryClient.invalidateQueries({ queryKey: ['forecast', user?.id, month] });
-    },
-  });
-
   useEffect(() => {
     const calendarParam = searchParams.get('calendar');
     if (!calendarParam) return;
@@ -124,8 +80,8 @@ export function SettingsPage() {
       setSyncError('');
       setSyncResult(data.newEvents);
       // Bug fix: this previously invalidated nothing, so newly synced events
-      // never showed on /planned-expenses (or the dashboard's missing-amount
-      // prompt) until a manual reload. Same keys PlannedExpensesPage.jsx
+      // never showed on /planned-expenses (or the homepage's Upcoming
+      // Events card) until a manual reload. Same keys PlannedExpensesPage.jsx
       // invalidates on its own mutations.
       queryClient.invalidateQueries({ queryKey: ['planned-expenses', user?.id, month] });
       queryClient.invalidateQueries({ queryKey: ['forecast', user?.id, month] });
@@ -222,17 +178,6 @@ export function SettingsPage() {
           )}
         </div>
       </Card>
-
-      {isCalendarConnected && (
-        <UpcomingEventsCard
-          className="mt-6 max-w-lg"
-          plannedExpenses={allPlannedExpenses}
-          categoryOptions={categoryOptions}
-          onDismiss={(id) => dismissMutation.mutateAsync(id)}
-          onUndoDismiss={(id) => undoDismissMutation.mutateAsync(id)}
-          onSpend={(id, payload) => spendMutation.mutateAsync({ id, payload })}
-        />
-      )}
 
       <Modal
         opened={disconnectOpen}

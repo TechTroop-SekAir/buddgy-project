@@ -113,3 +113,5 @@ such thing as an async component with only a happy path:
 - [ ] No hardcoded colors, radii, sizes, or backend URLs
 - [ ] Responsive at the breakpoints in `docs/DESIGN.md`
 - [ ] No `console.log`
+- [ ] Full client Playwright suite (`npm run test:e2e` from the repo root) passes locally — no git
+      hook enforces this, it's a run-it-yourself gate before every commit and push

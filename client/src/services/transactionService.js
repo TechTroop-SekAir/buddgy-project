@@ -1,7 +1,10 @@
 import api from './api';
 
-async function list(userId, month) {
-  return api.get('/transactions', { params: { month } });
+// envelopeId (server/routes/transactions.js) narrows the list to one
+// envelope — used by CategoryDetailsDrawer.jsx to show a category's
+// transactions without fetching and filtering the whole month client-side.
+async function list(userId, month, { envelopeId } = {}) {
+  return api.get('/transactions', { params: { month, ...(envelopeId ? { envelopeId } : {}) } });
 }
 
 // text: string (free-form quick-entry input). Server derives the user from

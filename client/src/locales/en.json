@@ -8,13 +8,13 @@
     "loading": "Loading…"
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Homepage",
     "transactions": "Transactions",
     "plannedExpenses": "Planned Expenses",
     "imports": "Import CSV",
     "settings": "Settings",
     "logout": "Log out",
-    "backToDashboard": "← Dashboard",
+    "backToDashboard": "← Homepage",
     "admin": "Admin",
     "imports": "Imports",
     "plannedExpenses": "Planned expenses",
@@ -56,7 +56,7 @@
     }
   },
   "dashboard": {
-    "title": "Category Dashboard",
+    "title": "Homepage",
     "addCategory": "Add Category",
     "addFirstCategory": "Add your first category",
     "addTransaction": "Add Transaction",
@@ -87,7 +87,13 @@
     "overallSpending": "Overall spending — {{month}}",
     "remainingOf": "{{remaining}} remaining of {{budget}}",
     "cardMenu": "Actions for {{name}}",
-    "budgetMeterLabel": "{{name}} budget usage"
+    "budgetMeterLabel": "{{name}} budget usage",
+    "openDetails": "View {{name}} spending details"
+  },
+  "categoryDetailsDrawer": {
+    "loading": "Loading transactions",
+    "error": "Couldn't load transactions for this category.",
+    "empty": "No transactions in this category yet."
   },
   "addCategoryModal": {
     "title": "Add category",
@@ -96,6 +102,7 @@
     "budgetLabel": "Monthly budget",
     "submit": "Add Category",
     "nameRequired": "Name is required",
+    "nameDuplicate": "A category with this name already exists this month.",
     "budgetInvalid": "Budget must be greater than 0",
     "suggestedCategories": {
       "pets": "Pets",
@@ -185,6 +192,7 @@
   "errors": {
     "unauthorized": "Incorrect email or password.",
     "duplicate": "An account with this email already exists.",
+    "duplicateName": "A category with this name already exists this month.",
     "notFound": "Item not found.",
     "forbidden": "You don't have permission to do that.",
     "generic": "Something went wrong. Please try again.",
@@ -322,6 +330,7 @@
   },
   "onboarding": {
     "title": "Welcome to Buddgy",
+    "subtitle": "Let's set up your first month — it only takes a minute.",
     "steps": {
       "income": "Income",
       "categories": "Categories"
@@ -371,6 +380,7 @@
     "income": "Income",
     "actualExpenses": "Actual expenses",
     "plannedExpenses": "Planned/projected expenses",
+    "ofBudget": "of {{budget}} budgeted",
     "plannedSavingsBalance": "Planned savings balance"
   },
   "addPlannedExpenseModal": {

@@ -6,9 +6,8 @@ import { CategoryFormModal } from '../components/categories/CategoryFormModal';
 import { CategoryCard } from '../components/categories/CategoryCard';
 import { ForecastBanner } from '../components/categories/ForecastBanner';
 import { SummaryBar } from '../components/categories/SummaryBar';
-import { MissingAmountPrompt } from '../components/categories/MissingAmountPrompt';
+import { UpcomingEventsCard } from '../components/plannedExpenses/UpcomingEventsCard';
 import { QuickEntryModal } from '../components/transactions/QuickEntryModal';
-import { OnboardingWizardModal } from '../components/onboarding/OnboardingWizardModal';
 import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
 import categoryService from '../services/categoryService';
@@ -16,14 +15,13 @@ import transactionService from '../services/transactionService';
 import forecastService from '../services/forecastService';
 import plannedExpenseService from '../services/plannedExpenseService';
 import incomeService from '../services/incomeService';
-import authService from '../services/authService';
 import { getCurrentMonth } from '../utils/month';
 import { getDaysRemainingInMonth, getMonthLabel } from '../utils/date';
 import { sortCategoriesBySpent } from '../utils/categoryStatus';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
@@ -50,6 +48,19 @@ export function DashboardPage() {
     queryKey: forecastQueryKey,
     queryFn: () => forecastService.get(user.id, month),
     enabled: categories.length > 0,
+  });
+
+  // includeDismissed so UpcomingEventsCard's "show dismissed" toggle has
+  // something to undo — same reasoning as PlannedExpensesPage.jsx.
+  const plannedExpensesQueryKey = ['planned-expenses', user.id, month];
+
+  const {
+    data: allPlannedExpenses = [],
+    isLoading: isPlannedExpensesLoading,
+    isError: isPlannedExpensesError,
+  } = useQuery({
+    queryKey: plannedExpensesQueryKey,
+    queryFn: () => plannedExpenseService.list(user.id, month, { includeDismissed: true }),
   });
 
   const incomeQueryKey = ['income-sources', user.id, month];
@@ -99,42 +110,43 @@ export function DashboardPage() {
     },
   });
 
-  // Filling in a missing amount changes a planned expense's contribution to
-  // the forecast totals, so per docs/STATE.md's staleness rule this
-  // invalidates forecastQueryKey the same way every other money mutation on
-  // this page does.
-  const missingAmountMutation = useMutation({
-    mutationFn: ({ id, payload }) => plannedExpenseService.update(id, payload),
+  // UpcomingEventsCard's four actions (dismiss / undo-dismiss / spend / save
+  // a missing amount) are all just PATCHes to a planned expense — same
+  // invalidation set PlannedExpensesPage.jsx and SettingsPage.jsx use for
+  // the same card, since every one of them can change forecast totals and,
+  // via envelope assignment or confirmation, the envelope cards above.
+  const dismissMutation = useMutation({
+    mutationFn: (id) => plannedExpenseService.update(id, { is_dismissed: true }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: plannedExpensesQueryKey });
       queryClient.invalidateQueries({ queryKey: forecastQueryKey });
     },
   });
-
-  // Sequential on purpose: a failed income-save must never leave onboarding
-  // marked complete with no income persisted. monthly_budget_agorot: 1 is a
-  // placeholder (server rejects 0) — formatShekelsRounded() displays it as
-  // ₪0 everywhere, matching the real intent of "no budget set yet."
-  const onboardingMutation = useMutation({
-    mutationFn: async ({ incomeRows, selectedCategories }) => {
-      await incomeService.replace(user.id, month, incomeRows);
-
-      await Promise.all(
-        selectedCategories.map((category) =>
-          categoryService.create(user.id, { ...category, monthly_budget_agorot: 1, month })
-        )
-      );
-
-      await authService.completeOnboarding();
-      await refreshUser();
-    },
+  const undoDismissMutation = useMutation({
+    mutationFn: (id) => plannedExpenseService.update(id, { is_dismissed: false }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: plannedExpensesQueryKey });
+      queryClient.invalidateQueries({ queryKey: forecastQueryKey });
+    },
+  });
+  const spendMutation = useMutation({
+    mutationFn: ({ id, payload }) => plannedExpenseService.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: plannedExpensesQueryKey });
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: forecastQueryKey });
-      queryClient.invalidateQueries({ queryKey: incomeQueryKey });
+    },
+  });
+  const saveAmountMutation = useMutation({
+    mutationFn: ({ id, payload }) => plannedExpenseService.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: plannedExpensesQueryKey });
+      queryClient.invalidateQueries({ queryKey: forecastQueryKey });
     },
   });
 
   const sortedCategories = sortCategoriesBySpent(categories);
+  const categoryOptions = categories.map((category) => ({ value: String(category.id), label: category.name }));
   const monthLabel = getMonthLabel(month);
   const daysRemaining = getDaysRemainingInMonth(month);
   const hasIncome = income?.rows?.length > 0;
@@ -176,7 +188,7 @@ export function DashboardPage() {
           alone can render before any categories exist (e.g. right after
           onboarding with income entered but no categories picked) since it
           already falls back gracefully when `forecast` is undefined; the
-          forecast-dependent banner/prompt stay gated on real category data. */}
+          forecast-dependent banner/card stay gated on real category data. */}
       {!isLoading && !isError && hasSummaryData && (
         <div className="flex flex-col gap-4">
           {categories.length > 0 && (
@@ -192,11 +204,19 @@ export function DashboardPage() {
             isIncomeError={isIncomeError}
             monthLabel={monthLabel}
           />
-          {categories.length > 0 && (
-            <MissingAmountPrompt
-              plannedExpenses={forecast?.missingAmountPlannedExpenses}
-              onSubmit={(id, payload) => missingAmountMutation.mutateAsync({ id, payload })}
+          {categories.length > 0 && !isPlannedExpensesLoading && !isPlannedExpensesError && (
+            <UpcomingEventsCard
+              plannedExpenses={allPlannedExpenses}
+              missingAmountPlannedExpenses={forecast?.missingAmountPlannedExpenses}
+              categoryOptions={categoryOptions}
+              onDismiss={(id) => dismissMutation.mutateAsync(id)}
+              onUndoDismiss={(id) => undoDismissMutation.mutateAsync(id)}
+              onSpend={(id, payload) => spendMutation.mutateAsync({ id, payload })}
+              onSaveAmount={(id, payload) => saveAmountMutation.mutateAsync({ id, payload })}
             />
+          )}
+          {categories.length > 0 && isPlannedExpensesError && (
+            <Alert>{t('plannedExpenses.error')}</Alert>
           )}
         </div>
       )}
@@ -250,11 +270,6 @@ export function DashboardPage() {
         opened={isQuickEntryOpen}
         onClose={() => setIsQuickEntryOpen(false)}
         onConfirm={(payload) => quickEntryMutation.mutateAsync(payload)}
-      />
-
-      <OnboardingWizardModal
-        opened={!user?.onboarding_completed_at}
-        onFinish={(payload) => onboardingMutation.mutateAsync(payload)}
       />
     </div>
   );

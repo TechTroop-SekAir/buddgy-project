@@ -8,13 +8,13 @@
     "loading": "טוען…"
   },
   "nav": {
-    "dashboard": "לוח בקרה",
+    "dashboard": "דף הבית",
     "transactions": "תנועות",
     "plannedExpenses": "הוצאות שוטפות",
     "imports": "ייבוא CSV",
     "settings": "הגדרות",
     "logout": "התנתקות",
-    "backToDashboard": "→ לוח בקרה",
+    "backToDashboard": "→ דף הבית",
     "admin": "ניהול",
     "imports": "ייבוא",
     "plannedExpenses": "הוצאות שוטפות",
@@ -56,7 +56,7 @@
     }
   },
   "dashboard": {
-    "title": "לוח בקרה לקטגוריות",
+    "title": "דף הבית",
     "addCategory": "הוספת קטגוריה",
     "addFirstCategory": "הוספת הקטגוריה הראשונה שלך",
     "addTransaction": "הוספת תנועה",
@@ -88,7 +88,13 @@
     "overallSpending": "הוצאות סה״כ — {{month}}",
     "remainingOf": "{{remaining}} מתוך {{budget}} נותרו",
     "cardMenu": "פעולות עבור {{name}}",
-    "budgetMeterLabel": "ניצול תקציב {{name}}"
+    "budgetMeterLabel": "ניצול תקציב {{name}}",
+    "openDetails": "צפייה בפירוט ההוצאות של {{name}}"
+  },
+  "categoryDetailsDrawer": {
+    "loading": "טוען תנועות",
+    "error": "לא ניתן היה לטעון את התנועות עבור קטגוריה זו.",
+    "empty": "אין עדיין תנועות בקטגוריה זו."
   },
   "addCategoryModal": {
     "title": "הוספת קטגוריה",
@@ -97,6 +103,7 @@
     "budgetLabel": "תקציב חודשי",
     "submit": "הוספת קטגוריה",
     "nameRequired": "יש להזין שם",
+    "nameDuplicate": "קיימת כבר קטגוריה בשם זה החודש.",
     "budgetInvalid": "התקציב חייב להיות גדול מ-0",
     "suggestedCategories": {
       "pets": "חיות מחמד",
@@ -186,6 +193,7 @@
   "errors": {
     "unauthorized": "אימייל או סיסמה שגויים.",
     "duplicate": "קיים כבר חשבון עם כתובת אימייל זו.",
+    "duplicateName": "קיימת כבר קטגוריה בשם זה החודש.",
     "notFound": "הפריט לא נמצא.",
     "forbidden": "אין לך הרשאה לבצע פעולה זו.",
     "generic": "משהו השתבש. נסו שוב.",
@@ -323,6 +331,7 @@
   },
   "onboarding": {
     "title": "ברוכים הבאים ל-Buddgy",
+    "subtitle": "בואו נגדיר את החודש הראשון שלכם — זה ייקח רק דקה.",
     "steps": {
       "income": "הכנסות",
       "categories": "קטגוריות"
@@ -372,6 +381,7 @@
     "income": "הכנסות",
     "actualExpenses": "הוצאות בפועל",
     "plannedExpenses": "תכנון הוצאות / צפוי",
+    "ofBudget": "מתוך {{budget}} בתקציב",
     "plannedSavingsBalance": "יתרה מתוכננת לחיסכון"
   },
   "addPlannedExpenseModal": {

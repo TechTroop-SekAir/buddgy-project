@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Badge, Button, Card } from '../ui';
+import { Alert, Badge, Button, Card, NumberInput } from '../ui';
 import { SpendPromptModal } from './SpendPromptModal';
 import { formatDate } from '../../utils/date';
 import { hasMissingAmount, isUpcomingEvent, isDismissedUpcomingEvent } from '../../utils/plannedExpenseStatus';
 import { getErrorMessage } from '../../utils/errorMessages';
+import { shekelsToAgorot } from '../../utils/money';
 
 // One row per upcoming event — owns its own dismiss-pending/error state,
 // same reasoning as PlannedExpenseRow.jsx/MissingAmountRow.jsx: a shared
@@ -81,23 +82,88 @@ function DismissedEventRow({ plannedExpense, onUndoDismiss }) {
   );
 }
 
+// A confirmed planned expense that's still missing its amount — the one gap
+// the Spend flow below doesn't cover, since Spend sets amount and confirms
+// in one step. Ported from the old, now-deleted MissingAmountPrompt.jsx.
+function NeedsAmountRow({ plannedExpense, onSaveAmount }) {
+  const { t } = useTranslation();
+  const [amountShekels, setAmountShekels] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!(Number(amountShekels) > 0)) {
+      setError(t('forecast.missingAmountInvalid'));
+      return;
+    }
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await onSaveAmount(plannedExpense.id, { amount_agorot: shekelsToAgorot(Number(amountShekels)) });
+    } catch (err) {
+      setError(getErrorMessage(err.message, t));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 border-b border-border-subtle py-3 last:border-0">
+      <div className="min-w-40 flex-1">
+        <p className="text-sm font-medium text-text-primary">{plannedExpense.title}</p>
+        <p className="text-xs text-text-secondary">{formatDate(plannedExpense.due_date)}</p>
+      </div>
+      <NumberInput
+        aria-label={plannedExpense.title}
+        value={amountShekels}
+        onChange={(value) => setAmountShekels(String(value ?? ''))}
+        placeholder="0"
+        leftSection="₪"
+        min={0}
+        error={error}
+        className="w-32"
+      />
+      <Button type="submit" variant="outline" color="accent" size="sm" loading={isSubmitting}>
+        {t('forecast.missingAmountSubmit')}
+      </Button>
+    </form>
+  );
+}
+
 // Surfaces calendar events Claude judged likely to cost money (weddings,
 // birthdays, flights — anything without an amount in the title that used to
 // be silently dropped) so the user can either dismiss them ("this won't cost
-// money") or say how much they plan to spend. See
-// docs/features/UPCOMING-EVENTS.md.
+// money") or say how much they plan to spend, plus any already-confirmed row
+// still missing an amount (formerly MissingAmountPrompt.jsx, folded in here
+// per docs/features/HOMEPAGE-FIXES.md so the homepage has one card instead
+// of two overlapping ones). See docs/features/UPCOMING-EVENTS.md.
 //
 // `plannedExpenses` must be fetched with includeDismissed so the "show
 // dismissed" toggle has something to undo — see PlannedExpensesPage.jsx.
-export function UpcomingEventsCard({ plannedExpenses, categoryOptions, onDismiss, onUndoDismiss, onSpend, className = '' }) {
+// `missingAmountPlannedExpenses` is forecastService's list (any non-dismissed
+// 'likely' row missing an amount, regardless of confirmation) — filtered
+// here to confirmed rows only, since unconfirmed ones already get amount +
+// confirmation together via the Spend button.
+export function UpcomingEventsCard({
+  plannedExpenses,
+  missingAmountPlannedExpenses = [],
+  categoryOptions,
+  onDismiss,
+  onUndoDismiss,
+  onSpend,
+  onSaveAmount,
+  className = '',
+}) {
   const { t } = useTranslation();
   const [showDismissed, setShowDismissed] = useState(false);
   const [spendModalTarget, setSpendModalTarget] = useState(null);
 
   const upcoming = plannedExpenses.filter(isUpcomingEvent);
   const dismissed = plannedExpenses.filter(isDismissedUpcomingEvent);
+  const needsAmount = missingAmountPlannedExpenses.filter((pe) => pe.is_confirmed);
 
-  if (upcoming.length === 0 && dismissed.length === 0) return null;
+  if (upcoming.length === 0 && dismissed.length === 0 && needsAmount.length === 0) return null;
 
   return (
     <Card padding={0} className={`bg-bg-surface border border-border-card rounded-lg shadow-sm ${className}`}>
@@ -115,6 +181,15 @@ export function UpcomingEventsCard({ plannedExpenses, categoryOptions, onDismiss
             </Button>
           )}
         </div>
+
+        {needsAmount.length > 0 && (
+          <div className="flex flex-col mb-2 pb-2 border-b border-border-subtle">
+            <p className="text-xs font-medium text-text-secondary mb-1">{t('forecast.missingAmountTitle')}</p>
+            {needsAmount.map((plannedExpense) => (
+              <NeedsAmountRow key={plannedExpense.id} plannedExpense={plannedExpense} onSaveAmount={onSaveAmount} />
+            ))}
+          </div>
+        )}
 
         {upcoming.length > 0 ? (
           <div className="flex flex-col">

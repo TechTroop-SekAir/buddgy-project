@@ -66,6 +66,7 @@ describe('GET /api/forecast', () => {
       totalActualSpentAgorot: 0,
       totalPlannedExpensesAgorot: 0,
       totalEndOfMonthSpendAgorot: 0,
+      totalBudgetAgorot: 0,
       missingAmountPlannedExpenses: [],
     });
   });

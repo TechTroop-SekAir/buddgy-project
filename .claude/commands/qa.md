@@ -130,6 +130,11 @@ Before a feature is considered done:
 - [ ] A regression test exists for any bug fixes in this feature
 - [ ] All tests pass in CI
 - [ ] No tests are skipped or marked `.only` in committed code
+- [ ] **The full client Playwright suite (`npm run test:e2e` from the repo root) passes locally
+      before any commit or push.** Root `playwright.config.js` already wires `testDir: './e2e'`,
+      `globalSetup`, and both dev-server webServers, so this is a run-it-yourself gate, not new
+      tooling — there is no git hook enforcing it. If a spec fails, fix the regression (or the
+      spec, if the behavior change was intentional) before committing.
 
 ---
 

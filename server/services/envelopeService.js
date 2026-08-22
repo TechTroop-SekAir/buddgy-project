@@ -55,8 +55,20 @@ async function list(userId, monthInput) {
   return envelopes.map((e) => ({ ...e.get({ plain: true }), spent_agorot: spentByEnvelopeId[e.id] ?? 0 }));
 }
 
+// Proactive check, same pattern as authService.js's duplicate-email guard —
+// a clean 409 instead of surfacing the DB constraint's error shape.
+// envelopes_user_id_month_name_key (migration 20260822000200) enforces this
+// at the DB level too, as the last line of defense against a race.
+async function assertNameAvailable(userId, month, name, { excludeId } = {}) {
+  const where = { user_id: userId, month, name };
+  if (excludeId != null) where.id = { [Op.ne]: excludeId };
+  const existing = await Envelope.findOne({ where, attributes: ['id'] });
+  if (existing) throw new AppError('duplicate: name', 409);
+}
+
 async function create(userId, { name, monthly_budget_agorot, color, month: monthInput }) {
   const month = normalizeMonth(monthInput);
+  await assertNameAvailable(userId, month, name);
   const envelope = await Envelope.create({ user_id: userId, name, monthly_budget_agorot, color, month });
   return { ...envelope.get({ plain: true }), spent_agorot: 0 };
 }
@@ -72,7 +84,10 @@ async function update(userId, id, patch) {
   const envelope = await findOwned(userId, id);
   const { name, monthly_budget_agorot, color } = patch;
   const fields = {};
-  if (name !== undefined) fields.name = name;
+  if (name !== undefined) {
+    if (name !== envelope.name) await assertNameAvailable(userId, envelope.month, name, { excludeId: id });
+    fields.name = name;
+  }
   if (monthly_budget_agorot !== undefined) fields.monthly_budget_agorot = monthly_budget_agorot;
   if (color !== undefined) fields.color = color;
 

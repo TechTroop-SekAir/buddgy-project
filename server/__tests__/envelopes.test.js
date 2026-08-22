@@ -177,6 +177,21 @@ describe('POST /api/envelopes', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('validation failed: monthly_budget_agorot');
   });
+
+  it('rejects a name that duplicates an existing envelope in the same month, without creating anything', async () => {
+    mockEnvelopeFindOne.mockResolvedValue(
+      makeEnvelopeInstance({ id: 5, user_id: AUTHED_USER_ID, name: 'Fun', monthly_budget_agorot: 30000, color: null, month: '2026-08-01' })
+    );
+
+    const res = await request(app)
+      .post('/api/envelopes')
+      .set('Authorization', authHeader())
+      .send({ name: 'Fun', monthly_budget_agorot: 5000, month: '2026-08' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('duplicate: name');
+    expect(mockEnvelopeCreate).not.toHaveBeenCalled();
+  });
 });
 
 describe('PUT/PATCH /api/envelopes/:id', () => {
@@ -196,9 +211,14 @@ describe('PUT/PATCH /api/envelopes/:id', () => {
   });
 
   it('updates an envelope the caller owns via PATCH (matches the shipped client)', async () => {
-    mockEnvelopeFindOne.mockResolvedValue(
-      makeEnvelopeInstance({ id: 5, user_id: AUTHED_USER_ID, name: 'Fun', monthly_budget_agorot: 30000, color: null, month: '2026-08-01' })
-    );
+    // First call: findOwned's ownership lookup. Second: assertNameAvailable's
+    // duplicate check, run because the patch changes `name` — null means no
+    // other envelope in this user's month already has it.
+    mockEnvelopeFindOne
+      .mockResolvedValueOnce(
+        makeEnvelopeInstance({ id: 5, user_id: AUTHED_USER_ID, name: 'Fun', monthly_budget_agorot: 30000, color: null, month: '2026-08-01' })
+      )
+      .mockResolvedValueOnce(null);
 
     const res = await request(app)
       .patch('/api/envelopes/5')
@@ -207,6 +227,22 @@ describe('PUT/PATCH /api/envelopes/:id', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.name).toBe('Entertainment');
+  });
+
+  it('rejects renaming to a name already used by another envelope in the same month', async () => {
+    mockEnvelopeFindOne
+      .mockResolvedValueOnce(
+        makeEnvelopeInstance({ id: 5, user_id: AUTHED_USER_ID, name: 'Fun', monthly_budget_agorot: 30000, color: null, month: '2026-08-01' })
+      )
+      .mockResolvedValueOnce(makeEnvelopeInstance({ id: 6, user_id: AUTHED_USER_ID, name: 'Entertainment' }));
+
+    const res = await request(app)
+      .patch('/api/envelopes/5')
+      .set('Authorization', authHeader())
+      .send({ name: 'Entertainment' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('duplicate: name');
   });
 
   it('returns 404, not 403, for another user\'s envelope', async () => {

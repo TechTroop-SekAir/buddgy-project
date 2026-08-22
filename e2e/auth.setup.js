@@ -13,13 +13,13 @@ const ADMIN_FILE = path.join(__dirname, '.auth', 'admin.json');
 // already authenticated instead of re-running the login form each time.
 // The login flow itself is still exercised fresh in auth.spec.js.
 //
-// OnboardingWizardModal (client/src/pages/DashboardPage.jsx) opens whenever
-// user.onboarding_completed_at is missing. Its non-dismissible overlay would
-// otherwise intercept pointer events on every other spec's first dashboard
-// interaction (e.g. auth.spec.js's logout test). Call the real
-// PATCH /api/auth/onboarding endpoint directly (bypassing the wizard UI) so
-// every spec that reuses this storageState starts past onboarding. The
-// wizard itself is exercised fresh, through the real UI, in onboarding.spec.js.
+// The app redirects to /onboarding (client/src/routes.jsx) whenever
+// user.onboarding_completed_at is missing, which would otherwise land every
+// other spec's first dashboard interaction (e.g. auth.spec.js's logout test)
+// on the wizard instead. Call the real PATCH /api/auth/onboarding endpoint
+// directly (bypassing the wizard UI) so every spec that reuses this
+// storageState starts past onboarding. The wizard itself is exercised fresh,
+// through the real UI, in onboarding.spec.js.
 async function markOnboardingComplete(page) {
   const token = await page.evaluate(() => localStorage.getItem('buddgy_token'));
   if (!token) return;
@@ -34,12 +34,14 @@ async function loginAndSave(page, email, password, storageStatePath) {
   await page.getByLabel(t.auth.emailLabel).fill(email);
   await page.getByLabel(t.auth.passwordLabel).fill(password);
   await page.getByRole('button', { name: t.auth.login.submit }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  // These seeded accounts have never onboarded, so the login redirect lands
+  // on /onboarding (client/src/routes.jsx), not /dashboard.
+  await expect(page).toHaveURL(/\/onboarding$/);
   await markOnboardingComplete(page);
-  // The dashboard already fetched `user` (and its now-stale
+  // /onboarding already fetched `user` (and its now-stale
   // onboarding_completed_at: null) before markOnboardingComplete ran —
-  // reload so the page re-fetches /auth/me and the wizard actually closes
-  // before storageState is captured.
+  // reload so the page re-fetches /auth/me and the redirect guard sends it
+  // on to /dashboard before storageState is captured.
   await page.reload();
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.context().storageState({ path: storageStatePath });

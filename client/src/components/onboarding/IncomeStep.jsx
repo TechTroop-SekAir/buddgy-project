@@ -79,7 +79,7 @@ export function IncomeStep({ onNext }) {
 
       <div className="rounded-lg border border-border-card bg-bg-surface p-4">
         <p className="text-xs font-medium text-text-muted">{t('onboarding.income.totalLabel')}</p>
-        <p className="mt-0.5 font-mono text-xl font-semibold text-text-primary">
+        <p className="num-tabular mt-0.5 font-mono text-xl font-semibold text-text-primary">
           {formatShekelsRounded(totalAgorot)}
         </p>
       </div>

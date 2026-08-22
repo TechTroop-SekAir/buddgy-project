@@ -90,6 +90,7 @@ describe('GET /api/forecast', () => {
         totalActualSpentAgorot: 90000,
         totalPlannedExpensesAgorot: 70000,
         totalEndOfMonthSpendAgorot: 160000,
+        totalBudgetAgorot: 150000,
         missingAmountPlannedExpenses: [],
       },
       error: null,
@@ -112,6 +113,7 @@ describe('GET /api/forecast', () => {
         totalActualSpentAgorot: 0,
         totalPlannedExpensesAgorot: 0,
         totalEndOfMonthSpendAgorot: 0,
+        totalBudgetAgorot: 0,
         missingAmountPlannedExpenses: [],
       },
       error: null,
@@ -156,6 +158,7 @@ describe('GET /api/forecast', () => {
       totalActualSpentAgorot: 40000,
       totalPlannedExpensesAgorot: 0,
       totalEndOfMonthSpendAgorot: 40000,
+      totalBudgetAgorot: 100000,
       missingAmountPlannedExpenses: [],
     });
   });
@@ -275,6 +278,7 @@ describe('GET /api/forecast', () => {
     expect(Number.isInteger(res.body.data.totalActualSpentAgorot)).toBe(true);
     expect(Number.isInteger(res.body.data.totalPlannedExpensesAgorot)).toBe(true);
     expect(Number.isInteger(res.body.data.totalEndOfMonthSpendAgorot)).toBe(true);
+    expect(Number.isInteger(res.body.data.totalBudgetAgorot)).toBe(true);
     for (const id of res.body.data.atRiskEnvelopes) {
       expect(Number.isInteger(id)).toBe(true);
     }
@@ -295,6 +299,7 @@ describe('GET /api/forecast', () => {
         totalActualSpentAgorot: 0,
         totalPlannedExpensesAgorot: 0,
         totalEndOfMonthSpendAgorot: 0,
+        totalBudgetAgorot: 0,
         missingAmountPlannedExpenses: [],
       });
     }
