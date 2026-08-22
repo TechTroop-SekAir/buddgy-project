@@ -32,8 +32,19 @@
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
     "passwordLabel": "Password",
+    "showPassword": "Show typed characters",
+    "hidePassword": "Hide typed characters",
+    "brand": {
+      "tagline": "Budget by envelope, not by spreadsheet.",
+      "points": {
+        "envelopes": "Pre-allocate your budget into spending envelopes",
+        "ai": "Log expenses in plain text with AI quick entry",
+        "calendar": "Sync upcoming bills from Google Calendar"
+      }
+    },
     "login": {
       "title": "Log in",
+      "subtitle": "Welcome back — let's see where your budget stands.",
       "passwordPlaceholder": "Your password",
       "submit": "Log in",
       "noAccount": "Don't have an account?",
@@ -41,6 +52,7 @@
     },
     "register": {
       "title": "Create an account",
+      "subtitle": "Set up your envelopes in a couple of minutes.",
       "passwordPlaceholder": "At least 8 characters",
       "confirmPasswordLabel": "Confirm password",
       "confirmPasswordPlaceholder": "Re-enter your password",
@@ -331,6 +343,7 @@
   "onboarding": {
     "title": "Welcome to Buddgy",
     "subtitle": "Let's set up your first month — it only takes a minute.",
+    "stepCounter": "Step {{current}} of {{total}}",
     "steps": {
       "income": "Income",
       "categories": "Categories"
@@ -343,9 +356,7 @@
       "removeRow": "Remove row",
       "continue": "Continue",
       "defaultRows": {
-        "primarySalary": "Primary salary",
-        "secondarySalary": "Secondary salary",
-        "stipend": "Stipend/Other"
+        "primarySalary": "Primary salary"
       },
       "errors": {
         "labelRequired": "Enter a name for this income source",
@@ -358,6 +369,8 @@
       "finish": "Finish",
       "selectAll": "Select All",
       "deselectAll": "Deselect All",
+      "selectedCount_one": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
       "suggestions": {
         "housing": {
           "label": "Housing",

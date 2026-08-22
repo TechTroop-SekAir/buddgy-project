@@ -34,16 +34,22 @@ async function loginAndSave(page, email, password, storageStatePath) {
   await page.getByLabel(t.auth.emailLabel).fill(email);
   await page.getByLabel(t.auth.passwordLabel).fill(password);
   await page.getByRole('button', { name: t.auth.login.submit }).click();
-  // These seeded accounts have never onboarded, so the login redirect lands
-  // on /onboarding (client/src/routes.jsx), not /dashboard.
-  await expect(page).toHaveURL(/\/onboarding$/);
-  await markOnboardingComplete(page);
-  // /onboarding already fetched `user` (and its now-stale
-  // onboarding_completed_at: null) before markOnboardingComplete ran —
-  // reload so the page re-fetches /auth/me and the redirect guard sends it
-  // on to /dashboard before storageState is captured.
-  await page.reload();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  // A never-onboarded account redirects to /onboarding (client/src/routes.jsx)
+  // on login; an account that already completed onboarding in a previous run
+  // against this same persistent buddgy_e2e database (seed.js's
+  // findOrCreate is idempotent and never resets onboarding_completed_at)
+  // lands directly on /dashboard. Handle both so this setup doesn't depend on
+  // the database's history.
+  await expect(page).toHaveURL(/\/(onboarding|dashboard)$/);
+  if (new URL(page.url()).pathname === '/onboarding') {
+    await markOnboardingComplete(page);
+    // /onboarding already fetched `user` (and its now-stale
+    // onboarding_completed_at: null) before markOnboardingComplete ran —
+    // reload so the page re-fetches /auth/me and the redirect guard sends it
+    // on to /dashboard before storageState is captured.
+    await page.reload();
+    await expect(page).toHaveURL(/\/dashboard$/);
+  }
   await page.context().storageState({ path: storageStatePath });
 }
 

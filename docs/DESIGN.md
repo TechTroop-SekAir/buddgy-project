@@ -23,6 +23,12 @@ Constraints:
 - Must work well at the size a phone is used for quick entry ("coffee, 34 shekels" typed one-handed) — see [Responsive Breakpoints](#responsive-breakpoints)
 - Must never rely on color alone to convey envelope status — pair color with a label/icon for accessibility
 
+**First-run screens** (`/login`, `/register`, `/onboarding`) carry more decoration than the rest of
+the app — a `--brand-gradient-strong` panel, the logo lockup, and (in onboarding) an icon-card grid
+— since this is the one place a gradient hero and marketing copy earn their keep. Everywhere else
+stays restrained per the palette below. See `client/src/components/layout/AuthLayout.jsx` and
+`client/src/components/ui/SelectableCard.jsx` for the reusable pieces.
+
 ## Palette & Tokens
 
 Defined in `client/src/styles/tokens.css`. Finalized per `docs/DASHBOARD-REDESIGN.md` Step 1 (supersedes the Day-1 placeholder values). Core tokens:

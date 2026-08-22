@@ -32,8 +32,19 @@
     "emailLabel": "אימייל",
     "emailPlaceholder": "you@example.com",
     "passwordLabel": "סיסמה",
+    "showPassword": "הצג את התווים שהוקלדו",
+    "hidePassword": "הסתר את התווים שהוקלדו",
+    "brand": {
+      "tagline": "תקציב לפי מעטפות, לא לפי גיליון אלקטרוני.",
+      "points": {
+        "envelopes": "הקצו מראש תקציב למעטפות הוצאה",
+        "ai": "רשמו הוצאות בטקסט חופשי עם הזנה מהירה מבוססת AI",
+        "calendar": "סנכרנו חשבונות קרובים מיומן Google"
+      }
+    },
     "login": {
       "title": "התחברות",
+      "subtitle": "ברוכים השבים — בואו נבדוק איפה עומד התקציב שלכם.",
       "passwordPlaceholder": "הסיסמה שלך",
       "submit": "התחברות",
       "noAccount": "אין לך חשבון?",
@@ -41,6 +52,7 @@
     },
     "register": {
       "title": "יצירת חשבון",
+      "subtitle": "הגדירו את המעטפות שלכם בכמה דקות.",
       "passwordPlaceholder": "לפחות 8 תווים",
       "confirmPasswordLabel": "אימות סיסמה",
       "confirmPasswordPlaceholder": "הזן/י את הסיסמה שוב",
@@ -332,6 +344,7 @@
   "onboarding": {
     "title": "ברוכים הבאים ל-Buddgy",
     "subtitle": "בואו נגדיר את החודש הראשון שלכם — זה ייקח רק דקה.",
+    "stepCounter": "שלב {{current}} מתוך {{total}}",
     "steps": {
       "income": "הכנסות",
       "categories": "קטגוריות"
@@ -344,9 +357,7 @@
       "removeRow": "הסרת שורה",
       "continue": "המשך",
       "defaultRows": {
-        "primarySalary": "משכורת ראשית",
-        "secondarySalary": "משכורת משנית",
-        "stipend": "קצבה/אחר"
+        "primarySalary": "משכורת ראשית"
       },
       "errors": {
         "labelRequired": "יש להזין שם למקור ההכנסה",
@@ -359,6 +370,10 @@
       "finish": "סיום",
       "selectAll": "בחר הכל",
       "deselectAll": "בטל הכל",
+      "selectedCount_one": "נבחרה {{count}}",
+      "selectedCount_two": "נבחרו {{count}}",
+      "selectedCount_many": "נבחרו {{count}}",
+      "selectedCount_other": "נבחרו {{count}}",
       "suggestions": {
         "housing": {
           "label": "דיור ומגורים",

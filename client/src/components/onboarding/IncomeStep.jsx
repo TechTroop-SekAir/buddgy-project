@@ -38,7 +38,7 @@ export function IncomeStep({ onNext }) {
 
       <div className="flex flex-col gap-3">
         {form.values.rows.map((row, index) => (
-          <div key={index} className="flex items-end gap-2">
+          <div key={index} className="flex items-end gap-2 rounded-md border border-border-card bg-bg-hover p-3">
             <TextInput
               className="flex-1"
               label={index === 0 ? t('addCategoryModal.nameLabel') : undefined}
@@ -77,16 +77,22 @@ export function IncomeStep({ onNext }) {
         {t('onboarding.income.addRow')}
       </Button>
 
-      <div className="rounded-lg border border-border-card bg-bg-surface p-4">
-        <p className="text-xs font-medium text-text-muted">{t('onboarding.income.totalLabel')}</p>
-        <p className="num-tabular mt-0.5 font-mono text-xl font-semibold text-text-primary">
-          {formatShekelsRounded(totalAgorot)}
-        </p>
+      <div className="flex items-center gap-3 rounded-lg border border-accent bg-accent-subtle p-4">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-surface">
+          <Icon name="trendingUp" size="md" className="text-accent" />
+        </span>
+        <div>
+          <p className="text-xs font-medium text-text-muted">{t('onboarding.income.totalLabel')}</p>
+          <p className="num-tabular mt-0.5 font-mono text-2xl font-semibold text-text-primary">
+            {formatShekelsRounded(totalAgorot)}
+          </p>
+        </div>
       </div>
 
       <div className="flex justify-end mt-2">
-        <Button type="submit" variant="filled" color="accent">
+        <Button type="submit" variant="filled" color="accent" size="lg">
           {t('onboarding.income.continue')}
+          <Icon name="chevronRight" size="sm" className="ms-1" />
         </Button>
       </div>
     </form>
