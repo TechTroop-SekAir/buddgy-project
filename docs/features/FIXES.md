@@ -25,3 +25,14 @@ in planned-expenses page:
 
 
 before any commit and push - E2E test for client (also add it to .claude\commands\qa.md)
+
+
+New: 
+
+- Dark Mode - Darya
+
+- adding settings (changing incomes and details from the onboarding, and personal details) - Matan
+
+- CSV - Check if works, and (will sum in every category and will suggest budget) - Ofek 
+
+- adding to the agent more option to suggest (where to cut or save money from - one or few categories - and the luxury one and not necessary) - Ofek 

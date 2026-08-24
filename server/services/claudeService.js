@@ -312,13 +312,26 @@ async function classifyEventCostLikelihood(userId, events) {
  * from generateText itself (timeout, malformed tool input, rate limit)
  * propagate uncaught, same as every other function here's failure contract.
  *
- * @param {{ system: string, prompt: string, tools: object, stopWhen?: unknown, maxOutputTokens?: number }} params
+ * `messages` is optional client-side conversation history (Budget Advisor's
+ * A-21 follow-up support) — an array of `{ role: 'user'|'assistant',
+ * content: string }` turns, most recent last, NOT including the current
+ * `prompt`. When given, it's passed to `generateText` as `messages` (with
+ * `prompt` appended as the final user turn) instead of the plain `prompt`
+ * string — the AI SDK accepts only one of the two.
+ *
+ * `temperature` is optional and forwarded to `generateText` only when given, so every existing
+ * caller is unaffected. Pass 0 when a caller needs repeatable answers over unchanged data (e.g.
+ * Budget Advisor's envelope-suggestion pick, docs/features/AGENTS.md § Agent 1) — this makes the
+ * model near-deterministic, not a hard guarantee.
+ *
+ * @param {{ system: string, prompt: string, messages?: Array<{role: 'user'|'assistant', content: string}>, tools: object, stopWhen?: unknown, temperature?: number, maxOutputTokens?: number }} params
  */
-async function runToolLoop({ system, prompt, tools, stopWhen, maxOutputTokens = TOOL_LOOP_MAX_TOKENS }) {
+async function runToolLoop({ system, prompt, messages, tools, stopWhen, temperature, maxOutputTokens = TOOL_LOOP_MAX_TOKENS }) {
   return generateText({
     model: llmModel(MODEL_ID),
     system,
-    prompt,
+    ...(messages ? { messages: [...messages, { role: 'user', content: prompt }] } : { prompt }),
+    ...(temperature != null ? { temperature } : {}),
     tools,
     stopWhen: stopWhen ?? stepCountIs(TOOL_LOOP_DEFAULT_MAX_STEPS),
     maxOutputTokens,

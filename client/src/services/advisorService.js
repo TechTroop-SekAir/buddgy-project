@@ -1,12 +1,11 @@
 import api from './api';
 
 // POST /api/advisor/ask — docs/features/AGENTS.md § Agent 1 (Budget Advisor).
-// Transport only: server/services/advisorService.js currently returns a
-// placeholder verdict until A-21 lands the real tool-use loop.
-async function ask(text) {
-  return api.post('/advisor/ask', { text });
+// `history` is this chat session's prior turns, client-state-only — never
+// persisted, cleared on refresh/new session (useAdvisorPrompt.js owns it).
+async function ask(text, history = []) {
+  return api.post('/advisor/ask', { text, history });
 }
 
 const advisorService = { ask };
-
 export default advisorService;
