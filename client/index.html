@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Buddgy</title>
+    <!-- Sets data-theme before first paint, so styles/tokens.css's dark
+         override block already applies by the time React mounts — avoids a
+         flash of the wrong theme. Key ('buddgy_theme') must match
+         src/context/ThemeContext.jsx's THEME_KEY. -->
+    <script>
+      (function () {
+        var stored = localStorage.getItem('buddgy_theme');
+        var mode = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.dataset.theme = mode;
+      })();
+    </script>
     <!-- DM Mono only — money figures. Body text stays on the system sans
          stack (src/styles/tokens.css --font-sans); DM Sans has no Hebrew
          coverage. See docs/DASHBOARD-REDESIGN.md Step 1. -->

@@ -78,7 +78,7 @@ export function OnboardingPage() {
       <div className="h-0.5 w-full bg-brand-stripe" />
       <div className="flex items-center gap-2.5 px-6 py-5">
         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-gradient">
-          <Icon name="wallet" size="sm" className="text-bg-surface" />
+          <Icon name="wallet" size="sm" className="text-on-fill" />
         </span>
         <span className="text-base font-semibold tracking-tight text-text-primary">{t('common.appName')}</span>
       </div>

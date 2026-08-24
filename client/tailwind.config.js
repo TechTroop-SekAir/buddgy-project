@@ -1,6 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  // Cascade-driven: the app never uses `dark:` utility variants directly,
+  // since color tokens already resolve per-mode through tokens.css's
+  // [data-theme="dark"] block. This just documents the mechanism so a
+  // future `dark:` usage resolves against the right selector, not the
+  // default (and unused) `media` strategy.
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
@@ -17,6 +23,7 @@ export default {
         'text-muted': 'var(--text-muted)',
         accent: 'var(--accent)',
         'accent-subtle': 'var(--accent-subtle)',
+        'text-on-fill': 'var(--text-on-fill)',
         'border-card': 'var(--border-card)',
         'border-nav': 'var(--border-nav)',
         'border-subtle': 'var(--border-subtle)',

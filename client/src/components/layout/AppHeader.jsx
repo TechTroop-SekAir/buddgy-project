@@ -5,6 +5,7 @@ import { ActionIcon, Burger, Button, Drawer, Icon } from '../ui';
 import { ProfileMenu } from './ProfileMenu';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useMonth } from '../../context/MonthContext';
 import { getCurrentMonth } from '../../utils/month';
 import { getMonthLabel } from '../../utils/date';
@@ -44,6 +45,7 @@ export function AppHeader() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { direction } = useLocale();
+  const { mode, setMode } = useTheme();
   const { month, goToPreviousMonth, goToNextMonth, goToCurrentMonth } = useMonth();
   const [drawerOpened, setDrawerOpened] = useState(false);
   const items = user.role === 'admin' ? [...NAV_ITEMS, { to: '/admin', labelKey: 'nav.admin', icon: 'barChart3' }] : NAV_ITEMS;
@@ -115,6 +117,15 @@ export function AppHeader() {
               </Button>
             )}
           </span>
+
+          <ActionIcon
+            variant="subtle"
+            size="lg"
+            onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+            aria-label={mode === 'dark' ? t('nav.themeToggleToLight') : t('nav.themeToggleToDark')}
+          >
+            <Icon name={mode === 'dark' ? 'sun' : 'moon'} size="sm" />
+          </ActionIcon>
 
           <ProfileMenu />
         </div>

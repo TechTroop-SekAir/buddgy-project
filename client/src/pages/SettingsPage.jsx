@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Alert, Badge, Button, Card, Modal } from '../components/ui';
+import { Alert, Badge, Button, Card, Icon, Modal } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
+import { useTheme } from '../context/ThemeContext';
 import calendarService from '../services/calendarService';
 
 const ERROR_KEY_BY_MESSAGE = {
@@ -31,6 +32,7 @@ function checkMockConnected(userId) {
 export function SettingsPage() {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
+  const { mode, setMode } = useTheme();
   const { month } = useMonth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -113,6 +115,33 @@ export function SettingsPage() {
         </p>
       )}
       {callbackNotice === 'error' && <Alert className="mt-4">{t('calendar.callbackError')}</Alert>}
+
+      <Card className="bg-bg-surface border border-border-card rounded-lg mt-6 max-w-lg">
+        <div className="p-6 flex flex-col gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">{t('settings.appearance.title')}</h2>
+            <p className="text-sm text-text-secondary mt-1">{t('settings.appearance.description')}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={mode === 'light' ? 'filled' : 'outline'}
+              color="accent"
+              leftSection={<Icon name="sun" size="sm" />}
+              onClick={() => setMode('light')}
+            >
+              {t('settings.appearance.light')}
+            </Button>
+            <Button
+              variant={mode === 'dark' ? 'filled' : 'outline'}
+              color="accent"
+              leftSection={<Icon name="moon" size="sm" />}
+              onClick={() => setMode('dark')}
+            >
+              {t('settings.appearance.dark')}
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       <Card className="bg-bg-surface border border-border-card rounded-lg mt-6 max-w-lg">
         <div className="p-6 flex flex-col gap-4">

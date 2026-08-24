@@ -19,7 +19,7 @@ export function ProfileMenu() {
           radius="pill"
           size="lg"
           aria-label={t('nav.profileMenu')}
-          className="bg-brand-gradient-strong text-xs font-semibold text-bg-surface"
+          className="bg-brand-gradient-strong text-xs font-semibold text-on-fill"
         >
           {initial}
         </ActionIcon>
