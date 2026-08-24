@@ -42,6 +42,8 @@ import {
   CreditCard,
   PartyPopper,
   Plane,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 // The only module allowed to import lucide-react — see client/CLAUDE.md
@@ -91,6 +93,8 @@ const ICON_REGISTRY = {
   creditCard: CreditCard,
   partyPopper: PartyPopper,
   plane: Plane,
+  sun: Sun,
+  moon: Moon,
 };
 
 const SIZES = { xs: 12, sm: 14, md: 16, lg: 18, xl: 22 };

@@ -20,7 +20,9 @@
     "plannedExpenses": "הוצאות שוטפות",
     "settings": "הגדרות",
     "menu": "תפריט",
-    "profileMenu": "תפריט חשבון"
+    "profileMenu": "תפריט חשבון",
+    "themeToggleToDark": "מעבר למצב כהה",
+    "themeToggleToLight": "מעבר למצב בהיר"
   },
   "landing": {
     "title": "באדג'י",
@@ -266,6 +268,14 @@
       "aiFailed": "לא הצלחנו לזהות את העמודות באופן אוטומטי. יש לבחור אותן ידנית למטה.",
       "storage": "משהו השתבש בשמירת הקובץ. יש לנסות שוב.",
       "generic": "משהו השתבש. יש לנסות שוב."
+    }
+  },
+  "settings": {
+    "appearance": {
+      "title": "מראה",
+      "description": "בחרו איך באדג'י ייראה במכשיר הזה.",
+      "light": "בהיר",
+      "dark": "כהה"
     }
   },
   "calendar": {

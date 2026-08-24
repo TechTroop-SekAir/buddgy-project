@@ -56,7 +56,7 @@ export function PromptBar() {
               <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 text-sm leading-snug text-start ${
-                    m.role === 'user' ? 'bg-brand-gradient-strong text-bg-surface' : 'bg-bg-subtle text-text-secondary'
+                    m.role === 'user' ? 'bg-brand-gradient-strong text-on-fill' : 'bg-bg-subtle text-text-secondary'
                   }`}
                 >
                   {m.role === 'assistant' && (
@@ -79,7 +79,7 @@ export function PromptBar() {
         )}
 
         {!open && (
-          <div className="flex items-center gap-2 overflow-x-auto px-4 pb-1 pt-3">
+          <div className="scrollbar-thin flex items-center gap-2 overflow-x-auto px-4 pb-1 pt-3">
             {CHIP_KEYS.map((key) => (
               <button
                 key={key}
@@ -95,7 +95,7 @@ export function PromptBar() {
 
         <div className="flex items-center gap-2 px-4 py-3">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-brand-gradient">
-            <Icon name="sparkles" size="xs" className="text-bg-surface" />
+            <Icon name="sparkles" size="xs" className="text-on-fill" />
           </span>
           <TextInput
             ref={inputRef}
@@ -119,7 +119,7 @@ export function PromptBar() {
             disabled={!input.trim()}
             loading={isPending}
             aria-label={t('advisor.send')}
-            className="bg-brand-gradient text-bg-surface disabled:opacity-30"
+            className="bg-brand-gradient text-on-fill disabled:opacity-30"
           >
             <Icon name="send" size="xs" />
           </ActionIcon>

@@ -9,6 +9,11 @@
  */
 
 :root {
+  /* Lets the browser render native form-control chrome (scrollbar, date
+     picker, select fallback) in the matching light/dark variant instead of
+     always light. */
+  color-scheme: light dark;
+
   /* Backgrounds */
   --bg-page: #f8fafc;
   --bg-surface: #ffffff;
@@ -30,6 +35,11 @@
   /* The one interactive color */
   --accent: #3d6bf0;
   --accent-subtle: #e8edfd;
+
+  /* Fixed white for text/icons on top of saturated fills (brand gradients,
+     --accent buttons) — unlike --bg-surface, this must NOT flip in dark
+     mode, since the fill it sits on doesn't flip either. */
+  --text-on-fill: #ffffff;
 
   /* Borders */
   --border-card: #e6ebf2;
@@ -109,4 +119,81 @@
   /* Form validation (kept distinct from status-* above) */
   --form-success: #22a35a;
   --form-error: #e0453a;
+}
+
+/* Dark mode — same token names, dark-tuned values only. Toggled via
+   ThemeContext.jsx setting data-theme on <html> (see src/context/ThemeContext.jsx).
+   --brand-gradient / --brand-stripe and --text-on-fill are intentionally
+   absent here: they're fixed-identity/decorative colors that already read
+   correctly on either a light or dark surface, so they stay mode-invariant. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --bg-page: #0b1120;
+  --bg-surface: #141c2e;
+  --bg-input: #101828;
+  --bg-subtle: #1a2337;
+  --bg-hover: #111a2c;
+  --bg-surface-translucent: rgb(20 28 46 / 0.85);
+
+  /* Text hierarchy */
+  --text-primary: #f1f5f9;
+  --text-strong: #e2e8f0;
+  --text-secondary: #b6c2d4;
+  --text-muted: #7c8aa3;
+
+  /* The one interactive color */
+  --accent: #6d8bff;
+  --accent-subtle: #1b2648;
+
+  /* Borders — alpha-white hairlines scale with whatever surface tone sits
+     underneath, instead of a flat hex tuned to one specific background. */
+  --border-card: rgb(255 255 255 / 0.08);
+  --border-nav: rgb(255 255 255 / 0.08);
+  --border-subtle: rgb(255 255 255 / 0.05);
+
+  /* Status text tier — re-tuned for AA contrast against dark surfaces. */
+  --status-ok: #34d399;
+  --status-warning: #fbbf24;
+  --status-critical: #fb923c;
+  --status-danger: #f87171;
+  --status-forecast-alert: #f0653f;
+
+  /* Status fill tier — already saturated/bright enough to read on dark. */
+  --status-ok-fill: #34d399;
+  --status-warning-fill: #facc15;
+  --status-critical-fill: #fb923c;
+  --status-danger-fill: #f57373;
+
+  /* Status tint backgrounds — alpha-blended glow instead of a flat pale
+     hex, which would render as a bright patch on a dark page. */
+  --status-ok-tint: rgb(52 211 153 / 0.16);
+  --status-warning-tint: rgb(251 191 36 / 0.16);
+  --status-critical-tint: rgb(251 146 60 / 0.16);
+  --status-danger-tint: rgb(248 113 113 / 0.16);
+
+  /* Envelope accent palette — unchanged hexes (already mid-tone pastels
+     that read fine on dark); only their tint backgrounds move to an
+     alpha blend for the same reason as the status tints above. */
+  --cat-1-tint: rgb(56 189 248 / 0.14);
+  --cat-2-tint: rgb(245 115 115 / 0.14);
+  --cat-3-tint: rgb(167 139 250 / 0.14);
+  --cat-4-tint: rgb(52 211 153 / 0.14);
+  --cat-5-tint: rgb(251 146 60 / 0.14);
+  --cat-6-tint: rgb(34 211 238 / 0.14);
+  --cat-fallback-tint: rgb(148 163 184 / 0.14);
+
+  /* Shadow — pure black at higher opacity. Slate-tinted shadows assume a
+     light surface underneath; on dark, elevation reads mainly through the
+     lighter-surface + visible-border combination above, with shadow only
+     as secondary reinforcement. */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.35);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.45), 0 2px 6px -2px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.55), 0 4px 12px -4px rgb(0 0 0 / 0.4);
+
+  /* Form validation (kept distinct from status-* above, same relationship
+     as light mode: close-but-not-identical to status-ok/-danger dark). */
+  --form-success: #4ade80;
+  --form-error: #fb7185;
 }

@@ -20,7 +20,9 @@
     "plannedExpenses": "Planned expenses",
     "settings": "Settings",
     "menu": "Menu",
-    "profileMenu": "Account menu"
+    "profileMenu": "Account menu",
+    "themeToggleToDark": "Switch to dark mode",
+    "themeToggleToLight": "Switch to light mode"
   },
   "landing": {
     "title": "Buddgy",
@@ -265,6 +267,14 @@
       "aiFailed": "We couldn't detect your columns automatically. Choose them manually below.",
       "storage": "Something went wrong storing your file. Please try again.",
       "generic": "Something went wrong. Please try again."
+    }
+  },
+  "settings": {
+    "appearance": {
+      "title": "Appearance",
+      "description": "Choose how Buddgy looks on this device.",
+      "light": "Light",
+      "dark": "Dark"
     }
   },
   "calendar": {
