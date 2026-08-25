@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { TOKEN_KEY, THEME_KEY } from '../constants/storageKeys';
 
-export const TOKEN_KEY = 'buddgy_token';
+export { TOKEN_KEY };
 
 // Every feature service builds on this. Attaches the JWT, and unwraps the
 // { data, error } envelope (CLAUDE.md § API Design Rules) so callers only
@@ -29,6 +30,10 @@ client.interceptors.response.use(
     // to reconnect, don't silently fail the whole session).
     if (error.response?.status === 401 && error.response?.data?.error === 'unauthorized') {
       localStorage.removeItem(TOKEN_KEY);
+      // Reset theme too, so the /login page this redirect lands on always
+      // starts light (client/src/context/ThemeContext.jsx's resetTheme does
+      // the same on an in-app logout; this path bypasses that context).
+      localStorage.removeItem(THEME_KEY);
       if (window.location.pathname !== '/login') {
         window.location.assign('/login');
       }

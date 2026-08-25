@@ -7,12 +7,13 @@
     <!-- Sets data-theme before first paint, so styles/tokens.css's dark
          override block already applies by the time React mounts — avoids a
          flash of the wrong theme. Key ('buddgy_theme') must match
-         src/context/ThemeContext.jsx's THEME_KEY. -->
+         src/constants/storageKeys.js's THEME_KEY. Light is the hard default —
+         no prefers-color-scheme fallback — dark mode is opt-in only, via the
+         in-app toggle. -->
     <script>
       (function () {
         var stored = localStorage.getItem('buddgy_theme');
-        var mode = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.dataset.theme = mode;
+        document.documentElement.dataset.theme = stored || 'light';
       })();
     </script>
     <!-- DM Mono only — money figures. Body text stays on the system sans

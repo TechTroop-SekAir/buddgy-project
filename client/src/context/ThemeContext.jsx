@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react';
+import { THEME_KEY } from '../constants/storageKeys';
 
 // The single place that touches document.documentElement's data-theme
 // attribute — components never set it themselves. Switching `mode` here is
@@ -6,20 +7,18 @@ import { createContext, useContext, useMemo, useState } from 'react';
 // shape/placement; see applyMode below for the one deliberate deviation.
 const ThemeContext = createContext(null);
 
-const THEME_KEY = 'buddgy_theme'; // must match the inline script in index.html — keep both in sync
-
 function resolveInitialMode() {
   // index.html runs an inline script before React mounts that already reads
-  // localStorage/prefers-color-scheme and sets this attribute, specifically
-  // to avoid a flash of the wrong theme on load — read it back here rather
-  // than re-deriving the same value a second time.
+  // localStorage and sets this attribute, specifically to avoid a flash of
+  // the wrong theme on load — read it back here rather than re-deriving the
+  // same value a second time.
   if (typeof document !== 'undefined' && document.documentElement.dataset.theme) {
     return document.documentElement.dataset.theme;
   }
   if (typeof window === 'undefined') return 'light';
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored) return stored;
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  // Light is the hard default — no prefers-color-scheme fallback. Dark mode
+  // is reachable only via an explicit in-app toggle.
+  return localStorage.getItem(THEME_KEY) || 'light';
 }
 
 export function ThemeProvider({ children }) {
@@ -39,7 +38,17 @@ export function ThemeProvider({ children }) {
     setMode(next);
   };
 
-  const value = useMemo(() => ({ mode, setMode: applyMode }), [mode]);
+  // Discards the stored preference entirely (not just setting mode to
+  // 'light') so a subsequent logout->login cycle starts light too, rather
+  // than restoring whatever was cleared. Called on logout — see
+  // AuthContext.jsx.
+  const resetTheme = () => {
+    localStorage.removeItem(THEME_KEY);
+    document.documentElement.dataset.theme = 'light';
+    setMode('light');
+  };
+
+  const value = useMemo(() => ({ mode, setMode: applyMode, resetTheme }), [mode]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

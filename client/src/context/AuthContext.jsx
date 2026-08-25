@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import authService from '../services/authService';
 import { TOKEN_KEY } from '../services/api';
+import { useTheme } from './ThemeContext';
 
 // Auth state — token + user, backed by localStorage per docs/STATE.md §
 // Auth State. On mount, an existing token is rehydrated into `user` via
@@ -8,6 +9,7 @@ import { TOKEN_KEY } from '../services/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const { resetTheme } = useTheme();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,6 +34,9 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
+    // Always start the next session (or the /login page right after this
+    // one) in light mode, rather than restoring the previous user's choice.
+    resetTheme();
     setUser(null);
   };
 
