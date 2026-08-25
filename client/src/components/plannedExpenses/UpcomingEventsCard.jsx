@@ -154,6 +154,11 @@ export function UpcomingEventsCard({
   onSpend,
   onSaveAmount,
   className = '',
+  // Dashboard passes true so a calendar-connected user with nothing to show
+  // yet sees the card's own empty state instead of the card disappearing —
+  // see docs/features/UPCOMING-EVENTS.md. Other callers (PlannedExpensesPage)
+  // keep the original "hide entirely when empty" behavior.
+  showWhenEmpty = false,
 }) {
   const { t } = useTranslation();
   const [showDismissed, setShowDismissed] = useState(false);
@@ -163,7 +168,7 @@ export function UpcomingEventsCard({
   const dismissed = plannedExpenses.filter(isDismissedUpcomingEvent);
   const needsAmount = missingAmountPlannedExpenses.filter((pe) => pe.is_confirmed);
 
-  if (upcoming.length === 0 && dismissed.length === 0 && needsAmount.length === 0) return null;
+  if (upcoming.length === 0 && dismissed.length === 0 && needsAmount.length === 0 && !showWhenEmpty) return null;
 
   return (
     <Card padding={0} className={`bg-bg-surface border border-border-card rounded-lg shadow-sm ${className}`}>

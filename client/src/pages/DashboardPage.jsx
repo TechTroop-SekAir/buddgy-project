@@ -19,6 +19,7 @@ import incomeService from '../services/incomeService';
 import { getCurrentMonth } from '../utils/month';
 import { getDaysRemainingInMonth, getMonthLabel } from '../utils/date';
 import { sortCategoriesBySpent } from '../utils/categoryStatus';
+import { isCalendarConnected } from '../utils/calendar';
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -159,6 +160,7 @@ export function DashboardPage() {
   const daysRemaining = getDaysRemainingInMonth(month);
   const hasIncome = income?.rows?.length > 0;
   const hasSummaryData = categories.length > 0 || hasIncome;
+  const calendarConnected = isCalendarConnected(user);
 
   return (
     <div>
@@ -223,22 +225,25 @@ export function DashboardPage() {
           onboarding with income entered but no categories picked) since it
           already falls back gracefully when `forecast` is undefined; the
           forecast-dependent banner/card stay gated on real category data. */}
-      {!isLoading && !isError && hasSummaryData && (
+      {!isLoading && !isError && (hasSummaryData || calendarConnected) && (
         <div className="flex flex-col gap-4">
           {categories.length > 0 && (
             <ForecastBanner forecast={forecast} isLoading={isForecastLoading} isError={isForecastError} />
           )}
-          <SummaryBar
-            categories={categories}
-            forecast={forecast}
-            isForecastLoading={isForecastLoading}
-            isForecastError={isForecastError}
-            income={income}
-            isIncomeLoading={isIncomeLoading}
-            isIncomeError={isIncomeError}
-            monthLabel={monthLabel}
-          />
-          {categories.length > 0 && !isPlannedExpensesLoading && !isPlannedExpensesError && (
+          {hasSummaryData && (
+            <SummaryBar
+              categories={categories}
+              forecast={forecast}
+              isForecastLoading={isForecastLoading}
+              isForecastError={isForecastError}
+              income={income}
+              isIncomeLoading={isIncomeLoading}
+              isIncomeError={isIncomeError}
+              monthLabel={monthLabel}
+            />
+          )}
+          {calendarConnected && isPlannedExpensesLoading && <Skeleton height={140} radius="lg" />}
+          {calendarConnected && !isPlannedExpensesLoading && !isPlannedExpensesError && (
             <UpcomingEventsCard
               plannedExpenses={allPlannedExpenses}
               missingAmountPlannedExpenses={forecast?.missingAmountPlannedExpenses}
@@ -247,11 +252,10 @@ export function DashboardPage() {
               onUndoDismiss={(id) => undoDismissMutation.mutateAsync(id)}
               onSpend={(id, payload) => spendMutation.mutateAsync({ id, payload })}
               onSaveAmount={(id, payload) => saveAmountMutation.mutateAsync({ id, payload })}
+              showWhenEmpty
             />
           )}
-          {categories.length > 0 && isPlannedExpensesError && (
-            <Alert>{t('plannedExpenses.error')}</Alert>
-          )}
+          {calendarConnected && isPlannedExpensesError && <Alert>{t('plannedExpenses.error')}</Alert>}
         </div>
       )}
 

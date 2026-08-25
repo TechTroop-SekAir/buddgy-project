@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
 import { useTheme } from '../context/ThemeContext';
 import calendarService from '../services/calendarService';
+import { isCalendarConnected as getIsCalendarConnected } from '../utils/calendar';
 
 const ERROR_KEY_BY_MESSAGE = {
   'Google Calendar is not connected.': 'calendar.error.notConnected',
@@ -18,16 +19,6 @@ const ERROR_KEY_BY_MESSAGE = {
 
 function resolveErrorKey(message) {
   return ERROR_KEY_BY_MESSAGE[message] || 'calendar.error.generic';
-}
-
-function checkMockConnected(userId) {
-  try {
-    const raw = localStorage.getItem('buddgy_mock_calendar_connected');
-    const ids = raw ? JSON.parse(raw) : [];
-    return ids.includes(userId) || ids.includes(String(userId)) || ids.includes(Number(userId));
-  } catch {
-    return false;
-  }
 }
 
 export function SettingsPage() {
@@ -44,12 +35,7 @@ export function SettingsPage() {
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const [disconnectError, setDisconnectError] = useState('');
 
-  const isMock = import.meta.env.VITE_USE_MOCK_CALENDAR === 'true';
-  const isCalendarConnected = Boolean(
-    user?.connected ||
-    user?.is_calendar_connected ||
-    (isMock && checkMockConnected(user?.id))
-  );
+  const isCalendarConnected = getIsCalendarConnected(user);
 
   useEffect(() => {
     const calendarParam = searchParams.get('calendar');
