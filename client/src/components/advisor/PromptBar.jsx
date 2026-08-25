@@ -8,7 +8,18 @@ import { formatShekels } from '../../utils/money';
 // sentence — server has no locale context, client/CLAUDE.md § i18n) with
 // all dynamic data riding along in the response's own structured fields,
 // same pattern as forecast.recommendation (ForecastBanner.jsx).
+//
+// `reasoning` is the one exception: a free-text explanation the model wrote
+// for a conversational follow-up ("how did you calculate that?"), in the
+// user's own language — docs/features/AGENTS.md § Agent 1. It replaces the
+// locale-key line entirely rather than appending to it, so a follow-up
+// reads as an answer, not a repeat of the verdict banner. This is dynamic
+// AI-generated content, not a hardcoded UI string, so client/CLAUDE.md's
+// "zero hardcoded strings" i18n rule doesn't apply here — same category as
+// other AI-generated free text already unrendered through i18n (e.g.
+// AI-parsed transaction descriptions).
 function replyText(t, message) {
+  if (message.reasoning) return message.reasoning;
   return t(message.explanationKey, {
     amount: message.amountAgorot != null ? formatShekels(message.amountAgorot) : undefined,
     balance: message.projectedBalanceAfterAgorot != null ? formatShekels(message.projectedBalanceAfterAgorot) : undefined,

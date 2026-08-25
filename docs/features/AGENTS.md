@@ -120,6 +120,54 @@ Mirrors `forecastService`'s existing choice to keep `recommendation` a structure
 > `.overBudgetWithSuggestion`, `.overBudgetNoSuggestion`. Each key is static per case — all dynamic
 > data (amount, balance, envelope name, cut) rides in the response's own structured fields, which
 > the client interpolates client-side (`PromptBar.jsx`), same as `forecast.recommendation`.
+>
+> **Client-side-only conversation history:** `useAdvisorPrompt.js` already holds every turn of the
+> chat session for rendering, so `POST /api/advisor/ask` also accepts an optional `history` array
+> (`{ role: 'user'|'assistant', content }[]`, capped at 10 turns) alongside `text` — flattened from
+> that same state, assistant turns serialized as the structured verdict (not the rendered/
+> translated reply). `advisorService.js#ask` forwards it to `claudeService.js#runToolLoop` as
+> `messages`, prepended to the current question, so a same-session follow-up ("how did you
+> calculate that?") has context. Nothing is persisted server-side and nothing survives a page
+> refresh or a new session — the system prompt is still rebuilt from fresh envelope/forecast data
+> on every call.
+>
+> **Free-text follow-ups (`reasoning_text`):** `provide_verdict`'s schema also carries an optional
+> `reasoning_text` (capped at 600 chars), set only when the current turn is conversational/
+> explanatory about the model's most recent answer (e.g. "why?") rather than a new or repeated
+> spending question. On that turn the model is instructed to reuse — never recompute — the prior
+> verdict/amount/suggestion and explain in `reasoning_text`, in the user's own language; a normal
+> spending question still recomputes and leaves it `null`. The client (`PromptBar.jsx#replyText`)
+> renders `reasoning` in place of the `explanationKey` line when present, so a follow-up reads as
+> an answer instead of a repeated verdict banner. A companion system-prompt rule tells the model to
+> break ties between comparably-discretionary, sufficient-headroom envelopes deterministically
+> (most headroom, then lowest id) so `suggested_envelope_id` doesn't vary across otherwise-identical
+> questions.
+>
+> **Deterministic cut amount, `temperature: 0`:** the tie-break rule alone wasn't enough — the same
+> question still returned a different envelope and a different cut (100.00 vs 99.99 ILS) across
+> calls. Two further changes: (1) `runToolLoop` now runs the advisor at `temperature: 0`
+> (`claudeService.js`'s `temperature` param, optional and forwarded only when a caller sets it, so
+> every other caller is unaffected) for near-deterministic sampling; (2) `cut_shekels` was removed
+> from `provide_verdict`'s schema entirely — the model only ever chooses WHICH envelope
+> (`suggested_envelope_id`) now, and `ask()` derives the cut in JS as the shortfall
+> (`-projectedBalanceAfterAgorot`, when negative) capped at that envelope's own headroom (budget
+> minus spent), all in integer agorot with no shekel round-trip. This is the same "money math never
+> comes from the model" rule `amountAgorot` already followed. One behavior change follows from this:
+> if the model says `over_budget` but the JS-computed balance isn't actually negative, there is no
+> shortfall to cut, so `suggestion` is `null` and the reply falls back to
+> `advisor.reply.overBudgetNoSuggestion`.
+>
+> **Essential-envelope blocklist guardrail:** envelope name is the model's only signal for
+> discretionary-vs-essential — there's no such flag in the data — and that judgment alone once
+> suggested a vague-but-possibly-essential envelope ("הוצאות כלליות" / "General expenses"). A
+> hardcoded, single-place keyword list (`ESSENTIAL_ENVELOPE_KEYWORDS` in `advisorService.js`; Hebrew
+> and English — rent/mortgage/utilities/insurance/groceries/bills and שכירות/משכנתא/חשמל/ארנונה/ביטוח/
+> מחיה/חשבונות/מים/ועד בית) is matched case-insensitively as a substring of each envelope's name.
+> Matching envelopes are flagged `[ESSENTIAL — never suggest cutting from this one]` in the system
+> prompt so the model is steered away from them before it ever picks — but the actual enforcement is
+> in `ask()`: `suggested_envelope_id` is re-checked against the same blocklist after the id-validity
+> guard, same "prompt is guidance, JS is the guarantee" posture as every other hallucination guard in
+> this file. A blocklisted pick collapses to `suggestion: null`, same as an invalid id.
 
 ### New/changed files
 

@@ -78,6 +78,46 @@ describe('POST /api/advisor/ask', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects a history item with a bad role', async () => {
+    const user = await createUser();
+    const res = await request(app)
+      .post('/api/advisor/ask')
+      .set('Authorization', authHeader(user))
+      .send({ text: 'follow-up', history: [{ role: 'system', content: 'x' }] });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects more than 10 history turns', async () => {
+    const user = await createUser();
+    const history = Array.from({ length: 11 }, (_, i) => ({ role: 'user', content: `turn ${i}` }));
+    const res = await request(app)
+      .post('/api/advisor/ask')
+      .set('Authorization', authHeader(user))
+      .send({ text: 'follow-up', history });
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts a valid history array and forwards it to runToolLoop as messages ending in the current text', async () => {
+    const user = await createUser();
+    mockRunToolLoop.mockResolvedValue(
+      verdictResult({ verdict: 'in_budget', amount_shekels: null, suggested_envelope_id: null, cut_shekels: null })
+    );
+    const history = [
+      { role: 'user', content: 'Can I spend 400 NIS on tires?' },
+      { role: 'assistant', content: '{"verdict":"over_budget"}' },
+    ];
+
+    const res = await request(app)
+      .post('/api/advisor/ask')
+      .set('Authorization', authHeader(user))
+      .send({ text: 'how did you calculate that?', history });
+
+    expect(res.status).toBe(200);
+    expect(mockRunToolLoop).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: 'how did you calculate that?', messages: history })
+    );
+  });
+
   it('answers a status question (no concrete amount) as in_budget and logs a successful ai_calls row', async () => {
     const user = await createUser();
     mockRunToolLoop.mockResolvedValue(
@@ -96,19 +136,23 @@ describe('POST /api/advisor/ask', () => {
       projectedBalanceAfterAgorot: 0, // zero envelopes/activity this month -> forecast is 0
       suggestion: null,
       explanationKey: 'advisor.reply.inBudgetStatus',
+      reasoning: null,
     });
     expect(mockLogAiCall).toHaveBeenCalledWith(user.id, 'budget_advisor', true);
   });
 
-  it('answers over_budget with a suggestion, converting the model-picked envelope id/cut to agorot', async () => {
+  it('answers over_budget with a suggestion, computing the cut in JS as the shortfall capped at headroom', async () => {
     const user = await createUser();
-    const fun = await createEnvelope({ user_id: user.id, name: 'Entertainment', monthly_budget_agorot: 50000, month: currentMonth() });
+    // Budget 10000 (100 ILS), no spend yet -> balance 10000. A 400 ILS ask
+    // leaves -30000 (300 ILS shortfall), but this envelope only has 10000
+    // (100 ILS) of headroom, so the cut is capped there.
+    const fun = await createEnvelope({ user_id: user.id, name: 'Entertainment', monthly_budget_agorot: 10000, month: currentMonth() });
     mockRunToolLoop.mockResolvedValue(
       verdictResult({
         verdict: 'over_budget',
         amount_shekels: 400,
         suggested_envelope_id: fun.id,
-        cut_shekels: 120,
+        cut_shekels: 999999, // model's own arithmetic — must be ignored
       })
     );
 
@@ -120,9 +164,44 @@ describe('POST /api/advisor/ask', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.verdict).toBe('over_budget');
     expect(res.body.data.amountAgorot).toBe(40000);
-    expect(res.body.data.projectedBalanceAfterAgorot).toBe(10000); // envelope budget 50000, no other activity - 40000
-    expect(res.body.data.suggestion).toEqual({ envelopeId: fun.id, envelopeName: 'Entertainment', cutAgorot: 12000 });
+    expect(res.body.data.projectedBalanceAfterAgorot).toBe(-30000); // 10000 - 40000
+    expect(res.body.data.suggestion).toEqual({ envelopeId: fun.id, envelopeName: 'Entertainment', cutAgorot: 10000 });
     expect(res.body.data.explanationKey).toBe('advisor.reply.overBudgetWithSuggestion');
+  });
+
+  it('returns no suggestion when over_budget but the JS-computed balance is not actually negative', async () => {
+    const user = await createUser();
+    const fun = await createEnvelope({ user_id: user.id, name: 'Entertainment', monthly_budget_agorot: 50000, month: currentMonth() });
+    mockRunToolLoop.mockResolvedValue(
+      verdictResult({ verdict: 'over_budget', amount_shekels: 400, suggested_envelope_id: fun.id })
+    );
+
+    const res = await request(app)
+      .post('/api/advisor/ask')
+      .set('Authorization', authHeader(user))
+      .send({ text: 'I need to spend 400 NIS on new tires, unbudgeted — how do I balance my budget?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.projectedBalanceAfterAgorot).toBe(10000); // envelope budget 50000, no other activity - 40000
+    expect(res.body.data.suggestion).toBeNull();
+    expect(res.body.data.explanationKey).toBe('advisor.reply.overBudgetNoSuggestion');
+  });
+
+  it('rejects a blocklisted essential envelope as a suggestion, even though it is a valid, model-picked id', async () => {
+    const user = await createUser();
+    const rent = await createEnvelope({ user_id: user.id, name: 'Rent', monthly_budget_agorot: 500000, month: currentMonth() });
+    mockRunToolLoop.mockResolvedValue(
+      verdictResult({ verdict: 'over_budget', amount_shekels: 400, suggested_envelope_id: rent.id, cut_shekels: 100 })
+    );
+
+    const res = await request(app)
+      .post('/api/advisor/ask')
+      .set('Authorization', authHeader(user))
+      .send({ text: 'I need to spend 400 NIS on new tires, unbudgeted — how do I balance my budget?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.suggestion).toBeNull();
+    expect(res.body.data.explanationKey).toBe('advisor.reply.overBudgetNoSuggestion');
   });
 
   it('rejects a hallucinated envelope id — suggestion is null even though the model "suggested" one', async () => {
@@ -171,6 +250,27 @@ describe('POST /api/advisor/ask', () => {
     expect(res.status).toBe(422);
     expect(res.body.data).toBeNull();
     expect(mockLogAiCall).toHaveBeenCalledWith(user.id, 'budget_advisor', false);
+  });
+
+  it('returns a model-supplied reasoning_text verbatim as reasoning, for a conversational follow-up', async () => {
+    const user = await createUser();
+    mockRunToolLoop.mockResolvedValue(
+      verdictResult({
+        verdict: 'over_budget',
+        amount_shekels: 400,
+        suggested_envelope_id: null,
+        cut_shekels: null,
+        reasoning_text: 'Your projected balance was 480, so 400 more leaves you short.',
+      })
+    );
+
+    const res = await request(app)
+      .post('/api/advisor/ask')
+      .set('Authorization', authHeader(user))
+      .send({ text: 'how did you calculate that?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.reasoning).toBe('Your projected balance was 480, so 400 more leaves you short.');
   });
 
   it('only ever returns a known explanationKey', async () => {
