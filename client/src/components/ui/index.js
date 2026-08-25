@@ -18,6 +18,7 @@ export { Skeleton } from './Skeleton';
 export { Meter } from './Meter';
 export { Burger } from './Burger';
 export { Drawer } from './Drawer';
+export { Collapse } from './Collapse';
 export { Alert } from './Alert';
 export { EmptyState } from './EmptyState';
 export { Checkbox } from './Checkbox';
