@@ -354,7 +354,7 @@ describe('CSV import scopes dedup and confirm access per user', () => {
       .post(`/api/imports/${ownerImport.id}/confirm`)
       .set('Authorization', authHeader(owner))
       .send({ mapping });
-    expect(first.body.data).toEqual({ imported: 1, duplicatesSkipped: 0 });
+    expect(first.body.data).toEqual({ imported: 1, duplicatesSkipped: 0, unparseableSkipped: 0 });
 
     // dedup_hash is salted with user_id (csvImportService.js computeDedupHash)
     // — an identical row from a different user must import as new, not be
@@ -364,7 +364,7 @@ describe('CSV import scopes dedup and confirm access per user', () => {
       .post(`/api/imports/${intruderImport.id}/confirm`)
       .set('Authorization', authHeader(intruder))
       .send({ mapping });
-    expect(second.body.data).toEqual({ imported: 1, duplicatesSkipped: 0 });
+    expect(second.body.data).toEqual({ imported: 1, duplicatesSkipped: 0, unparseableSkipped: 0 });
 
     const intruderTransactions = await request(app)
       .get('/api/transactions?month=2026-08')

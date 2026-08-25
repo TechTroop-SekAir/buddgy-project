@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, Icon, SelectableCard, TextInput } from '../ui';
+import { Button, Icon, SelectableCard, TextInput } from '../ui';
 
 const CATEGORY_LABEL_KEYS = {
   housing: 'onboarding.categories.suggestions.housing.label',
@@ -35,7 +35,7 @@ const CATEGORY_META = {
   general: { icon: 'wallet', accent: 0 },
 };
 
-export function CategoriesStep({ onBack, onFinish, isSubmitting, submitError }) {
+export function CategoriesStep({ onBack, onNext }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState([]);
   const [housingCustomLabel, setHousingCustomLabel] = useState('');
@@ -46,14 +46,14 @@ export function CategoriesStep({ onBack, onFinish, isSubmitting, submitError }) 
   const toggleCategory = (key) =>
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
 
-  const handleFinish = () => {
+  const handleNext = () => {
     const selectedCategories = selected.map((key) => ({
       name:
         key === 'housing' && housingCustomLabel.trim()
           ? housingCustomLabel.trim()
           : t(CATEGORY_LABEL_KEYS[key]),
     }));
-    onFinish(selectedCategories);
+    onNext(selectedCategories);
   };
 
   return (
@@ -99,15 +99,13 @@ export function CategoriesStep({ onBack, onFinish, isSubmitting, submitError }) 
         })}
       </div>
 
-      {submitError && <Alert>{submitError}</Alert>}
-
       <div className="flex justify-end gap-3 mt-2">
-        <Button type="button" variant="outline" color="gray" size="lg" onClick={onBack} disabled={isSubmitting}>
+        <Button type="button" variant="outline" color="gray" size="lg" onClick={onBack}>
           {t('onboarding.categories.back')}
         </Button>
-        <Button type="button" variant="filled" color="accent" size="lg" loading={isSubmitting} onClick={handleFinish}>
-          <Icon name="check" size="sm" className="me-1" />
-          {t('onboarding.categories.finish')}
+        <Button type="button" variant="filled" color="accent" size="lg" onClick={handleNext}>
+          {t('onboarding.categories.continue')}
+          <Icon name="chevronRight" size="sm" className="ms-1" />
         </Button>
       </div>
     </div>

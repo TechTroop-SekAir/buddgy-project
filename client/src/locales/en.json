@@ -5,7 +5,8 @@
     "delete": "Delete",
     "edit": "Edit",
     "back": "Back",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "dismiss": "Dismiss"
   },
   "nav": {
     "dashboard": "Homepage",
@@ -253,6 +254,8 @@
       "summary_one": "{{imported}} transaction imported, {{duplicatesSkipped}} duplicate skipped",
       "summary_other": "{{imported}} transactions imported, {{duplicatesSkipped}} duplicates skipped",
       "unassignedNote": "Imported transactions aren't assigned to a category yet — assign them from the Transactions page.",
+      "unparseableSkipped_one": "{{count}} row in the file didn't look like a transaction and was skipped.",
+      "unparseableSkipped_other": "{{count}} rows in the file didn't look like transactions and were skipped.",
       "viewTransactions": "View transactions",
       "importAnother": "Import another file"
     },
@@ -356,7 +359,8 @@
     "stepCounter": "Step {{current}} of {{total}}",
     "steps": {
       "income": "Income",
-      "categories": "Categories"
+      "categories": "Categories",
+      "import": "Import"
     },
     "income": {
       "heading": "How much net monthly income do you have? You can add multiple sources.",
@@ -376,7 +380,7 @@
     "categories": {
       "heading": "Which categories would you like to add? Pick as many as you like, or skip and add them later.",
       "back": "Back",
-      "finish": "Finish",
+      "continue": "Continue",
       "selectAll": "Select All",
       "deselectAll": "Deselect All",
       "selectedCount_one": "{{count}} selected",
@@ -397,6 +401,14 @@
         "vacations": "Vacations",
         "general": "General expenses"
       }
+    },
+    "import": {
+      "heading": "Have a transaction history CSV from your bank? Import it now, or skip and do it later from Settings.",
+      "back": "Back",
+      "skip": "Skip for now",
+      "finish": "Import & finish",
+      "failedNotice": "Your income and categories were saved, but the CSV import didn't go through. You can retry it from the Import page.",
+      "failedNoticeAction": "Go to Import"
     }
   },
   "summaryBar": {

@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Alert, Badge, Button, EmptyState, FileInput, Select, Skeleton, Table } from '../components/ui';
-import { useAuth } from '../context/AuthContext';
-import importService from '../services/importService';
-import { getCurrentMonth } from '../utils/month';
-import { toColumnOptions } from '../utils/csv';
-import { formatDate } from '../utils/date';
-import { formatShekels } from '../utils/money';
-const STEP = { SELECT: 'select', UPLOADING: 'uploading', MAPPING: 'mapping', DONE: 'done' };
+import { Alert, Badge, Button, EmptyState, FileInput, Icon, Select, Skeleton, Table } from '../ui';
+import { useAuth } from '../../context/AuthContext';
+import importService from '../../services/importService';
+import { toColumnOptions } from '../../utils/csv';
+import { formatDate } from '../../utils/date';
+import { formatShekels } from '../../utils/money';
 
-// Server error strings (docs/API.md § CSV Import, server/services/csvImportService.js)
-// mapped to translation keys — never surface a raw server string.
+const STEP = { SELECT: 'select', UPLOADING: 'uploading', MAPPING: 'mapping' };
+
+// Server error strings, same mapping as ImportPage.jsx — kept in sync there
+// since both surfaces call the same /imports/preview endpoint.
 const ERROR_KEY_BY_MESSAGE = {
   'validation failed: file too large (max 10MB)': 'csvImport.error.fileTooLarge',
   'validation failed: file must be a CSV': 'csvImport.error.notCsv',
@@ -29,12 +28,14 @@ function resolveErrorKey(message) {
   return 'csvImport.error.generic';
 }
 
-export function ImportPage() {
+// Onboarding's 3rd, skippable step (docs/fixes/... none — new addition). Only
+// runs /imports/preview itself (upload + AI column detection, same as
+// ImportPage.jsx) — the actual /imports/:id/confirm call is deferred to the
+// parent's single onboardingMutation, so a failure there still lets income +
+// categories save without a partially-applied CSV import in between.
+export function CsvImportStep({ onBack, onFinish, isSubmitting, submitError }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const month = getCurrentMonth();
-
   const [step, setStep] = useState(STEP.SELECT);
   const [file, setFile] = useState(null);
   const [header, setHeader] = useState([]);
@@ -42,42 +43,15 @@ export function ImportPage() {
   const [previewRows, setPreviewRows] = useState([]);
   const [mapping, setMapping] = useState({ date: null, amount: null, description: null });
   const [aiFailed, setAiFailed] = useState(false);
-  const [error, setError] = useState('');
-  const [result, setResult] = useState(null);
-
-  const reset = () => {
-    setStep(STEP.SELECT);
-    setFile(null);
-    setHeader([]);
-    setImportId(null);
-    setPreviewRows([]);
-    setMapping({ date: null, amount: null, description: null });
-    setAiFailed(false);
-    setError('');
-    setResult(null);
-  };
+  const [previewError, setPreviewError] = useState('');
 
   const previewMutation = useMutation({
     mutationFn: (selectedFile) => importService.preview(selectedFile, user.id),
   });
 
-  const confirmMutation = useMutation({
-    mutationFn: () => importService.confirm(importId, mapping, user.id),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['transactions', user.id, month] });
-      queryClient.invalidateQueries({ queryKey: ['categories', user.id, month] });
-      // Imported rows are new transactions, which change actual spend that
-      // the forecast depends on (docs/STATE.md's staleness rule).
-      queryClient.invalidateQueries({ queryKey: ['forecast', user.id, month] });
-      setResult(data);
-      setStep(STEP.DONE);
-    },
-    onError: (err) => setError(t(resolveErrorKey(err.message))),
-  });
-
   const handleUpload = async () => {
     if (!file) return;
-    setError('');
+    setPreviewError('');
     setAiFailed(false);
     setStep(STEP.UPLOADING);
 
@@ -91,13 +65,10 @@ export function ImportPage() {
         amount: data.detectedMapping.amount,
         description: data.detectedMapping.description,
       });
-      // The server never fails this request over an AI outage (it uploads
-      // first, then tries Claude) — a wholly-undetected mapping is how it
-      // reports "AI unavailable, map columns yourself" on the success path.
       setAiFailed(!data.detectedMapping.date && !data.detectedMapping.amount);
       setStep(STEP.MAPPING);
     } catch (err) {
-      setError(t(resolveErrorKey(err.message)));
+      setPreviewError(t(resolveErrorKey(err.message)));
       setStep(STEP.SELECT);
     }
   };
@@ -106,11 +77,11 @@ export function ImportPage() {
   const canConfirm = Boolean(mapping.date && mapping.amount);
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-text-primary">{t('csvImport.title')}</h1>
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-text-secondary">{t('onboarding.import.heading')}</p>
 
       {step === STEP.SELECT && (
-        <div className="flex flex-col gap-4 mt-6 max-w-md">
+        <div className="flex flex-col gap-4 max-w-md">
           <FileInput
             label={t('csvImport.select.label')}
             description={t('csvImport.select.hint')}
@@ -118,10 +89,7 @@ export function ImportPage() {
             value={file}
             onChange={setFile}
           />
-          {error && <Alert>{error}</Alert>}
-          <Button variant="filled" color="accent" disabled={!file} onClick={handleUpload}>
-            {t('csvImport.select.submit')}
-          </Button>
+          {previewError && <Alert>{previewError}</Alert>}
         </div>
       )}
 
@@ -134,7 +102,7 @@ export function ImportPage() {
       )}
 
       {step === STEP.MAPPING && (
-        <div className="flex flex-col gap-4 mt-6">
+        <div className="flex flex-col gap-4">
           <p className="text-base font-medium text-text-primary">{t('csvImport.mapping.title')}</p>
 
           {aiFailed && (
@@ -203,56 +171,47 @@ export function ImportPage() {
               </Table>
             </div>
           )}
+        </div>
+      )}
 
-          {error && <Alert>{error}</Alert>}
+      {submitError && <Alert>{submitError}</Alert>}
 
-          <div className="flex justify-end gap-3 mt-2">
-            <Button type="button" variant="outline" color="gray" onClick={reset}>
-              {t('csvImport.mapping.back')}
+      <div className="flex justify-between gap-3 mt-2">
+        <Button type="button" variant="outline" color="gray" size="lg" onClick={onBack} disabled={isSubmitting}>
+          {t('onboarding.import.back')}
+        </Button>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="subtle"
+            color="gray"
+            size="lg"
+            loading={isSubmitting}
+            onClick={() => onFinish(null)}
+          >
+            {t('onboarding.import.skip')}
+          </Button>
+          {step === STEP.SELECT && (
+            <Button type="button" variant="filled" color="accent" size="lg" disabled={!file} onClick={handleUpload}>
+              {t('csvImport.select.submit')}
             </Button>
+          )}
+          {step === STEP.MAPPING && (
             <Button
               type="button"
               variant="filled"
               color="accent"
+              size="lg"
               disabled={!canConfirm}
-              loading={confirmMutation.isPending}
-              onClick={() => {
-                setError('');
-                confirmMutation.mutate();
-              }}
+              loading={isSubmitting}
+              onClick={() => onFinish({ importId, mapping })}
             >
-              {t('csvImport.mapping.confirm')}
+              <Icon name="check" size="sm" className="me-1" />
+              {t('onboarding.import.finish')}
             </Button>
-          </div>
-        </div>
-      )}
-
-      {step === STEP.DONE && result && (
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
-          <p className="text-lg font-semibold text-text-primary">{t('csvImport.done.title')}</p>
-          <p className="text-text-secondary">
-            {t('csvImport.done.summary', {
-              count: result.imported,
-              imported: result.imported,
-              duplicatesSkipped: result.duplicatesSkipped,
-            })}
-          </p>
-          <p className="text-sm text-text-secondary max-w-md">{t('csvImport.done.unassignedNote')}</p>
-          {result.unparseableSkipped > 0 && (
-            <p className="text-sm text-status-warning max-w-md">
-              {t('csvImport.done.unparseableSkipped', { count: result.unparseableSkipped })}
-            </p>
           )}
-          <div className="flex gap-3">
-            <Button variant="outline" color="gray" onClick={reset}>
-              {t('csvImport.done.importAnother')}
-            </Button>
-            <Button variant="filled" color="accent" component={Link} to="/transactions">
-              {t('csvImport.done.viewTransactions')}
-            </Button>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

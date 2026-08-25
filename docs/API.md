@@ -142,6 +142,7 @@ Response `data`:
 ```json
 {
   "importId": 12,
+  "header": ["Transaction Date", "Charge Amount", "Merchant"],
   "detectedMapping": { "date": "Transaction Date", "amount": "Charge Amount",
                        "description": "Merchant" },
   "previewRows": [ { "transaction_date": "2026-08-01", "amount_agorot": 12990,
@@ -149,14 +150,18 @@ Response `data`:
 }
 ```
 
+`header` is the file's column names exactly as the server parsed them (BOM stripped, windows-1255 fallback applied) — the client must build its column-mapping dropdowns from this, not by re-parsing the file itself, or it will disagree with `detectedMapping` on any non-UTF-8 export.
+
 `detectedMapping` values are `null` where Claude found no matching column, or where Claude was unreachable entirely — the file is still uploaded and `importId` is still returned either way (upload happens before the Claude call, not after), so this endpoint never fails just because Claude is down. The client must let the user pick manually whenever any value is `null`. Never persists any rows.
+
+A `previewRows` cell (`transaction_date` or `amount_agorot`) is `null` when that specific cell couldn't be parsed (blank, a totals row, an unrecognized date format) — this never fails the request; only `POST /imports/:id/confirm` is strict about unparseable cells.
 
 ```
 POST /api/imports/:id/confirm   🔒   body: { "mapping": { "date": "...", "amount": "...", "description": "..." | null } }
-                                      → { imported: 47, duplicatesSkipped: 3 }
+                                      → { imported: 47, duplicatesSkipped: 3, unparseableSkipped: 2 }
 ```
 
-`mapping` keys are the source-file column names to use, taken from the caller (pre-filled by `detectedMapping`, editable). `date` and `amount` are required. Rows are inserted with `envelope_id: null`, `source: 'csv'`. `duplicatesSkipped` counts rows whose `dedup_hash` already existed — see [`DATABASE.md`](./DATABASE.md) § Idempotency.
+`mapping` keys are the source-file column names to use, taken from the caller (pre-filled by `detectedMapping`, editable). `date` and `amount` are required. Rows are inserted with `envelope_id: null`, `source: 'csv'`. `duplicatesSkipped` counts rows whose `dedup_hash` already existed — see [`DATABASE.md`](./DATABASE.md) § Idempotency. `unparseableSkipped` counts rows whose mapped date or amount cell couldn't be read — never fatal to the request: real bank exports commonly tack on trailing non-transaction rows (a blank row, a "Total" label, a bare sum), which can never satisfy `transaction_date`/`amount_agorot`'s NOT NULL constraint regardless, so those rows are skipped and counted rather than aborting the whole import.
 
 ## Calendar & Forecast
 
