@@ -7,7 +7,7 @@
 | [Conventions](#conventions) | Envelope format, auth, status codes |
 | [Error Catalog](#error-catalog) | Standard error codes/messages |
 | [Auth](#auth) | Register, login, me, onboarding completion |
-| [Income Sources](#income-sources) | Onboarding wizard's income step — full-month replace |
+| [Income Sources](#income-sources) | Onboarding wizard + Settings' income editor — full-month replace |
 | [Envelopes](#envelopes) | CRUD |
 | [Transactions](#transactions) | CRUD + AI parse |
 | [CSV Import](#csv-import) | Preview + confirm |
@@ -61,13 +61,15 @@ PATCH  /api/auth/onboarding 🔒                                  → { user }
 ## Income Sources
 
 ```
-GET  /api/income-sources?month=2026-08  🔒  → { rows: [ income_source ], total_agorot }
-PUT  /api/income-sources                🔒  → { rows: [ income_source ], total_agorot }
+GET  /api/income-sources?month=2026-08[&fallback=previous]  🔒  → { rows: [ income_source ], total_agorot }[, carried_from]
+PUT  /api/income-sources                                    🔒  → { rows: [ income_source ], total_agorot }
 ```
 
 `income_source` shape: `{ id, user_id, month, label, amount_agorot, sort_order }`. `month` follows the same convention as envelopes — accepts `2026-08` or `2026-08-01`, both normalize to the first-of-month `DATEONLY` value.
 
-`PUT` is a **full-month replace**, not a partial update: body is `{ month, rows: [{ label, amount_agorot }] }`, and every existing row for that month is discarded and replaced with exactly the rows sent, in the given order (`sort_order` is server-assigned from array position — never client-writable). An empty `rows` array clears the month. Backs the onboarding wizard's income step (`client/src/components/onboarding/IncomeStep.jsx`) and the Dashboard's income figure (`SummaryBar.jsx`) — both call through `client/src/services/incomeService.js`.
+`GET`'s optional `fallback=previous`: if the requested month has no rows, the response is prefilled from the most recent earlier month that does — those rows come back with `id: null` (they're a draft, not yet saved for this month) and `carried_from` set to that source month (`null` if the month already has its own rows, or if there's no earlier data at all). Only present in the response when `fallback` was passed — a plain `GET` keeps returning exactly `{ rows, total_agorot }`. Backs Settings' income editor (`client/src/components/income/IncomeSettingsCard.jsx`), so a new month isn't presented blank.
+
+`PUT` is a **full-month replace**, not a partial update: body is `{ month, rows: [{ label, amount_agorot }] }`, and every existing row for that month is discarded and replaced with exactly the rows sent, in the given order (`sort_order` is server-assigned from array position — never client-writable). An empty `rows` array clears the month. Backs the onboarding wizard's income step (`client/src/components/onboarding/IncomeStep.jsx`, via the shared `client/src/components/income/IncomeRowsFields.jsx`) and Settings' income editor — both, plus the Dashboard's read-only income figure (`SummaryBar.jsx`), call through `client/src/services/incomeService.js`. Income can only be edited through Settings after onboarding completes — `/onboarding` itself is unreachable once `onboarding_completed_at` is set.
 
 All scoped to the caller's `user_id` — see [`SECURITY.md`](./SECURITY.md) § Row-Level Access.
 

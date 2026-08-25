@@ -12,7 +12,7 @@
 | [planned_expenses](#planned_expenses) | Future spend, from calendar sync or manual entry |
 | [csv_imports](#csv_imports) | Audit trail of bank-statement uploads |
 | [ai_calls](#ai_calls) | Usage log backing `GET /api/admin/stats`' `aiCallCount` |
-| [income_sources](#income_sources) | Onboarding wizard's income step, per month |
+| [income_sources](#income_sources) | Per-month income, editable in Settings after onboarding |
 | [Indexes](#indexes) | What's indexed and why |
 | [Idempotency](#idempotency) | How duplicate imports/syncs are prevented |
 | [Migration Conventions](#migration-conventions) | Naming, up/down rules |
@@ -136,7 +136,7 @@ erDiagram
 | amount_agorot | INTEGER | NOT NULL |
 | sort_order | INTEGER | DEFAULT 0 — preserves the order rows were entered in on the client |
 
-Backs the onboarding wizard's income step (`client/src/components/onboarding/IncomeStep.jsx`) and the Dashboard's income figure (`SummaryBar.jsx`) — previously client-only, stored in `localStorage` (`mockIncomeService.js`), so it never reached the DB and vanished on a different device/browser. `PUT /api/income-sources` is a full-month replace, not a per-row upsert — see [`API.md`](./API.md) § Income Sources.
+Backs the onboarding wizard's income step (`client/src/components/onboarding/IncomeStep.jsx`), Settings' income editor (`client/src/components/income/IncomeSettingsCard.jsx` — the only way to change income after onboarding, since `/onboarding` itself is unreachable once complete), and the Dashboard's read-only income figure (`SummaryBar.jsx`) — previously client-only, stored in `localStorage` (`mockIncomeService.js`), so it never reached the DB and vanished on a different device/browser. `PUT /api/income-sources` is a full-month replace, not a per-row upsert; `GET ...&fallback=previous` prefills an empty month from the most recent earlier one — see [`API.md`](./API.md) § Income Sources.
 
 ## Indexes
 

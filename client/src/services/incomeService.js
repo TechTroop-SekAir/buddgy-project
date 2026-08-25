@@ -3,9 +3,12 @@ import * as mockIncomeService from './mockIncomeService';
 
 // Real implementation, backed by server/routes/income.js. api.js's response
 // interceptor already unwraps the { data, error } envelope, so these
-// resolve directly to { rows, total_agorot }.
-async function list(userId, month) {
-  return api.get('/income-sources', { params: { month } });
+// resolve directly to { rows, total_agorot } — plus `carried_from` when
+// `fallback` is passed (Settings' income editor; see incomeSourceService.js
+// on the server). DashboardPage calls list() without a fallback and keeps
+// getting the plain shape.
+async function list(userId, month, fallback) {
+  return api.get('/income-sources', { params: { month, fallback } });
 }
 
 async function replace(userId, month, rows) {

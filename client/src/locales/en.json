@@ -273,11 +273,22 @@
     }
   },
   "settings": {
+    "title": "Settings",
     "appearance": {
       "title": "Appearance",
       "description": "Choose how Buddgy looks on this device.",
       "light": "Light",
       "dark": "Dark"
+    },
+    "income": {
+      "title": "Income",
+      "carriedFrom": "Copied from {{month}} — review and save to keep it.",
+      "save": "Save",
+      "saved": "Income saved.",
+      "loadError": "Couldn't load your income sources.",
+      "clear": "Clear income",
+      "clearConfirmTitle": "Clear income for this month?",
+      "clearConfirmBody": "This removes every income source for {{month}}. You can add them again anytime."
     }
   },
   "calendar": {

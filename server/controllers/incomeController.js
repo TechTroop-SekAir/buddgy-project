@@ -4,7 +4,7 @@ const { ok } = require('../utils/respond');
 const incomeSourceService = require('../services/incomeSourceService');
 
 async function list(req, res) {
-  const result = await incomeSourceService.list(req.user.id, req.query.month);
+  const result = await incomeSourceService.list(req.user.id, req.query.month, req.query.fallback);
   return ok(res, result);
 }
 
