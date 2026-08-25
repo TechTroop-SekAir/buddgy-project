@@ -9,7 +9,14 @@ const incomeController = require('../controllers/incomeController');
 
 const MONTH_RE = /^\d{4}-\d{2}(-\d{2})?$/;
 
-const listQuerySchema = z.object({ month: z.string().regex(MONTH_RE, 'invalid month') });
+const listQuerySchema = z.object({
+  month: z.string().regex(MONTH_RE, 'invalid month'),
+  // Settings' income editor passes this so a month with no rows yet is
+  // prefilled from the most recent earlier month instead of showing empty —
+  // see incomeSourceService.list. Omitted entirely by DashboardPage's plain
+  // read, which must keep showing a real ₪0 for an unfilled month.
+  fallback: z.enum(['previous']).optional(),
+});
 // Full-month replace (client/src/services/mockIncomeService.js's contract) —
 // user_id is derived from the JWT, never client-writable; sort_order is
 // server-assigned from array position, not accepted from the client.

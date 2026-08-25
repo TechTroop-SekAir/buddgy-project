@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Alert, Badge, Button, Card, Icon, Modal } from '../components/ui';
+import { IncomeSettingsCard } from '../components/income/IncomeSettingsCard';
 import { useAuth } from '../context/AuthContext';
 import { useMonth } from '../context/MonthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -107,7 +108,7 @@ export function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-text-primary">{t('calendar.title')}</h1>
+      <h1 className="text-2xl font-semibold text-text-primary">{t('settings.title')}</h1>
 
       {callbackNotice === 'success' && (
         <p className="text-sm text-status-ok mt-4" role="status">
@@ -142,6 +143,8 @@ export function SettingsPage() {
           </div>
         </div>
       </Card>
+
+      <IncomeSettingsCard />
 
       <Card className="bg-bg-surface border border-border-card rounded-lg mt-6 max-w-lg">
         <div className="p-6 flex flex-col gap-4">
