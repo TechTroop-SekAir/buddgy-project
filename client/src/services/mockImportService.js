@@ -126,7 +126,7 @@ export async function preview(file, userId) {
     }
   });
 
-  return { importId, detectedMapping, previewRows };
+  return { importId, header, detectedMapping, previewRows };
 }
 
 export async function confirm(importId, mapping, userId) {
@@ -147,9 +147,24 @@ export async function confirm(importId, mapping, userId) {
 
   let imported = 0;
   let duplicatesSkipped = 0;
+  let unparseableSkipped = 0;
 
   record.dataRows.forEach((row) => {
-    const mapped = mapRow(row, record.header, mapping);
+    // Real bank exports commonly tack on trailing non-transaction rows (a
+    // blank row, a "Total" label, a bare sum) — mirrors the server's
+    // csvImportService.confirmImport: skip and count rather than throwing
+    // and losing the whole import over rows that were never real data.
+    let mapped;
+    try {
+      mapped = mapRow(row, record.header, mapping);
+    } catch {
+      unparseableSkipped += 1;
+      return;
+    }
+    if (mapped.transaction_date == null || mapped.amount_agorot == null) {
+      unparseableSkipped += 1;
+      return;
+    }
     const dedupHash = `${mapped.amount_agorot}:${mapped.transaction_date}:${mapped.description}`;
 
     if (existingHashes.has(dedupHash)) {
@@ -173,5 +188,5 @@ export async function confirm(importId, mapping, userId) {
 
   saveTransactions(transactions);
 
-  return { imported, duplicatesSkipped };
+  return { imported, duplicatesSkipped, unparseableSkipped };
 }

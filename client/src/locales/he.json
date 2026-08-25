@@ -5,7 +5,8 @@
     "delete": "מחיקה",
     "edit": "עריכה",
     "back": "חזרה",
-    "loading": "טוען…"
+    "loading": "טוען…",
+    "dismiss": "התעלמות"
   },
   "nav": {
     "dashboard": "דף הבית",
@@ -254,6 +255,10 @@
       "summary_one": "יובאה תנועה אחת, {{duplicatesSkipped}} כפילות דולגה",
       "summary_other": "יובאו {{imported}} תנועות, {{duplicatesSkipped}} כפילויות דולגו",
       "unassignedNote": "התנועות שיובאו עדיין לא משויכות לקטגוריה — ניתן לשייך אותן מעמוד התנועות.",
+      "unparseableSkipped_one": "שורה אחת בקובץ לא נראתה כתנועה ודולגה.",
+      "unparseableSkipped_two": "{{count}} שורות בקובץ לא נראו כתנועות ודולגו.",
+      "unparseableSkipped_many": "{{count}} שורות בקובץ לא נראו כתנועות ודולגו.",
+      "unparseableSkipped_other": "{{count}} שורות בקובץ לא נראו כתנועות ודולגו.",
       "viewTransactions": "צפייה בתנועות",
       "importAnother": "ייבוא קובץ נוסף"
     },
@@ -368,7 +373,8 @@
     "stepCounter": "שלב {{current}} מתוך {{total}}",
     "steps": {
       "income": "הכנסות",
-      "categories": "קטגוריות"
+      "categories": "קטגוריות",
+      "import": "ייבוא"
     },
     "income": {
       "heading": "כמה הכנסה חודשית נטו יש לך? אפשר להוסיף כמה מקורות.",
@@ -388,7 +394,7 @@
     "categories": {
       "heading": "אילו קטגוריות תרצו להוסיף? אפשר לבחור כמה שרוצים, או לדלג ולהוסיף מאוחר יותר.",
       "back": "חזרה",
-      "finish": "סיום",
+      "continue": "המשך",
       "selectAll": "בחר הכל",
       "deselectAll": "בטל הכל",
       "selectedCount_one": "נבחרה {{count}}",
@@ -411,6 +417,14 @@
         "vacations": "חופשות",
         "general": "הוצאות כלליות"
       }
+    },
+    "import": {
+      "heading": "יש לך קובץ CSV של היסטוריית תנועות מהבנק? אפשר לייבא אותו עכשיו, או לדלג ולעשות זאת מאוחר יותר דרך ההגדרות.",
+      "back": "חזרה",
+      "skip": "דילוג לעת עתה",
+      "finish": "ייבוא וסיום",
+      "failedNotice": "ההכנסות והקטגוריות שלך נשמרו, אך ייבוא ה-CSV לא הצליח. ניתן לנסות שוב מעמוד הייבוא.",
+      "failedNoticeAction": "מעבר לייבוא"
     }
   },
   "summaryBar": {

@@ -97,8 +97,19 @@ describe('POST /api/imports/preview', () => {
     expect(mockTransactionBulkCreate).not.toHaveBeenCalled();
   });
 
-  it('parses a UTF-8 BOM + windows-1255 Hebrew file without dropping rows', async () => {
-    const hebrewCsv = ['Transaction Date,Charge Amount,Merchant', '2026-08-01,50.00,שופרסל'].join('\n');
+  it('returns the parsed header alongside the preview', async () => {
+    const res = await request(app)
+      .post('/api/imports/preview')
+      .set('Authorization', authHeader())
+      .attach('file', Buffer.from(CLEAN_CSV, 'utf8'), 'statement.csv');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.header).toEqual(['Transaction Date', 'Charge Amount', 'Merchant']);
+  });
+
+  it('parses a UTF-8 BOM + windows-1255 Hebrew file without dropping rows, and decodes the header too', async () => {
+    mockDetectColumnMapping.mockResolvedValueOnce({ date: 'תאריך', amount: 'סכום', description: 'בית עסק' });
+    const hebrewCsv = ['תאריך,סכום,בית עסק', '2026-08-01,50.00,שופרסל'].join('\n');
     const bomPrefixed = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), iconv.encode(hebrewCsv, 'windows-1255')]);
 
     const res = await request(app)
@@ -107,8 +118,39 @@ describe('POST /api/imports/preview', () => {
       .attach('file', bomPrefixed, 'statement.csv');
 
     expect(res.status).toBe(200);
+    expect(res.body.data.header).toEqual(['תאריך', 'סכום', 'בית עסק']);
     expect(res.body.data.previewRows).toHaveLength(1);
     expect(res.body.data.previewRows[0].description).toBe('שופרסל');
+  });
+
+  it('does not fail the request over an unparseable cell — renders it as null instead', async () => {
+    // A blank amount (separate debit/credit columns) and a totals row are
+    // both common in real bank exports and must not 400 the whole preview.
+    const messyCsv = [
+      'Transaction Date,Charge Amount,Merchant',
+      '2026-08-01,129.90,Shufersal Deal',
+      '2026-08-02,,Cafe Nordoy',
+      'TOTAL,183.90,',
+    ].join('\n');
+
+    const res = await request(app)
+      .post('/api/imports/preview')
+      .set('Authorization', authHeader())
+      .attach('file', Buffer.from(messyCsv, 'utf8'), 'statement.csv');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.previewRows).toHaveLength(3);
+    expect(res.body.data.previewRows[0].amount_agorot).toBe(12990);
+    expect(res.body.data.previewRows[1]).toEqual({
+      transaction_date: '2026-08-02',
+      amount_agorot: null,
+      description: 'Cafe Nordoy',
+    });
+    expect(res.body.data.previewRows[2]).toEqual({
+      transaction_date: null,
+      amount_agorot: 18390,
+      description: null,
+    });
   });
 
   it('parses a semicolon-delimited file', async () => {
@@ -196,7 +238,7 @@ describe('POST /api/imports/:id/confirm', () => {
       .send({ mapping });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ imported: 2, duplicatesSkipped: 0 });
+    expect(res.body.data).toEqual({ imported: 2, duplicatesSkipped: 0, unparseableSkipped: 0 });
     expect(mockTransactionBulkCreate).toHaveBeenCalledTimes(1);
     const inserted = mockTransactionBulkCreate.mock.calls[0][0];
     expect(inserted).toHaveLength(2);
@@ -214,8 +256,54 @@ describe('POST /api/imports/:id/confirm', () => {
       .send({ mapping });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ imported: 0, duplicatesSkipped: 2 });
+    expect(res.body.data).toEqual({ imported: 0, duplicatesSkipped: 2, unparseableSkipped: 0 });
     expect(mockTransactionBulkCreate).not.toHaveBeenCalled();
+  });
+
+  it('skips a row with an unparseable cell instead of failing the whole import', async () => {
+    // Regression: a blank amount or a trailing totals row used to throw
+    // uncaught inside confirmImport's row-mapping loop, 400ing the entire
+    // request and losing every good row along with it.
+    const messyCsv = [
+      'Transaction Date,Charge Amount,Merchant',
+      '2026-08-01,129.90,Shufersal Deal',
+      '2026-08-02,,Cafe Nordoy',
+    ].join('\n');
+    global.fetch.mockResolvedValue({ ok: true, arrayBuffer: async () => Buffer.from(messyCsv, 'utf8') });
+    mockTransactionFindAll.mockResolvedValue([]);
+
+    const res = await request(app)
+      .post('/api/imports/12/confirm')
+      .set('Authorization', authHeader())
+      .send({ mapping });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ imported: 1, duplicatesSkipped: 0, unparseableSkipped: 1 });
+    expect(mockTransactionBulkCreate).toHaveBeenCalledTimes(1);
+    expect(mockTransactionBulkCreate.mock.calls[0][0]).toHaveLength(1);
+  });
+
+  // Real-world reproduction: docs/csv/1_edited.csv is an actual Israeli
+  // credit-card export a user hit this exact bug with — 8 real transaction
+  // rows, then 3 trailing non-transaction rows the export tool appends (a
+  // blank row, a "סך הכל" / Total label row, and a bare "1418.8₪" sum row).
+  // All three have an unparseable mapped date; before the fix this 400'd the
+  // whole request and none of the 8 good rows ever got imported.
+  it('imports every real row from a real bank export with trailing Total rows, skipping only the junk', async () => {
+    const bankCsvPath = require('path').join(__dirname, '..', '..', 'docs', 'csv', '1_edited.csv');
+    const bankCsv = require('fs').readFileSync(bankCsvPath);
+    const bankMapping = { date: 'תאריך עסקה', amount: 'סכום חיוב', description: 'שם בית העסק' };
+
+    global.fetch.mockResolvedValue({ ok: true, arrayBuffer: async () => bankCsv });
+    mockTransactionFindAll.mockResolvedValue([]);
+
+    const res = await request(app)
+      .post('/api/imports/12/confirm')
+      .set('Authorization', authHeader())
+      .send({ mapping: bankMapping });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ imported: 8, duplicatesSkipped: 0, unparseableSkipped: 3 });
   });
 
   it('returns 400 when the mapping is missing required columns', async () => {

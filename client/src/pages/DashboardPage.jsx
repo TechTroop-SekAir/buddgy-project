@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, EmptyState, Icon, Skeleton } from '../components/ui';
+import { ActionIcon, Alert, Button, Card, EmptyState, Icon, Skeleton } from '../components/ui';
 import { CategoryFormModal } from '../components/categories/CategoryFormModal';
 import { CategoryCard } from '../components/categories/CategoryCard';
 import { ForecastBanner } from '../components/categories/ForecastBanner';
@@ -22,9 +23,16 @@ import { sortCategoriesBySpent } from '../utils/categoryStatus';
 export function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
+  // Carried in nav state from OnboardingPage.jsx when the (optional,
+  // skippable) CSV import step failed but income + categories still saved —
+  // local, not persisted: dismiss just clears this render, no server flag to
+  // update, and a reload naturally drops history.state's replace: true entry.
+  const [isImportFailedDismissed, setIsImportFailedDismissed] = useState(false);
+  const showImportFailedNotice = location.state?.csvImportFailed && !isImportFailedDismissed;
   const { month } = useMonth();
   const isCurrentMonth = month === getCurrentMonth();
   const queryKey = ['categories', user.id, month];
@@ -165,6 +173,32 @@ export function DashboardPage() {
           {t('dashboard.addTransaction')}
         </Button>
       </div>
+
+      {showImportFailedNotice && (
+        <Card
+          padding={0}
+          className="mb-6 flex items-start gap-3 rounded-lg border border-status-warning bg-status-warning-tint p-4"
+          role="alert"
+        >
+          <Icon name="alertTriangle" size="md" className="mt-0.5 shrink-0 text-status-warning" />
+          <div className="flex flex-1 items-center justify-between gap-3">
+            <p className="text-sm text-text-primary">{t('onboarding.import.failedNotice')}</p>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button variant="outline" color="gray" size="sm" component={Link} to="/imports">
+                {t('onboarding.import.failedNoticeAction')}
+              </Button>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                aria-label={t('common.dismiss')}
+                onClick={() => setIsImportFailedDismissed(true)}
+              >
+                <Icon name="x" size="sm" />
+              </ActionIcon>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {isLoading && (
         <div className="flex flex-col gap-4" aria-label={t('dashboard.loading')}>

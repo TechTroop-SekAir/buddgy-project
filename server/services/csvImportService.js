@@ -127,7 +127,17 @@ function computeDedupHash(userId, t) {
   return crypto.createHash('sha256').update(raw).digest('hex');
 }
 
-/** Maps one raw CSV row into a transaction shape using a column mapping. */
+/**
+ * Maps one raw CSV row into a transaction shape using a column mapping.
+ * Parses date/amount independently and never throws — a cell the parser
+ * can't read (blank, a totals/summary row a bank export tacked onto the end
+ * of the file, an unexpected format) comes back as a `null` field rather
+ * than failing the whole row. transaction_date and amount_agorot are both
+ * NOT NULL columns on `transactions` (20260809000300-create-transactions.js),
+ * so a row with either still null was never insertable regardless — callers
+ * that are about to write rows (confirmImport) filter those out themselves
+ * and count them, rather than this function deciding what's fatal.
+ */
 function mapRow(headerRow, row, mapping) {
   const indexOf = (colName) => headerRow.indexOf(colName);
   const dateIdx = indexOf(mapping.date);
@@ -136,9 +146,23 @@ function mapRow(headerRow, row, mapping) {
 
   if (dateIdx === -1 || amountIdx === -1) return null;
 
+  let transaction_date = null;
+  try {
+    transaction_date = normalizeDate(row[dateIdx]);
+  } catch {
+    // left null — surfaced to the client as "—"
+  }
+
+  let amount_agorot = null;
+  try {
+    amount_agorot = shekelsToAgorot(parseAmountToShekels(row[amountIdx]));
+  } catch {
+    // left null — surfaced to the client as "—"
+  }
+
   return {
-    transaction_date: normalizeDate(row[dateIdx]),
-    amount_agorot: shekelsToAgorot(parseAmountToShekels(row[amountIdx])),
+    transaction_date,
+    amount_agorot,
     description: descIdx === -1 ? null : String(row[descIdx] ?? '').trim() || null,
   };
 }
@@ -184,18 +208,31 @@ async function previewImport(userId, file) {
     rows_imported: null,
   });
 
+  // mapRow never throws — an unparseable cell (blank amount, a totals row,
+  // an unexpected date format) comes back as a null field. The client
+  // renders a null cell as "—".
   const previewRows = rows
     .slice(0, PREVIEW_ROW_COUNT)
     .map((row) => mapRow(headerRow, row, detectedMapping))
     .filter(Boolean);
 
-  return { importId: csvImport.id, detectedMapping, previewRows };
+  return { importId: csvImport.id, header: headerRow, detectedMapping, previewRows };
 }
 
 /**
  * Re-downloads the stored file, applies the user-confirmed mapping (which
  * may differ from Claude's guess), and inserts new transactions inside one
  * transaction — dedupe via UNIQUE(dedup_hash), docs/DATABASE.md § Idempotency.
+ *
+ * Real bank/credit-card exports routinely tack on trailing rows that aren't
+ * transactions at all — a blank row, a "סך הכל" (Total) label, a bare sum —
+ * after the real data (docs/csv/1_edited.csv is a real example: 8 real rows,
+ * then exactly these 3). Such a row can never satisfy transaction_date/
+ * amount_agorot's NOT NULL constraint (20260809000300-create-transactions.js)
+ * regardless of how it's handled, so it's individually skipped and counted
+ * rather than aborting the whole import over rows that were never
+ * insertable in the first place — this used to throw on the entire request
+ * the moment any single row's date or amount didn't parse.
  *
  * @param {number} userId
  * @param {number} importId
@@ -224,7 +261,9 @@ async function confirmImport(userId, importId, mapping) {
   const buffer = Buffer.from(await response.arrayBuffer());
   const { headerRow, rows } = parseCsvBuffer(buffer);
 
-  const candidates = rows.map((row) => mapRow(headerRow, row, mapping)).filter(Boolean);
+  const mapped = rows.map((row) => mapRow(headerRow, row, mapping)).filter(Boolean);
+  const candidates = mapped.filter((c) => c.transaction_date != null && c.amount_agorot != null);
+  const unparseableSkipped = mapped.length - candidates.length;
   for (const c of candidates) {
     c.dedup_hash = computeDedupHash(userId, c);
   }
@@ -261,7 +300,7 @@ async function confirmImport(userId, importId, mapping) {
       { transaction: t }
     );
 
-    return { imported: toInsert.length, duplicatesSkipped };
+    return { imported: toInsert.length, duplicatesSkipped, unparseableSkipped };
   });
 }
 
