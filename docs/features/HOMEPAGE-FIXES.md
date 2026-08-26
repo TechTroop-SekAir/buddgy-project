@@ -99,6 +99,10 @@ Surface the total budgeted across all categories alongside it. `totalBudget` alr
 render it in the tile as a "of ₪X budgeted" secondary line. Add the locale key to **both**
 `he.json` and `en.json` in the same change.
 
+**Update:** superseded — the tile now renders `forecast.totalBudgetAgorot` directly as its
+primary value instead of `totalEndOfMonthSpendAgorot`, with no secondary line. The
+`summaryBar.ofBudget` locale key was removed from both `he.json` and `en.json`.
+
 ---
 
 ## Phase 3 — Categories / Envelopes
