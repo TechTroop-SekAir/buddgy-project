@@ -431,7 +431,6 @@
     "income": "הכנסות",
     "actualExpenses": "הוצאות בפועל",
     "plannedExpenses": "תכנון הוצאות / צפוי",
-    "ofBudget": "מתוך {{budget}} בתקציב",
     "plannedSavingsBalance": "יתרה מתוכננת לחיסכון"
   },
   "addPlannedExpenseModal": {
