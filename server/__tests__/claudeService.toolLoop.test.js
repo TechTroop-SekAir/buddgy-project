@@ -87,22 +87,6 @@ describe('runToolLoop', () => {
     expect(call.messages).toEqual([...history, { role: 'user', content: 'follow-up' }]);
   });
 
-  it('forwards a caller-supplied temperature to generateText', async () => {
-    mockGenerateText.mockResolvedValue({ toolCalls: [] });
-
-    await runToolLoop({ system: 'sys', prompt: 'hi', tools: {}, temperature: 0 });
-
-    expect(mockGenerateText.mock.calls[0][0].temperature).toBe(0);
-  });
-
-  it('omits temperature from generateText when the caller does not pass one', async () => {
-    mockGenerateText.mockResolvedValue({ toolCalls: [] });
-
-    await runToolLoop({ system: 'sys', prompt: 'hi', tools: {} });
-
-    expect('temperature' in mockGenerateText.mock.calls[0][0]).toBe(false);
-  });
-
   it('never calls logAiCall / AiCall.create itself, on success', async () => {
     mockGenerateText.mockResolvedValue({ toolCalls: [{ toolName: 'x', input: {} }] });
 

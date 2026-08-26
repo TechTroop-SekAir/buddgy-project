@@ -138,36 +138,45 @@ Mirrors `forecastService`'s existing choice to keep `recommendation` a structure
 > verdict/amount/suggestion and explain in `reasoning_text`, in the user's own language; a normal
 > spending question still recomputes and leaves it `null`. The client (`PromptBar.jsx#replyText`)
 > renders `reasoning` in place of the `explanationKey` line when present, so a follow-up reads as
-> an answer instead of a repeated verdict banner. A companion system-prompt rule tells the model to
-> break ties between comparably-discretionary, sufficient-headroom envelopes deterministically
-> (most headroom, then lowest id) so `suggested_envelope_id` doesn't vary across otherwise-identical
-> questions.
+> an answer instead of a repeated verdict banner.
 >
-> **Deterministic cut amount, `temperature: 0`:** the tie-break rule alone wasn't enough — the same
-> question still returned a different envelope and a different cut (100.00 vs 99.99 ILS) across
-> calls. Two further changes: (1) `runToolLoop` now runs the advisor at `temperature: 0`
-> (`claudeService.js`'s `temperature` param, optional and forwarded only when a caller sets it, so
-> every other caller is unaffected) for near-deterministic sampling; (2) `cut_shekels` was removed
-> from `provide_verdict`'s schema entirely — the model only ever chooses WHICH envelope
-> (`suggested_envelope_id`) now, and `ask()` derives the cut in JS as the shortfall
-> (`-projectedBalanceAfterAgorot`, when negative) capped at that envelope's own headroom (budget
-> minus spent), all in integer agorot with no shekel round-trip. This is the same "money math never
-> comes from the model" rule `amountAgorot` already followed. One behavior change follows from this:
-> if the model says `over_budget` but the JS-computed balance isn't actually negative, there is no
-> shortfall to cut, so `suggestion` is `null` and the reply falls back to
-> `advisor.reply.overBudgetNoSuggestion`.
+> **Deterministic cut pick (code-owned, not model-owned):** an earlier version tried to guarantee
+> determinism with a system-prompt tie-break rule plus `runToolLoop({ temperature: 0 })`. Neither
+> held: the prompt rule alone let the same question return a different envelope and a different cut
+> (100.00 vs 99.99 ILS) across calls, and `temperature` turned out to be silently inert —
+> Claude Sonnet 5 removed sampling params entirely, so the AI SDK stripped it and warned rather than
+> applying it (confirmed with a 9-run repro on 2026-08-26: even with the parameter gone, this
+> particular model happened to pick the same envelope every time — but nothing guaranteed that).
+> `resolveVerdict.js#pickCutEnvelope` now owns the choice outright: essential-blocklisted and
+> zero-headroom envelopes are excluded, a `DISCRETIONARY_ENVELOPE_KEYWORDS` tier is preferred over
+> unranked names, ties within a tier go to the most headroom, and the model's `suggested_envelope_id`
+> is consulted only as a final tie-break *inside* an already-tied group (same tier, identical
+> headroom) — never as the primary decision. `cut_shekels` was removed from `provide_verdict`'s
+> schema entirely for the same reason — the model never computes money; `ask()` derives the cut in JS
+> as the shortfall (`-projectedBalanceAfterAgorot`, when negative) capped at the chosen envelope's own
+> headroom (budget minus spent), all in integer agorot with no shekel round-trip. This is the same
+> "money math never comes from the model" rule `amountAgorot` already followed.
 >
-> **Essential-envelope blocklist guardrail:** envelope name is the model's only signal for
+> One behavior change follows from code owning the pick: a suggestion now appears whenever *any*
+> valid non-essential envelope has headroom — including when the model itself returned
+> `suggested_envelope_id: null` ("no good option"). The model can no longer suppress a suggestion,
+> only steer which one wins a tie. And if the model says `over_budget` but the JS-computed balance
+> isn't actually negative, there is no shortfall to cut, so `suggestion` is `null` and the reply falls
+> back to `advisor.reply.overBudgetNoSuggestion`.
+>
+> **Essential/discretionary keyword tiers:** envelope name is the only available signal for
 > discretionary-vs-essential — there's no such flag in the data — and that judgment alone once
-> suggested a vague-but-possibly-essential envelope ("הוצאות כלליות" / "General expenses"). A
-> hardcoded, single-place keyword list (`ESSENTIAL_ENVELOPE_KEYWORDS` in `advisorService.js`; Hebrew
-> and English — rent/mortgage/utilities/insurance/groceries/bills and שכירות/משכנתא/חשמל/ארנונה/ביטוח/
-> מחיה/חשבונות/מים/ועד בית) is matched case-insensitively as a substring of each envelope's name.
-> Matching envelopes are flagged `[ESSENTIAL — never suggest cutting from this one]` in the system
-> prompt so the model is steered away from them before it ever picks — but the actual enforcement is
-> in `ask()`: `suggested_envelope_id` is re-checked against the same blocklist after the id-validity
-> guard, same "prompt is guidance, JS is the guarantee" posture as every other hallucination guard in
-> this file. A blocklisted pick collapses to `suggestion: null`, same as an invalid id.
+> suggested a vague-but-possibly-essential envelope ("הוצאות כלליות" / "General expenses"). Two
+> hardcoded, single-place keyword lists live in `server/services/advisor/constants.js` and are
+> matched case-insensitively as a substring of each envelope's name (`essentialEnvelopes.js`'s
+> `isEssentialEnvelope`/`isDiscretionaryEnvelope`): `ESSENTIAL_ENVELOPE_KEYWORDS` (a hard exclude —
+> rent/mortgage/utilities/insurance/groceries/bills/food/health/daycare/school and their Hebrew
+> equivalents) and `DISCRETIONARY_ENVELOPE_KEYWORDS` (a soft preference tier `pickCutEnvelope` ranks
+> above unmatched names — unmatched is unranked, not penalized). Essential-matching envelopes are
+> flagged `[ESSENTIAL — never suggest cutting from this one]` in the system prompt so the model is
+> steered away from them, but the actual enforcement is in `resolveVerdict.js#pickCutEnvelope`, which
+> excludes them outright before ranking anything else — same "prompt is guidance, JS is the
+> guarantee" posture as every other hallucination guard in this file.
 
 ### New/changed files
 

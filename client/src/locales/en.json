@@ -489,6 +489,9 @@
     "placeholder": "Ask Buddgy AI — \"Can I afford dining out tonight?\"",
     "send": "Send",
     "close": "Close conversation",
+    "collapse": "Hide chat",
+    "expand": "Open Buddgy AI",
+    "thinking": "Buddgy AI is thinking…",
     "error": "Buddgy AI couldn't answer that. Please try again.",
     "chips": {
       "affordDiningOut": "Can I afford dining out tonight?",

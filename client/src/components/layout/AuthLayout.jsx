@@ -21,7 +21,7 @@ function LogoMark({ size = 'sm' }) {
   const iconSize = size === 'lg' ? 'md' : 'sm';
   return (
     <span className={`flex ${boxClass} shrink-0 items-center justify-center rounded-md bg-brand-gradient`}>
-      <Icon name="wallet" size={iconSize} className="text-on-fill" />
+      <Icon name="wallet" size={iconSize} className="text-text-on-fill" />
     </span>
   );
 }
@@ -32,7 +32,7 @@ export function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="grid min-h-screen bg-bg-page lg:grid-cols-2">
       {/* Brand panel — desktop only */}
-      <div className="hidden flex-col justify-center gap-8 bg-brand-gradient-strong px-12 py-9 text-on-fill lg:flex">
+      <div className="hidden flex-col justify-center gap-8 bg-brand-gradient-strong px-12 py-9 text-text-on-fill lg:flex">
         {/* Baked SVG wordmark (client/src/assets/logo/) — Latin "BUDDGY" +
             "Your Budget Buddy", vector outlines of Mulish Black Italic /
             SemiBold, white-on-transparent. Deliberately scoped to this

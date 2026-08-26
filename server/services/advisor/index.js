@@ -68,11 +68,16 @@ async function ask(userId, text, history = []) {
       messages: history.length ? history : undefined,
       tools,
       stopWhen: [stepCountIs(MAX_TOOL_LOOP_STEPS), hasToolCall('provide_verdict')],
-      // Identical questions over unchanged read-only data should not yield
-      // different suggestions turn to turn — the tie-break prompt rule in
-      // prompts.js wasn't enough on its own (Bug 2), so this removes most
-      // of the remaining sampling variance in which envelope is picked.
-      temperature: 0,
+      // No `temperature` here (previously 0): Claude Sonnet 5 removed
+      // sampling params (temperature/top_p/top_k) — the AI SDK silently
+      // strips it and warns "not supported ... will be ignored", so this
+      // was inert. A 9-run repro (2026-08-26, claude-sonnet-5, an
+      // intentionally ambiguous 5-envelope fixture) returned the identical
+      // suggested_envelope_id every time even with the parameter gone —
+      // Bug 2 ("identical questions yield different suggestions") did not
+      // reproduce on this model. resolveVerdict's pickCutEnvelope() now
+      // makes the envelope choice a JS-verified guarantee regardless, so
+      // determinism no longer depends on the model at all.
     });
   } catch {
     // Timeout, rate limit, or a malformed provide_verdict call (schema

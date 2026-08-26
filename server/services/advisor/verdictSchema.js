@@ -39,8 +39,10 @@ const verdictSchema = z.object({
         'rent, groceries, utilities, insurance) — use your own judgment on the name and any context ' +
         'from get_recent_transactions, there is no essential/discretionary flag in the data. Only ' +
         'choose an envelope that has enough headroom (budget minus spent) to absorb the cut. null if ' +
-        'verdict is not over_budget, or no envelope has enough headroom to help. The app computes ' +
-        'how much to cut itself — you only choose WHICH envelope.'
+        'verdict is not over_budget, or no envelope has enough headroom to help. The app makes the ' +
+        'final choice of envelope deterministically in code — this value is used only as a tie-break ' +
+        'when multiple candidates are otherwise indistinguishable, and it never controls how much to ' +
+        'cut; the app computes that itself.'
     ),
   // No cut_shekels field: how much to cut is arithmetic (shortfall capped at
   // the chosen envelope's headroom), computed in JS below from

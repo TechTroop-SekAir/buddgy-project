@@ -59,7 +59,7 @@ export function SelectableCard({ label, iconName, accentIndex = 0, checked, onCh
           </span>
           {checked && (
             <span className="flex h-5 w-5 items-center justify-center rounded-pill bg-accent">
-              <Icon name="check" size="xs" className="text-on-fill" />
+              <Icon name="check" size="xs" className="text-text-on-fill" />
             </span>
           )}
         </div>

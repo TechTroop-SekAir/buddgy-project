@@ -37,6 +37,10 @@ const ESSENTIAL_ENVELOPE_KEYWORDS = [
   'bill',
   'electricity',
   'water',
+  'food',
+  'health',
+  'daycare',
+  'school',
   // Hebrew
   'שכירות',
   'משכנתא',
@@ -47,6 +51,48 @@ const ESSENTIAL_ENVELOPE_KEYWORDS = [
   'חשבונות',
   'מים',
   'ועד בית',
+  'אוכל',
+  'בריאות',
+  'גן',
+  'חינוך',
 ];
 
-module.exports = { MAX_TOOL_LOOP_STEPS, MAX_REASONING_CHARS, ESSENTIAL_ENVELOPE_KEYWORDS };
+// Soft preference tier — the opposite role from the blocklist above:
+// resolveVerdict.js#pickCutEnvelope ranks a name-matching envelope above an
+// unmatched one when code, not the model, must choose which discretionary
+// envelope to cut from (see docs/features/AGENTS.md § Agent 1's
+// "Deterministic cut pick" note). An unmatched name is never penalized —
+// only unranked — so this is a preference, not a second blocklist.
+// Case-insensitive substring match, same shape as ESSENTIAL_ENVELOPE_KEYWORDS.
+const DISCRETIONARY_ENVELOPE_KEYWORDS = [
+  // English
+  'dining',
+  'restaurant',
+  'entertainment',
+  'subscription',
+  'shopping',
+  'vacation',
+  'travel',
+  'hobby',
+  'gift',
+  'gifts',
+  // Hebrew
+  'מסעדות',
+  'אוכל בחוץ',
+  'בילוי',
+  'בידור',
+  'מנוי',
+  'קניות',
+  'חופש',
+  'חופשה',
+  'נסיעות',
+  'תחביב',
+  'מתנות',
+];
+
+module.exports = {
+  MAX_TOOL_LOOP_STEPS,
+  MAX_REASONING_CHARS,
+  ESSENTIAL_ENVELOPE_KEYWORDS,
+  DISCRETIONARY_ENVELOPE_KEYWORDS,
+};

@@ -77,7 +77,22 @@ describe('advisorService.ask', () => {
     expect(result.explanationKey).toBe('advisor.reply.inBudgetStatus');
   });
 
-  it('rejects a suggested_envelope_id not present in the caller-owned envelope list', async () => {
+  it('falls back to the deterministic code pick when the model supplies an invalid suggested_envelope_id', async () => {
+    // Determinism is code-owned (resolveVerdict.js#pickCutEnvelope) — an
+    // invalid model pick no longer means "no suggestion" the way it used
+    // to; the app still picks the only (or best) valid non-essential
+    // candidate itself.
+    mockEnvelopeList.mockResolvedValue([{ id: 7, name: 'Entertainment', monthly_budget_agorot: 100000, spent_agorot: 0 }]);
+    mockRunToolLoop.mockResolvedValue(
+      verdictResult({ verdict: 'over_budget', amount_shekels: 400, suggested_envelope_id: 999 })
+    );
+
+    const result = await ask(USER_ID, 'unbudgeted 400 NIS');
+
+    expect(result.suggestion).toEqual({ envelopeId: 7, envelopeName: 'Entertainment', cutAgorot: 40000 });
+  });
+
+  it('suggests nothing when the only candidate envelope is essential-blocklisted', async () => {
     mockEnvelopeList.mockResolvedValue([{ id: 7, name: 'Food', monthly_budget_agorot: 100000, spent_agorot: 0 }]);
     mockRunToolLoop.mockResolvedValue(
       verdictResult({ verdict: 'over_budget', amount_shekels: 400, suggested_envelope_id: 999 })
@@ -91,8 +106,9 @@ describe('advisorService.ask', () => {
 
   it('never returns a blocklisted essential-sounding envelope as a suggestion, even with the most headroom and a model pick', async () => {
     // "Rent" is a blocklist keyword match and has by far the most headroom;
-    // "Entertainment" has none of its budget left. If the guard didn't
-    // exist, the model's pick of the essential envelope would win.
+    // "Entertainment" has none of its budget left, so pickCutEnvelope has no
+    // valid candidate at all — the model's pick of the essential envelope
+    // is excluded outright regardless of what it chose.
     mockEnvelopeList.mockResolvedValue([
       { id: 1, name: 'Rent', monthly_budget_agorot: 500000, spent_agorot: 0 },
       { id: 2, name: 'Entertainment', monthly_budget_agorot: 10000, spent_agorot: 10000 },
@@ -108,6 +124,8 @@ describe('advisorService.ask', () => {
   });
 
   it('matches a Hebrew essential keyword against the envelope name, case/substring-insensitively', async () => {
+    // The only envelope is essential-blocklisted, so pickCutEnvelope has no
+    // candidate regardless of the model's pick.
     mockEnvelopeList.mockResolvedValue([{ id: 1, name: 'ביטוח רכב', monthly_budget_agorot: 500000, spent_agorot: 0 }]);
     mockRunToolLoop.mockResolvedValue(
       verdictResult({ verdict: 'over_budget', amount_shekels: 400, suggested_envelope_id: 1 })
@@ -253,16 +271,6 @@ describe('advisorService.ask', () => {
     expect(result.reasoning).toBeNull();
   });
 
-  it('always calls runToolLoop with temperature: 0, for deterministic envelope picks over unchanged data', async () => {
-    mockRunToolLoop.mockResolvedValue(
-      verdictResult({ verdict: 'in_budget', amount_shekels: null, suggested_envelope_id: null, cut_shekels: null })
-    );
-
-    await ask(USER_ID, 'question');
-
-    expect(mockRunToolLoop).toHaveBeenCalledWith(expect.objectContaining({ temperature: 0 }));
-  });
-
   it('omits messages from runToolLoop when no history is given', async () => {
     mockRunToolLoop.mockResolvedValue(
       verdictResult({ verdict: 'in_budget', amount_shekels: null, suggested_envelope_id: null, cut_shekels: null })
@@ -296,5 +304,25 @@ describe('advisorService.ask', () => {
 
     expect(mockEnvelopeList).toHaveBeenCalledWith(USER_ID, expect.stringMatching(/^\d{4}-\d{2}-01$/));
     expect(mockForecastGet).toHaveBeenCalledWith(USER_ID, expect.stringMatching(/^\d{4}-\d{2}-01$/));
+  });
+
+  it('picks the same suggestion for identical envelope/forecast data regardless of what the model suggests (Bug 2 regression)', async () => {
+    // Determinism no longer depends on the model at all — see
+    // resolveVerdict.js#pickCutEnvelope. Three otherwise-identical calls,
+    // three different (even invalid/null) model picks, one same answer.
+    mockEnvelopeList.mockResolvedValue([
+      { id: 1, name: 'Dining out', monthly_budget_agorot: 80000, spent_agorot: 60000 }, // headroom 20000
+      { id: 2, name: 'Shopping', monthly_budget_agorot: 60000, spent_agorot: 42000 }, // headroom 18000
+    ]);
+
+    for (const suggestedId of [1, 999, null]) {
+      mockRunToolLoop.mockResolvedValue(
+        verdictResult({ verdict: 'over_budget', amount_shekels: 400, suggested_envelope_id: suggestedId })
+      );
+
+      const result = await ask(USER_ID, 'unbudgeted 400 NIS');
+
+      expect(result.suggestion).toEqual({ envelopeId: 1, envelopeName: 'Dining out', cutAgorot: 20000 });
+    }
   });
 });
