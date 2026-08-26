@@ -55,10 +55,10 @@ export function SummaryBar({
   const incomeTotalAgorot = income?.total_agorot ?? 0;
   const plannedTotalAgorot = forecast?.totalEndOfMonthSpendAgorot ?? 0;
   const plannedSavingsBalanceAgorot = incomeTotalAgorot - plannedTotalAgorot;
-  // "תכנון הוצאות / צפוי" previously showed actual+planned spend with no
-  // budget figure to compare it against — see docs/features/HOMEPAGE-FIXES.md
-  // § 2.2. forecast.totalBudgetAgorot falls back to totals.budget (derived
-  // from `categories`) so this still renders before the forecast query loads.
+  // "תכנון הוצאות / צפוי" renders the total budgeted across all categories —
+  // see docs/features/HOMEPAGE-FIXES.md § 2.2. forecast.totalBudgetAgorot
+  // falls back to totals.budget (derived from `categories`) so this still
+  // renders before the forecast query loads.
   const totalBudgetAgorot = forecast?.totalBudgetAgorot ?? totals.budget;
 
   return (
@@ -87,8 +87,7 @@ export function SummaryBar({
             icon="calendarDays"
             accent={{ chip: 'bg-cat-5-tint', icon: 'text-cat-5' }}
             label={t('summaryBar.plannedExpenses')}
-            value={formatShekelsRounded(plannedTotalAgorot)}
-            subValue={t('summaryBar.ofBudget', { budget: formatShekelsRounded(totalBudgetAgorot) })}
+            value={formatShekelsRounded(totalBudgetAgorot)}
             isLoading={isForecastLoading}
           />
           <StatTile

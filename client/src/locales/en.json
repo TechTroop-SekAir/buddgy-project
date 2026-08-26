@@ -426,7 +426,6 @@
     "income": "Income",
     "actualExpenses": "Actual expenses",
     "plannedExpenses": "Planned/projected expenses",
-    "ofBudget": "of {{budget}} budgeted",
     "plannedSavingsBalance": "Planned savings balance"
   },
   "addPlannedExpenseModal": {
